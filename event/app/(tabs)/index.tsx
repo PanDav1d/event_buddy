@@ -7,6 +7,7 @@ import { EventCard, SearchParams } from '@/constants/Types';
 import { API_URL } from '@/config';
 import { EventItem } from '@/components/EventItem';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 const CARD_MARGIN = 24;
 
@@ -34,18 +35,37 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
+  const [currLatitude, setCurrLatitude] = useState<number | null>(null);
+  const [currLongitude, setCurrLongitude] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permission to access location was denied');
+        return;
+      }
+      console.log('Permission has been already allowed');
+
+      let location = await Location.getCurrentPositionAsync({});
+      setCurrLatitude(location.coords.latitude);
+      setCurrLongitude(location.coords.longitude);
+    })();
+  }, []);
+
   const [refreshing, setRefreshing] = useState(false);
   const [apiData, setApiData] = useState<EventCard[]>([]);
   const [searchParams, setSearchParams] = useState<SearchParams>({
     tags: [""],
-    latitude: 48.155,
-    longitude: 11.7147,
+    latitude: currLatitude ?? 0,
+    longitude: currLongitude ?? 11.7147,
     date_range: {
       start: new Date(1722463200 * 1000),
       end: new Date(1725055200 * 1000),
     },
     radius: 20,
-  });  const [error, setError] = useState<string | null>(null);
+  });
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
@@ -77,7 +97,7 @@ export default function HomeScreen() {
   const renderContent = () => {
     if (error) {
       return (
-        <View style={styles.errorContainer}>
+        <View style={styles.errorContainer} >
           <Ionicons name="cloud-offline" size={100} color={colors.text} />
           <Text style={[styles.errorText, {color: colors.text}]}>Netzwerkfehler</Text>
         </View>

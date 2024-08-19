@@ -185,7 +185,7 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
     }
 
     return (
-        <SafeAreaView style={styles.searchBar}>
+        <SafeAreaView style={[styles.searchBar, {borderBottomColor: colors.backgroundSecondary}]}>
             <View style={styles.searchContainer}>
                 <Pressable style={[styles.searchButton, {backgroundColor: colors.backgroundSecondary}]} onPress={() => setModalVisible(true)}>
                     <Ionicons name="search-outline" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
@@ -275,13 +275,11 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
 
 const styles = StyleSheet.create({
     searchBar:{
-        paddingBottom: '4%',
         flexDirection: 'column',
         alignItems: 'center',
         display: 'flex',
         gap: 10,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0, 0, 0, 0.1)',
     },
     searchContainer: {
         flexDirection: 'row',

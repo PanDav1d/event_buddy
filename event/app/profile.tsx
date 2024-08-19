@@ -9,7 +9,7 @@ import { ListButton } from '@/components/ListButton';
 import SubmitButton from '@/components/SubmitButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MapView, { Marker } from 'react-native-maps';
-import { API_URL_POST } from '@/config';
+import { API_URL } from '@/config';
 import { Stack } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
@@ -70,7 +70,7 @@ export default function ProfileScreen() {
 
     const handleCreateEvent = async () => {
         try {
-            const response = await fetch(API_URL_POST, {
+            const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ export default function ProfileScreen() {
     };
 
     return (
-        <Stack screenOptions={{ headerShown: false }}>
+        <GestureHandlerRootView style={styles.container}>
             <SafeAreaView style={styles.safeArea}>
                 <ScrollView style={styles.scrollView}>
                     <View style={styles.header}>
@@ -216,7 +216,7 @@ export default function ProfileScreen() {
                     </View>
                 </View>
             </Modal>
-        </Stack>
+        </GestureHandlerRootView>
     );
 }
 
