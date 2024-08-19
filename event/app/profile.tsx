@@ -5,12 +5,12 @@ import { Text, View, StyleSheet, Pressable, useColorScheme, ImageBackground, Mod
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { FlatList, GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
-import { BlurView } from 'expo-blur';
 import { ListButton } from '@/components/ListButton';
 import SubmitButton from '@/components/SubmitButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MapView, { Marker } from 'react-native-maps';
 import { API_URL_POST } from '@/config';
+import { Stack } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -109,7 +109,7 @@ export default function ProfileScreen() {
     };
 
     return (
-        <GestureHandlerRootView style={styles.container}>
+        <Stack screenOptions={{ headerShown: false }}>
             <SafeAreaView style={styles.safeArea}>
                 <ScrollView style={styles.scrollView}>
                     <View style={styles.header}>
@@ -216,7 +216,7 @@ export default function ProfileScreen() {
                     </View>
                 </View>
             </Modal>
-        </GestureHandlerRootView>
+        </Stack>
     );
 }
 

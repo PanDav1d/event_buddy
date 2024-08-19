@@ -11,6 +11,8 @@ import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import Slider from '@react-native-community/slider';
 import { CalendarPicker } from "@/components/CalendarPicker";
+import { ProfileButton } from "@/components/ProfileButton";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 interface SearchBarProps {
@@ -183,11 +185,14 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
     }
 
     return (
-        <View style={styles.searchBar}>
-            <Pressable style={[styles.searchButton, {backgroundColor: colors.backgroundSecondary}]} onPress={() => setModalVisible(true)}>
-                <Ionicons name="search-outline" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
-                <ThemedText>Suchen und Filtern</ThemedText>
-            </Pressable>
+        <SafeAreaView style={styles.searchBar}>
+            <View style={styles.searchContainer}>
+                <Pressable style={[styles.searchButton, {backgroundColor: colors.backgroundSecondary}]} onPress={() => setModalVisible(true)}>
+                    <Ionicons name="search-outline" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
+                    <ThemedText>Suchen und Filtern</ThemedText>
+                </Pressable>
+                <ProfileButton />
+            </View>
             <FilterBar />
             <Modal
                 animationType="slide"
@@ -264,13 +269,12 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
                     </KeyboardAvoidingView>
                 </View>
             </Modal>
-        </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     searchBar:{
-        paddingTop: '15%',
         paddingBottom: '4%',
         flexDirection: 'column',
         alignItems: 'center',
@@ -279,6 +283,12 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(0, 0, 0, 0.1)',
     },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '90%',
+    },
     input: {
         borderColor: 'white',
         color: 'white',
@@ -286,16 +296,31 @@ const styles = StyleSheet.create({
         borderRadius: 15,
     },
     searchButton:{
-        marginLeft: 20,
-        marginRight: 20,
         flexDirection: 'row',
         alignItems: 'center',
         display: 'flex',
         gap: 10,
-        width: '90%',
+        flex: 1,
         backgroundColor: 'white',
         borderRadius: 25,
         padding: 15,
+        marginRight: 10,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    profileButton: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'white',
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
