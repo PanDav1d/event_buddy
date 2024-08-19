@@ -143,19 +143,20 @@ def get_events(latitude, longitude, radius, start_date, end_date):
         print("Error while fetching events: ", error)
         return []
 
-# Initialize the database
-#create_event_table()
-#insert_examples()
-
 @app.route("/")
 def index():
     return "<p>EventBuddy API</p>"
 
-@app.route("/health")
+@app.route("/api/v1/home.json", methods=['GET'])
+def get_home():
+    events = get_any_events()
+    return jsonify(events)
+
+@app.route("/api/v1/health", methods=['GET'])
 def health():
     return jsonify("OK")
 
-@app.route('/get/entries', methods=['GET'])
+@app.route('/api/v1/events.json', methods=['GET'])
 def get_entries():
     try:
         latitude = request.args.get('latitude')
@@ -196,7 +197,7 @@ def get_entries():
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
-@app.route('/create/event', methods=['POST'])
+@app.route('/api/v1/events.json', methods=['POST'])
 def create_event():
     try:
         data = request.json
