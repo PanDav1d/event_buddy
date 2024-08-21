@@ -1,5 +1,4 @@
 import { View, StatusBar, Text, StyleSheet, Pressable, ScrollView, Modal, Animated, useColorScheme, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from "react-native";
-import { TextInput } from "react-native-paper";
 import { ThemedText } from "@/components/ThemedText";
 import React, { useRef, useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -79,11 +78,6 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
             }).start();
         }
     }, [modalVisible]);
-
-    const translateY = slideAnimation.interpolate({
-        inputRange: [0, 1],
-        outputRange: [600, 0],
-    });
 
     const handleSearch = () => {
         onSearchChange(searchParams);
@@ -194,6 +188,7 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
                 <ProfileButton />
             </View>
             <FilterBar />
+
             <Modal
                 animationType="slide"
                 visible={modalVisible}
@@ -280,6 +275,7 @@ const styles = StyleSheet.create({
         display: 'flex',
         gap: 10,
         borderBottomWidth: 1,
+        paddingVertical: 10,
     },
     searchContainer: {
         flexDirection: 'row',

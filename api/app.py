@@ -6,6 +6,7 @@ import yaml
 
 app = Flask(__name__)
 
+# there is a different version on the server running cause external files didnt worked out well
 def create_connection():
     with open("config.yaml", "r") as config_file:
         config = yaml.safe_load(config_file)

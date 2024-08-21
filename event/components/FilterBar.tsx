@@ -1,20 +1,14 @@
-import { View, StatusBar, Text, StyleSheet, Pressable, ScrollView, Modal, Animated, useColorScheme } from "react-native";
-import { TextInput } from "react-native-paper";
+import { StyleSheet, Pressable, ScrollView, useColorScheme } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
-import React, { useRef, useEffect } from "react";
-import { Ionicons } from "@expo/vector-icons";
-import SubmitButton from "./SubmitButton";
+import React from "react";
 import { Colors } from "@/constants/Colors";
 
 export const FilterBar = () => {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
 
-    const [text, setText] = React.useState("");
     const [activeTab, setActiveTab] = React.useState("All");
-    const [modalVisible, setModalVisible] = React.useState(false);
     const tabs = ["All", "Music Festival", "Film Festival", "Food Festival", "Nightclub"];
-    const slideAnimation = useRef(new Animated.Value(0)).current;
 
     return (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsContainer}>
@@ -37,7 +31,6 @@ const styles = StyleSheet.create({
     tabsContainer: {
         borderRadius: 18,
         marginHorizontal: 16,
-        marginTop: 8,
     },
     tab: {
         paddingHorizontal: 16,
