@@ -398,9 +398,9 @@ def api_set_saved_event(user_id, event_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/saved_events.json/<int:user_id>/<int:event_id>', methods=['DELETE'])
-def api_remove_saved_event(user_id, event):
+def api_remove_saved_event(user_id, event_id):
     try:
-        remove_saved_event(user_id, event)
+        remove_saved_event(user_id, event_id)
         return jsonify({"message": "Event removed successfully"}), 200
     except Exception as e:
         print("Error:", str(e))
