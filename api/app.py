@@ -17,6 +17,55 @@ def create_connection():
         print(f"Error connecting to MySQL Database: {e}")
         return None
 
+
+def create_saved_event_table():
+    create_table_query = """
+        CREATE TABLE IF NOT EXISTS saved_event (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT,
+            event_id INT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (event_id) REFERENCES events(id)
+        );
+    """
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(create_table_query)
+            connection.commit()
+            print("table 'saved_event' has been created.")
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while creating table 'user': ", error)
+
+def create_user_table():
+    create_table_query = """
+        CREATE TABLE IF NOT EXISTS user (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50),
+            password VARCHAR(50),
+            first_name VARCHAR(50),
+            last_name VARCHAR(50),
+            email VARCHAR(50),
+            profile_image_url VARCHAR(100),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+    """
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(create_table_query)
+            connection.commit()
+            print("table 'user' has been created.")
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while creating table 'user': ", error)
+
 def create_event_table():
     create_table_query = """
         CREATE TABLE IF NOT EXISTS event (
@@ -41,6 +90,38 @@ def create_event_table():
             connection.close()
     except Error as error:
         print("Error while creating table: ", error)
+
+def insert_user(username, password, first_name, last_name, email, profile_image_url):
+    insert_query = '''
+    INSERT INTO user (username, password, first_name, last_name, email, profile_image_url)
+    VALUES (%s, %s, %s, %s, %s, %s);
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(insert_query, (username, password, first_name, last_name, email, profile_image_url))
+            connection.commit()
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while inserting user: ", error)
+
+def insert_saved_event(user_id, event_id):
+    insert_query = '''
+    INSERT INTO saved_event (user_id, event_id)
+    VALUES (%s, %s);
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(insert_query, (user_id, event_id))
+            connection.commit()
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while inserting saved event: ", error)
 
 def insert_event(title, organizer, description, image_url, unix_time, latitude, longitude):
     insert_query = '''
@@ -144,6 +225,42 @@ def get_events(latitude, longitude, radius, start_date, end_date):
         print("Error while fetching events: ", error)
         return []
 
+def get_user(user_id):
+    select_query = '''
+    SELECT * FROM user WHERE id = %s
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(select_query, (user_id,))
+            user = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            return user
+    except Error as error:
+        print("Error while fetching user: ", error)
+        return None
+
+def get_saved_events(user_id):
+    select_query = '''
+    SELECT * FROM saved_event WHERE user_id = %s
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(select_query, (user_id,))
+            events = cursor.fetchall()
+            cursor.close()
+            connection.close()
+            return events
+    except Error as error:
+        print("Error while fetching saved events: ", error)
+        return []
+
+
+
 @app.route("/")
 def index():
     return "<p>EventBuddy API</p>"
@@ -222,5 +339,41 @@ def create_event():
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route('/api/v1/profile.json/<int:id>', methods=['GET'])
+def api_get_user(id):
+    try:
+        user = get_user(id)
+        if user is None:
+            return jsonify({"error": "User not found"}), 404
+        return jsonify(user), 200
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/v1/saved_events.json/<int:user_id>', methods=['GET'])
+def api_get_saved_events(user_id):
+    try:
+        events = get_saved_events(user_id)
+        if events is None:
+            return jsonify({"error": "User not found"}), 404
+        return jsonify(events), 200
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/v1/saved_events.json/<int:user_id>/<int:event_id>', methods=['POST'])
+def ap_set_saved_event(user_id, event_id):
+    try:
+        insert_saved_event(user_id, event_id)
+        return jsonify({"message": "Event saved successfully"}), 201
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+
+
+create_event_table()
+create_user_table()
+create_saved_event_table()
+
+print("running")
