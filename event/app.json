@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "event",
-    "slug": "event",
+    "slug": "eventbuddy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -32,6 +32,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "b0c1635b-d843-4dd7-a679-ee14415d554f"
+      }
+    },
+    "owner": "dav1dm"
   }
 }

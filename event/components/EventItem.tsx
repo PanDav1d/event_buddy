@@ -7,9 +7,6 @@ import { Modal, ScrollView } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { ThemedText } from './ThemedText';
 import MapView, { Marker } from 'react-native-maps';
-import { MusicTag } from './MusicTag';
-import { DJWidget } from './DJWidget';
-import ParallaxScrollView from './ParallaxScrollView';
 
 export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () => void, isSaved: boolean }) { 
   const colorScheme = useColorScheme();
@@ -27,7 +24,7 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
     if (modalVisible) {
       Animated.timing(slideAnimation, {
         toValue: 0,
-        duration: 200,
+        duration: 600,
         useNativeDriver: true,
       }).start(() => setModalVisible(false));
     } else {
@@ -71,7 +68,7 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
   };
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background}, props.style]}>
+    <View style={[styles.container, {backgroundColor: colors.backgroundSecondary, borderRadius: 25, marginBottom: 20}, props.style]}>
       <Animated.View style={[
         styles.card,
         {
@@ -80,7 +77,7 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
             { translateY: translateYValue }
           ],
           opacity: opacityValue,
-        }
+        },
       ]}>
         <TouchableOpacity onPress={toggleModal}>
           <View style={styles.imageContainer}>
@@ -89,7 +86,7 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
               <Text style={styles.price}>Ab 12.99€</Text>
             </View>
             <TouchableOpacity style={styles.heartButton} onPress={props.onSave}>
-              <Ionicons name="heart-outline" size={24} color={props.isSaved ? 'red' : 'white'} />
+              <Ionicons name={props.isSaved ? 'heart' : 'heart-outline'} size={24} color={props.isSaved ? 'red' : 'white'} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.shareButton} onPress={onShare}>
               <Ionicons name="share-outline" size={24} color="white" />
@@ -97,10 +94,10 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
           </View>
           <View style={styles.contentContainer}>
             <View style={styles.titleRow}>
-              <Text style={styles.title} numberOfLines={1}>{props.title}</Text>
+              <ThemedText style={styles.title} numberOfLines={1}>{props.title}</ThemedText>
               <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color={Colors.light.tint} />
-                <Text style={styles.rating}>4.9</Text>
+                <Ionicons name="star" size={16} color={colors.text} />
+                <ThemedText style={styles.rating}>4.9</ThemedText>
               </View>
             </View>
             <Text style={styles.subtitle} numberOfLines={1}>{props.location}</Text>
@@ -115,11 +112,12 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
       <Modal 
         visible={modalVisible}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
+        onDismiss={() => setModalVisible(false)}
         onRequestClose={() => setModalVisible(false)}>
             <View style={styles.modalHeader}>
                 <Pressable onPress={() => setModalVisible(false)}>
-                    <Ionicons name="close-outline" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
+                    <Ionicons name="arrow-back" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
                 </Pressable>
                 <ThemedText style={styles.modalTitle} numberOfLines={1} ellipsizeMode="tail">{props.title}</ThemedText>
                 <View style={{width: 24}} />
@@ -134,6 +132,7 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
                 </View>
                 <Text style={styles.modalSubtitle}>{props.location}</Text>
 
+                {/*
                 <View style={styles.separator} />
                 <Text style={styles.modalSectionTitle}>Musik Genres</Text>
                 <MusicTag />
@@ -141,6 +140,8 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
                 <View style={styles.separator} />
                 <Text style={styles.modalSectionTitle}>DJs</Text>
                 <DJWidget />
+
+                */}
 
                 <View style={styles.separator} />
                 <View style={styles.modalEventDetails}>
@@ -204,17 +205,17 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
                 </View>
                 <View style={styles.separator} />
                 <Text style={styles.modalDescription}>
-                  {props.description || "No description available."}
+                  {props.description || "Keine Beschreibung verfügbar..."}
                 </Text>
               </View>
             </ScrollView>
             <View style={styles.modalFooter}>
               <TouchableOpacity style={styles.actionButton} onPress={addToCalendar}>
-                <Ionicons name="calendar" size={24} color={Colors.light.tint} />
+                <Ionicons name="calendar-outline" size={24} color={Colors.light.tint} />
                 <Text style={styles.actionButtonText}>Zum Kalender</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionButton} onPress={saveEvent}>
-                <Ionicons name="bookmark" size={24} color={Colors.light.tint} />
+                <Ionicons name="heart-outline" size={24} color={Colors.light.tint} />
                 <Text style={styles.actionButtonText}>Event speichern</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.buyButton, {backgroundColor: colors.accent}]} onPress={buyTickets}>
@@ -234,7 +235,6 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'column',
-    backgroundColor: 'white',
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -309,7 +309,6 @@ const styles = StyleSheet.create({
   rating: {
     marginLeft: 4,
     fontWeight: 'bold',
-    color: Colors.light.tint,
   },
   subtitle: {
     color: '#717171',
@@ -348,6 +347,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     margin: 10,
+    marginTop: 60,
 },
   closeButton: {
     padding: 8,

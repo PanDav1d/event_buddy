@@ -114,7 +114,6 @@ export default function HomeScreen() {
     try {
       const userId = 1; 
       console.log(`${API_URL_SAVED_EVENT}${userId}/${eventId}`);
-
       // Prüfen, ob das Event bereits gespeichert ist
       const checkResponse = await fetch(`${API_URL_SAVED_EVENT}${userId}`);
       if (!checkResponse.ok) {
@@ -126,6 +125,7 @@ export default function HomeScreen() {
       let response;
       if (isEventSaved) {
         // Event entfernen
+        console.log(`Unsaving: ${API_URL_SAVED_EVENT}${userId}/${eventId}`)
         response = await fetch(`${API_URL_SAVED_EVENT}${userId}/${eventId}`, {
           method: 'DELETE',
           headers: {
@@ -140,6 +140,7 @@ export default function HomeScreen() {
         setSavedEventIds(savedEventIds.filter(id => id !== eventId));
       } else {
         // Event speichern
+        console.log(`Saving: ${API_URL_SAVED_EVENT}${userId}/${eventId}`)
         response = await fetch(`${API_URL_SAVED_EVENT}${userId}/${eventId}`, {
           method: 'POST',
           headers: {
