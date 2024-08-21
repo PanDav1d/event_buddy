@@ -11,7 +11,7 @@ import { MusicTag } from './MusicTag';
 import { DJWidget } from './DJWidget';
 import ParallaxScrollView from './ParallaxScrollView';
 
-export function EventItem(props: EventCard & {style?: ViewStyle}) {
+export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () => void, isSaved: boolean }) { 
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -88,8 +88,8 @@ export function EventItem(props: EventCard & {style?: ViewStyle}) {
             <View style={styles.overlay}>
               <Text style={styles.price}>Ab 12.99€</Text>
             </View>
-            <TouchableOpacity style={styles.heartButton}>
-              <Ionicons name="heart-outline" size={24} color="white" />
+            <TouchableOpacity style={styles.heartButton} onPress={props.onSave}>
+              <Ionicons name="heart-outline" size={24} color={props.isSaved ? 'red' : 'white'} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.shareButton} onPress={onShare}>
               <Ionicons name="share-outline" size={24} color="white" />

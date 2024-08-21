@@ -25,8 +25,8 @@ def create_saved_event_table():
             user_id INT,
             event_id INT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id),
-            FOREIGN KEY (event_id) REFERENCES events(id)
+            FOREIGN KEY (user_id) REFERENCES user(id),
+            FOREIGN KEY (event_id) REFERENCES event(id)
         );
     """
     try:
@@ -122,6 +122,22 @@ def insert_saved_event(user_id, event_id):
             connection.close()
     except Error as error:
         print("Error while inserting saved event: ", error)
+
+def remove_saved_event(user_id, event_id):
+    delete_query = '''
+    DELETE FROM saved_event
+    WHERE user_id = %s AND event_id = %s;
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(delete_query, (user_id, event_id))
+            connection.commit()
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while deleting saved event: ", error)
 
 def insert_event(title, organizer, description, image_url, unix_time, latitude, longitude):
     insert_query = '''
@@ -339,6 +355,17 @@ def create_event():
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/v1/event.json/<int:id>', methods=['GET'])
+def api_get_event(id):
+    try:
+        event = get_event(id)
+        if event is None:
+            return jsonify({"error": "Event not found"}), 404
+        return jsonify(event), 200
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/v1/profile.json/<int:id>', methods=['GET'])
 def api_get_user(id):
     try:
@@ -362,10 +389,19 @@ def api_get_saved_events(user_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/saved_events.json/<int:user_id>/<int:event_id>', methods=['POST'])
-def ap_set_saved_event(user_id, event_id):
+def api_set_saved_event(user_id, event_id):
     try:
         insert_saved_event(user_id, event_id)
         return jsonify({"message": "Event saved successfully"}), 201
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/v1/saved_events.json/<int:user_id>/<int:event_id>', methods=['DELETE'])
+def api_remove_saved_event(user_id, event):
+    try:
+        remove_saved_event(user_id, event)
+        return jsonify({"message": "Event removed successfully"}), 200
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500

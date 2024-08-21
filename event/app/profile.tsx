@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThemedText } from '@/components/ThemedText';
 import { EventCard } from '@/constants/Types';
 import { Text, View, StyleSheet, Pressable, useColorScheme, ImageBackground, Modal, TextInput, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
@@ -9,10 +9,13 @@ import { ListButton } from '@/components/ListButton';
 import SubmitButton from '@/components/SubmitButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MapView, { Marker } from 'react-native-maps';
-import { API_URL } from '@/config';
+import { API_URL, API_URL_EVENT, API_URL_SAVED_EVENT } from '@/config';
 import { Stack } from 'expo-router';
+import * as Location from 'expo-location';
 
 const { width, height } = Dimensions.get('window');
+
+
 
 const data = [
     {
@@ -33,9 +36,6 @@ const data = [
         icon: 'log-out-outline',
         onPress: () => console.log('Logout'),
     },
-]
-
-const savedCards: EventCard[] = [
 ]
 
 const savedCardItem = (data: any) => (
@@ -67,6 +67,48 @@ export default function ProfileScreen() {
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
     });
+    const [savedCards, setSavedCards] = useState<EventCard[]>([]);
+
+    useEffect(() => {
+        fetchSavedEvents();
+    }, []);
+
+    const fetchSavedEvents = async () => {
+        try {
+            const userId = 1; // Replace with actual user ID
+            const response = await fetch(`${API_URL_SAVED_EVENT}${userId}`);
+            console.log(`${API_URL_SAVED_EVENT}${userId}`);
+            const savedEventIds = await response.json();
+            
+            const fetchedEvents = await Promise.all(
+                savedEventIds.map(async (savedEvent: any) => {
+                    const eventResponse = await fetch(`${API_URL_EVENT}${savedEvent.event_id}`);
+                    console.log(`${API_URL_EVENT}${savedEvent.event_id}`);
+                    return await eventResponse.json();
+                })
+            );
+            
+            setSavedCards(fetchedEvents);
+        } catch (error) {
+            console.error('Error fetching saved events:', error);
+        }
+    };
+
+    const getCurrentLocation = async () => {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+            console.log('Permission to access location was denied');
+            return;
+        }
+    
+        let location = await Location.getCurrentPositionAsync({});
+        setMapRegion({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+        });
+    };
 
     const handleCreateEvent = async () => {
         try {
@@ -176,10 +218,14 @@ export default function ProfileScreen() {
                                 <MapView
                                     style={styles.map}
                                     region={mapRegion}
-                                    onRegionChangeComplete={setMapRegion}
-                                >
+                                    onRegionChangeComplete={setMapRegion}>
                                     <Marker coordinate={mapRegion} />
                                 </MapView>
+                                <TouchableOpacity
+                                    style={styles.currentLocationButton}
+                                    onPress={getCurrentLocation}>
+                                        <Ionicons name="locate" size={24} color="black" />
+                                    </TouchableOpacity>
                             </View>
                             <View style={styles.inputContainer}>
                                 <ThemedText style={styles.inputLabel}>Beschreibung</ThemedText>
@@ -365,5 +411,18 @@ const styles = StyleSheet.create({
     },
     selectedTagText: {
         color: 'white',
+    },
+    currentLocationButton: {
+        position: 'absolute',
+        bottom: 16,
+        right: 16,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 10,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
 });

@@ -1,0 +1,60 @@
+"filename", "language", "CSV", "Markdown", "JSON", "TypeScript", "JSON with Comments", "JavaScript", "TypeScript JSX", "Objective-C++", "Swift", "Objective-C", "XML", "C++", "Python", "comment", "blank", "total"
+"/Users/david/Developer/event_buddy/README.md", "Markdown", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"/Users/david/Developer/event_buddy/api/app.py", "Python", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 369, 1, 45, 415
+"/Users/david/Developer/event_buddy/event/.VSCodeCounter/2024-08-03_19-33-45/details.md", "Markdown", 0, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 58
+"/Users/david/Developer/event_buddy/event/.VSCodeCounter/2024-08-03_19-33-45/diff-details.md", "Markdown", 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 15
+"/Users/david/Developer/event_buddy/event/.VSCodeCounter/2024-08-03_19-33-45/diff.csv", "CSV", 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
+"/Users/david/Developer/event_buddy/event/.VSCodeCounter/2024-08-03_19-33-45/diff.md", "Markdown", 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 19
+"/Users/david/Developer/event_buddy/event/.VSCodeCounter/2024-08-03_19-33-45/results.csv", "CSV", 45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 45
+"/Users/david/Developer/event_buddy/event/.VSCodeCounter/2024-08-03_19-33-45/results.json", "JSON", 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"/Users/david/Developer/event_buddy/event/.VSCodeCounter/2024-08-03_19-33-45/results.md", "Markdown", 0, 44, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 51
+"/Users/david/Developer/event_buddy/event/README.md", "Markdown", 0, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 51
+"/Users/david/Developer/event_buddy/event/app.json", "JSON", 0, 0, 37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 38
+"/Users/david/Developer/event_buddy/event/app/(tabs)/_layout.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 3, 17
+"/Users/david/Developer/event_buddy/event/app/(tabs)/index.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 227, 0, 0, 0, 0, 0, 0, 5, 24, 256
+"/Users/david/Developer/event_buddy/event/app/+html.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 0, 0, 10, 5, 40
+"/Users/david/Developer/event_buddy/event/app/+not-found.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 4, 33
+"/Users/david/Developer/event_buddy/event/app/_layout.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 1, 7, 38
+"/Users/david/Developer/event_buddy/event/app/profile.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 410, 0, 0, 0, 0, 0, 0, 0, 18, 428
+"/Users/david/Developer/event_buddy/event/babel.config.js", "JavaScript", 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7
+"/Users/david/Developer/event_buddy/event/components/CalendarPicker.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 143, 0, 0, 0, 0, 0, 0, 0, 16, 159
+"/Users/david/Developer/event_buddy/event/components/Collapsible.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 37, 0, 0, 0, 0, 0, 0, 0, 5, 42
+"/Users/david/Developer/event_buddy/event/components/DJWidget.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 191, 0, 0, 0, 0, 0, 0, 0, 6, 197
+"/Users/david/Developer/event_buddy/event/components/EventCardCollection.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 216, 0, 0, 0, 0, 0, 0, 0, 9, 225
+"/Users/david/Developer/event_buddy/event/components/EventItem.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 448, 0, 0, 0, 0, 0, 0, 3, 15, 466
+"/Users/david/Developer/event_buddy/event/components/EventItemModal.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 270, 0, 0, 0, 0, 0, 0, 0, 9, 279
+"/Users/david/Developer/event_buddy/event/components/ExternalLink.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 2, 3, 25
+"/Users/david/Developer/event_buddy/event/components/FilterBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 46, 0, 0, 0, 0, 0, 0, 0, 5, 51
+"/Users/david/Developer/event_buddy/event/components/InformationModal.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 3, 22
+"/Users/david/Developer/event_buddy/event/components/ListButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 1, 19
+"/Users/david/Developer/event_buddy/event/components/MusicTag.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 85, 0, 0, 0, 0, 0, 0, 0, 7, 92
+"/Users/david/Developer/event_buddy/event/components/ParallaxScrollView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 69, 0, 0, 0, 0, 0, 0, 0, 8, 77
+"/Users/david/Developer/event_buddy/event/components/ProfileButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 4, 26
+"/Users/david/Developer/event_buddy/event/components/SearchBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 360, 0, 0, 0, 0, 0, 0, 0, 25, 385
+"/Users/david/Developer/event_buddy/event/components/SubmitButton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4, 44
+"/Users/david/Developer/event_buddy/event/components/ThemedText.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 55, 0, 0, 0, 0, 0, 0, 0, 6, 61
+"/Users/david/Developer/event_buddy/event/components/ThemedView.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 5, 15
+"/Users/david/Developer/event_buddy/event/components/__tests__/ThemedText-test.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 4, 11
+"/Users/david/Developer/event_buddy/event/components/navigation/TabBarIcon.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 1, 3, 10
+"/Users/david/Developer/event_buddy/event/config.ts", "TypeScript", 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4
+"/Users/david/Developer/event_buddy/event/constants/Colors.ts", "TypeScript", 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 36
+"/Users/david/Developer/event_buddy/event/constants/Types.ts", "TypeScript", 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 23
+"/Users/david/Developer/event_buddy/event/hooks/useColorScheme.ts", "TypeScript", 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2
+"/Users/david/Developer/event_buddy/event/hooks/useColorScheme.web.ts", "TypeScript", 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 1, 9
+"/Users/david/Developer/event_buddy/event/hooks/useThemeColor.ts", "TypeScript", 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 23
+"/Users/david/Developer/event_buddy/event/ios/Podfile.properties.json", "JSON", 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5
+"/Users/david/Developer/event_buddy/event/ios/event/AppDelegate.h", "C++", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 3, 8
+"/Users/david/Developer/event_buddy/event/ios/event/AppDelegate.mm", "Objective-C++", 0, 0, 0, 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 7, 14, 63
+"/Users/david/Developer/event_buddy/event/ios/event/Images.xcassets/AppIcon.appiconset/Contents.json", "JSON", 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14
+"/Users/david/Developer/event_buddy/event/ios/event/Images.xcassets/Contents.json", "JSON", 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7
+"/Users/david/Developer/event_buddy/event/ios/event/Images.xcassets/SplashScreen.imageset/Contents.json", "JSON", 0, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21
+"/Users/david/Developer/event_buddy/event/ios/event/Images.xcassets/SplashScreenBackground.imageset/Contents.json", "JSON", 0, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21
+"/Users/david/Developer/event_buddy/event/ios/event/SplashScreen.storyboard", "XML", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51, 0, 0, 0, 0, 51
+"/Users/david/Developer/event_buddy/event/ios/event/event-Bridging-Header.h", "C++", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 4
+"/Users/david/Developer/event_buddy/event/ios/event/main.m", "Objective-C", 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 4, 11
+"/Users/david/Developer/event_buddy/event/ios/event/noop-file.swift", "Swift", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 5
+"/Users/david/Developer/event_buddy/event/package-lock.json", "JSON", 0, 0, 18776, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 18777
+"/Users/david/Developer/event_buddy/event/package.json", "JSON", 0, 0, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 67
+"/Users/david/Developer/event_buddy/event/scripts/reset-project.js", "JavaScript", 0, 0, 0, 0, 0, 57, 0, 0, 0, 0, 0, 0, 0, 5, 12, 74
+"/Users/david/Developer/event_buddy/event/tsconfig.json", "JSON with Comments", 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 18
+"Total", "-", 47, 148, 18946, 73, 17, 63, 2797, 42, 0, 7, 51, 5, 369, 55, 344, 22964
