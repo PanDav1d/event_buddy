@@ -1,8 +1,10 @@
 import React from 'react'
 import { Pressable, Text, StyleSheet, useColorScheme } from 'react-native'
 import { Colors } from '@/constants/Colors';
+import { ThemedText } from './ThemedText';
 
-const SubmitButton = ({ onPress, title }: { onPress: () => void, title: string }) => {
+const SubmitButton = ({ onPress, title }: { onPress: () => void, title: string }) =>
+{
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -10,12 +12,12 @@ const SubmitButton = ({ onPress, title }: { onPress: () => void, title: string }
     <Pressable
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: colors.accent },
+        { backgroundColor: colors.primary },
         pressed && styles.buttonPressed
       ]}
       onPress={onPress}
     >
-      <Text style={[styles.text, { color: colors.background }]}>{title}</Text>
+      <ThemedText style={styles.text}>{title}</ThemedText>
     </Pressable>
   )
 }

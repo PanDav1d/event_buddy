@@ -38,11 +38,11 @@ export const FilterBar = ({ onDateFilterChange }: FilterBarProps) =>
             showsHorizontalScrollIndicator={false}
             style={styles.tabsContainer}
         >
-            <Pressable style={[styles.tab, { backgroundColor: colors.backgroundSecondary }]} onPress={() => console.log("Pressed")}>
+            <Pressable style={[styles.tab, { backgroundColor: colors.tagInactive }]} onPress={() => console.log("Pressed")}>
                 <Ionicons
                     name="calendar-outline"
                     size={24}
-                    color={colors.text}
+                    color={colors.textPrimary}
                     style={styles.tabIcon}
                 />
             </Pressable>
@@ -52,13 +52,13 @@ export const FilterBar = ({ onDateFilterChange }: FilterBarProps) =>
                     style={[
                         styles.tab,
                         activeTab === tab &&
-                        styles.activeTab && { backgroundColor: colors.accent },
-                        activeTab != tab && { backgroundColor: colors.backgroundSecondary },
+                        { backgroundColor: colors.tagActive },
+                        activeTab != tab && { backgroundColor: colors.tagInactive },
                     ]}
                     onPress={() => handleTabPress(tab)}
                 >
                     <ThemedText
-                        style={[styles.tabText, activeTab === tab && styles.activeTabText]}
+                        style={[styles.tabText, { color: colors.textPrimary }, activeTab === tab && styles.activeTabText]}
                     >
                         {tab}
                     </ThemedText>
@@ -78,10 +78,6 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         marginRight: 8,
         borderRadius: 18,
-        backgroundColor: "#f0f0f0",
-    },
-    activeTab: {
-        backgroundColor: "#000",
     },
     tabText: {
         fontSize: 14,

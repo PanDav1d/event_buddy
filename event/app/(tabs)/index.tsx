@@ -11,7 +11,8 @@ import NetworkClient from '@/api/NetworkClient';
 
 const CARD_MARGIN = 24;
 
-export default function HomeScreen() {
+export default function HomeScreen()
+{
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -25,11 +26,15 @@ export default function HomeScreen() {
   const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
+  useEffect(() =>
+  {
+    (async () =>
+    {
+      try
+      {
         let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
+        if (status !== 'granted')
+        {
           console.log('Permission to access location was denied');
           throw new Error('Location permission denied');
         }
@@ -47,68 +52,81 @@ export default function HomeScreen() {
           end_date: Math.floor((Date.now() + 14 * 24 * 60 * 60 * 1000) / 1000),
           radius: 20,
         });
-      } catch (error) {
+      } catch (error)
+      {
         console.error('Error getting location:', error);
         setError('Failed to get location');
-      } finally {
+      } finally
+      {
         setIsLoading(false);
       }
     })();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async () =>
+  {
     if (!searchParams) return;
-    
-    try {
+
+    try
+    {
       const events = await NetworkClient.getEvents(searchParams, 1);
       setApiData(events);
       setError(null);
-    } catch (error) {
+    } catch (error)
+    {
       console.error('Error fetching data:', error);
       setError('Network Issue');
     }
   }
 
-  useEffect(() => {
-    if (searchParams) {
+  useEffect(() =>
+  {
+    if (searchParams)
+    {
       fetchData();
     }
   }, [searchParams]);
 
-  const reloadContent = useCallback(() => {
+  const reloadContent = useCallback(() =>
+  {
     setRefreshing(true);
     fetchData().then(() => setRefreshing(false));
   }, [searchParams]);
 
-  const saveEvent = async (eventId: number) => {
-    const userId = 1; 
+  const saveEvent = async (eventId: number) =>
+  {
+    const userId = 1;
     NetworkClient.saveEvent(userId, eventId);
   };
 
-  const renderContent = () => {
-    if (isLoading) {
+  const renderContent = () =>
+  {
+    if (isLoading)
+    {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.text} />
-          <Text style={[styles.loadingText, {color: colors.text}]}>Laden...</Text>
+          <ActivityIndicator size="large" color={colors.textPrimary} />
+          <Text style={[styles.loadingText, { color: colors.textPrimary }]}>Laden...</Text>
         </View>
       );
     }
 
-    if (error) {
+    if (error)
+    {
       return (
         <View style={styles.errorContainer} >
-          <Ionicons name="cloud-offline" size={100} color={colors.text} />
-          <Text style={[styles.errorText, {color: colors.text}]}>Netzwerkfehler</Text>
+          <Ionicons name="cloud-offline" size={100} color={colors.textPrimary} />
+          <Text style={[styles.errorText, { color: colors.textPrimary }]}>Netzwerkfehler</Text>
         </View>
       );
     }
 
-    if (apiData.length === 0) {
+    if (apiData.length === 0)
+    {
       return (
         <View style={styles.errorContainer}>
-          <Ionicons name="search-outline" size={100} color={colors.text} />
-          <Text style={[styles.errorText, {color: colors.text}]}>Keine Events gefunden</Text>
+          <Ionicons name="search-outline" size={100} color={colors.textPrimary} />
+          <Text style={[styles.errorText, { color: colors.textPrimary }]}>Keine Events gefunden</Text>
         </View>
       );
     }
@@ -116,7 +134,7 @@ export default function HomeScreen() {
     return (
       <FlatList
         data={apiData}
-        renderItem={({item}) => (<EventItem {...item} onSave={() => saveEvent(item.id)} />)}
+        renderItem={({ item }) => (<EventItem {...item} onSave={() => saveEvent(item.id)} />)}
         style={styles.cardList}
         showsVerticalScrollIndicator={true}
         refreshControl={
@@ -130,7 +148,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background}]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SearchBar onSearchChange={setSearchParams} />
       {renderContent()}
     </View>
@@ -138,7 +156,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  header : {
+  header: {
     paddingTop: '15%',
     padding: 25,
     shadowRadius: 2,

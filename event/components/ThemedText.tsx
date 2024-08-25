@@ -14,8 +14,9 @@ export function ThemedText({
   darkColor,
   type = 'default',
   ...rest
-}: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+}: ThemedTextProps)
+{
+  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'textPrimary');
 
   return (
     <Text

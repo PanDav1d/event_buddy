@@ -86,8 +86,8 @@ export function CalendarPicker({ onDateChange }: CalendarPickerProps)
             <TouchableOpacity
                 style={[
                     styles.day,
-                    isSelected ? { backgroundColor: colors.accent } : undefined,
-                    isInRange ? { backgroundColor: colors.lightAccent } : undefined,
+                    isSelected ? { backgroundColor: colors.primary } : undefined,
+                    isInRange ? { backgroundColor: colors.buttonPrimary } : undefined,
                 ]}
                 onPress={() => handleDatePress(date)}
             >
@@ -110,13 +110,13 @@ export function CalendarPicker({ onDateChange }: CalendarPickerProps)
             <View style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => changeMonth(-1)}>
-                        <Ionicons name="chevron-back" size={24} color={colors.text} />
+                        <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
                     </TouchableOpacity>
                     <ThemedText style={styles.monthText}>
                         {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
                     </ThemedText>
                     <TouchableOpacity onPress={() => changeMonth(1)}>
-                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                        <Ionicons name="chevron-forward" size={24} color={colors.textPrimary} />
                     </TouchableOpacity>
                 </View>
                 <ScrollView>

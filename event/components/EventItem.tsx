@@ -8,7 +8,8 @@ import { useState, useRef, useEffect } from 'react';
 import { ThemedText } from './ThemedText';
 import MapView, { Marker } from 'react-native-maps';
 
-export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () => void }) { 
+export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () => void })
+{
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -23,20 +24,25 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
 
   const mapRef = useRef<MapView>(null);
 
-  const toggleModal = () => {
-    if (modalVisible) {
+  const toggleModal = () =>
+  {
+    if (modalVisible)
+    {
       Animated.timing(slideAnimation, {
         toValue: 0,
         duration: 600,
         useNativeDriver: true,
       }).start(() => setModalVisible(false));
-    } else {
+    } else
+    {
       setModalVisible(true);
     }
   };
 
-  useEffect(() => {
-    if (modalVisible) {
+  useEffect(() =>
+  {
+    if (modalVisible)
+    {
       Animated.timing(slideAnimation, {
         toValue: 1,
         duration: 200,
@@ -45,33 +51,39 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
     }
   }, [modalVisible]);
 
-  const onShare = async () => {
-    try {
+  const onShare = async () =>
+  {
+    try
+    {
       await Share.share({
         message: `Check out this event: ${props.title}`,
       });
-    } catch (error) {
+    } catch (error)
+    {
       console.error(error);
     }
   };
 
-  const addToCalendar = () => {
+  const addToCalendar = () =>
+  {
     // Implement calendar functionality here
     console.log('Add to calendar');
   };
 
-  const saveEvent = () => {
+  const saveEvent = () =>
+  {
     // Implement save event functionality here
     console.log('Save event');
   };
 
-  const buyTickets = () => {
+  const buyTickets = () =>
+  {
     // Implement buy tickets functionality here
     console.log('Buy tickets');
   };
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.backgroundSecondary, borderRadius: 25, marginBottom: 20}, props.style]}>
+    <View style={[styles.container, { backgroundColor: colors.backgroundAlt, borderRadius: 25, marginBottom: 20 }, props.style]}>
       <Animated.View style={[
         styles.card,
         {
@@ -85,17 +97,26 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
         <TouchableOpacity onPress={toggleModal}>
           <View style={styles.imageContainer}>
             <Image source={{ uri: props.image_url }} style={styles.image} />
-            <View style={styles.overlay}>
+            <View style={styles.overlay_left}>
               <Text style={styles.price}>Ab 12.99€</Text>
             </View>
-            <TouchableOpacity style={styles.heartButton} onPress={() => {
+            <View style={styles.overlay_right}>
+              <Text style={styles.price}>
+                {new Date(Math.floor(props.unix_time / 1000)).toLocaleDateString('de-DE', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </Text>
+
+            </View>
+            <TouchableOpacity style={styles.heartButton} onPress={() =>
+            {
               setIsSavedAmount(isSaved ? isSavedAmount - 1 : isSavedAmount + 1);
               setIsSaved(!isSaved);
-              if(props.onSave){
+              if (props.onSave)
+              {
                 props.onSave();
-              }}}>
+              }
+            }}>
               <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={24} color={isSaved ? 'red' : 'white'} />
-              {isSavedAmount == 0 ? '' : <Text style={[styles.price, {textAlign: 'center'}]}>{isSavedAmount}</Text>}
+              {isSavedAmount == 0 ? '' : <Text style={[styles.price, { textAlign: 'center' }]}>{isSavedAmount}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={styles.shareButton} onPress={onShare}>
               <Ionicons name="share-outline" size={24} color="white" />
@@ -103,45 +124,40 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
           </View>
           <View style={styles.contentContainer}>
             <View style={styles.titleRow}>
-              <ThemedText style={styles.title} numberOfLines={1}>{props.title}</ThemedText>
-              <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color={colors.text} />
+              <ThemedText style={styles.title} numberOfLines={2}>{props.title}</ThemedText>
+              <Pressable style={[{ backgroundColor: colors.buttonPrimary }, styles.buyButton]}><ThemedText>Ticket Kaufen</ThemedText></Pressable>
+              {/*<View style={styles.ratingContainer}>
+                <Ionicons name="flame" size={16} color={colors.textPrimary} />
                 <ThemedText style={styles.rating}>4.9</ThemedText>
-              </View>
-            </View>
-            <Text style={styles.subtitle} numberOfLines={1}>{props.location}</Text>
-            <Text style={styles.date}>{new Date(props.unix_time * 1000).toISOString().split('T')[0]}</Text>
-            <View style={styles.eventDetails}>
-              <Text style={styles.eventInfo}><Ionicons name="time" size={14} color={colors.text} /> {new Date(props.unix_time * 1000).toISOString().split('T')[1].split('.')[0]}</Text>
-              <Text style={styles.eventInfo}><Ionicons name="location" size={14} color={colors.text} /> {props.location}</Text>
+              </View>*/}
             </View>
           </View>
         </TouchableOpacity>
       </Animated.View>
-      <Modal 
+      <Modal
         visible={modalVisible}
         animationType="slide"
         presentationStyle="fullScreen"
         onDismiss={() => setModalVisible(false)}
         onRequestClose={() => setModalVisible(false)}>
-            <View style={styles.modalHeader}>
-                <Pressable onPress={() => setModalVisible(false)}>
-                    <Ionicons name="arrow-back" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
-                </Pressable>
-                <ThemedText style={styles.modalTitle} numberOfLines={1} ellipsizeMode="tail">{props.title}</ThemedText>
-                <View style={{width: 24}} />
+        <View style={styles.modalHeader}>
+          <Pressable onPress={() => setModalVisible(false)}>
+            <Ionicons name="arrow-back" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
+          </Pressable>
+          <ThemedText style={styles.modalTitle} numberOfLines={1} ellipsizeMode="tail">{props.title}</ThemedText>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Image source={{ uri: props.image_url }} style={styles.modalImage} />
+          <View style={styles.modalContentContainer}>
+            <Text style={styles.modalTitle}>{props.title}</Text>
+            <View style={styles.modalRatingContainer}>
+              <Ionicons name="star" size={16} color={colors.primary} />
+              <Text style={styles.modalRating}>4.9 · Popular Event</Text>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-                  <Image source={{ uri: props.image_url }} style={styles.modalImage} />
-                <View style={styles.modalContentContainer}>
-                  <Text style={styles.modalTitle}>{props.title}</Text>
-                  <View style={styles.modalRatingContainer}>
-                  <Ionicons name="star" size={16} color={Colors.light.tint} />
-                  <Text style={styles.modalRating}>4.9 · Popular Event</Text>
-                </View>
-                <Text style={styles.modalSubtitle}>{props.location}</Text>
+            <Text style={styles.modalSubtitle}>{props.location}</Text>
 
-                {/*
+            {/*
                 <View style={styles.separator} />
                 <Text style={styles.modalSectionTitle}>Musik Genres</Text>
                 <MusicTag />
@@ -152,85 +168,85 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
 
                 */}
 
-                <View style={styles.separator} />
-                <View style={styles.modalEventDetails}>
-                  <View style={styles.modalEventInfo}>
-                    <Ionicons name="calendar-outline" size={24} color="black" />
-                    <View style={styles.modalEventInfoText}>
-                      <Text style={styles.modalEventInfoTitle}>Datum</Text>
-                      <Text style={styles.modalEventInfoSubtitle}>{new Date(props.unix_time * 1000).toISOString().split('T')[0]}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.modalEventInfo}>
-                    <Ionicons name="time-outline" size={24} color="black" />
-                    <View style={styles.modalEventInfoText}>
-                      <Text style={styles.modalEventInfoTitle}>Uhrzeit</Text>
-                      <Text style={styles.modalEventInfoSubtitle}>{new Date(props.unix_time * 1000).toISOString().split('T')[1].split('.')[0]}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.modalEventInfo}>
-                    <Ionicons name="location-outline" size={24} color="black" />
-                    <View style={styles.modalEventInfoText}>
-                      <Text style={styles.modalEventInfoTitle}>Standort</Text>
-                      <Text style={styles.modalEventInfoSubtitle}>{props.location}</Text>
-                    </View>
-                  </View>
-
-                    <View style={styles.mapContainer}>
-                        <MapView
-                            ref={mapRef}
-                            style={styles.map}
-                            initialRegion={{
-                                latitude: props.latitude,
-                                longitude: props.longitude,
-                                latitudeDelta: 0.02,
-                                longitudeDelta: 0.02,
-                            }}
-                            scrollEnabled={false}
-                            zoomEnabled={false}
-                            >
-                            <Marker
-                                coordinate={{
-                                    latitude: props.latitude,
-                                    longitude: props.longitude,
-                                }}
-                            />
-                        </MapView>
-                    </View>
+            <View style={styles.separator} />
+            <View style={styles.modalEventDetails}>
+              <View style={styles.modalEventInfo}>
+                <Ionicons name="calendar-outline" size={24} color="black" />
+                <View style={styles.modalEventInfoText}>
+                  <Text style={styles.modalEventInfoTitle}>Datum</Text>
+                  <Text style={styles.modalEventInfoSubtitle}>{new Date(props.unix_time * 1000).toISOString().split('T')[0]}</Text>
                 </View>
-                <View style={styles.separator} />
-                <Text style={styles.modalSectionTitle}>Ticket Preise</Text>
-                <View style={styles.ticketPriceContainer}>
-                  <Text style={styles.ticketType}>Eintritt</Text>
-                  <Text style={styles.ticketPrice}>12.99€</Text>
-                </View>
-                <View style={styles.ticketPriceContainer}>
-                  <Text style={styles.ticketType}>VIP Eintritt</Text>
-                  <Text style={styles.ticketPrice}>29.99€</Text>
-                </View>
-                <View style={styles.ticketPriceContainer}>
-                  <Text style={styles.ticketType}>Gruppe (5+ personen)</Text>
-                  <Text style={styles.ticketPrice}>9.99€ pro person</Text>
-                </View>
-                <View style={styles.separator} />
-                <Text style={styles.modalDescription}>
-                  {props.description || "Keine Beschreibung verfügbar..."}
-                </Text>
               </View>
-            </ScrollView>
-            <View style={styles.modalFooter}>
-              <TouchableOpacity style={styles.actionButton} onPress={addToCalendar}>
-                <Ionicons name="calendar-outline" size={24} color={Colors.light.tint} />
-                <Text style={styles.actionButtonText}>Zum Kalender</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={saveEvent}>
-                <Ionicons name="heart-outline" size={24} color={Colors.light.tint} />
-                <Text style={styles.actionButtonText}>Event speichern</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.buyButton, {backgroundColor: colors.accent}]} onPress={buyTickets}>
-                <Text style={styles.buyButtonText}>Ticket kaufen</Text>
-              </TouchableOpacity>
+              <View style={styles.modalEventInfo}>
+                <Ionicons name="time-outline" size={24} color="black" />
+                <View style={styles.modalEventInfoText}>
+                  <Text style={styles.modalEventInfoTitle}>Uhrzeit</Text>
+                  <Text style={styles.modalEventInfoSubtitle}>{new Date(props.unix_time * 1000).toISOString().split('T')[1].split('.')[0]}</Text>
+                </View>
+              </View>
+              <View style={styles.modalEventInfo}>
+                <Ionicons name="location-outline" size={24} color="black" />
+                <View style={styles.modalEventInfoText}>
+                  <Text style={styles.modalEventInfoTitle}>Standort</Text>
+                  <Text style={styles.modalEventInfoSubtitle}>{props.location}</Text>
+                </View>
+              </View>
+
+              <View style={styles.mapContainer}>
+                <MapView
+                  ref={mapRef}
+                  style={styles.map}
+                  initialRegion={{
+                    latitude: props.latitude,
+                    longitude: props.longitude,
+                    latitudeDelta: 0.02,
+                    longitudeDelta: 0.02,
+                  }}
+                  scrollEnabled={false}
+                  zoomEnabled={false}
+                >
+                  <Marker
+                    coordinate={{
+                      latitude: props.latitude,
+                      longitude: props.longitude,
+                    }}
+                  />
+                </MapView>
+              </View>
             </View>
+            <View style={styles.separator} />
+            <Text style={styles.modalSectionTitle}>Ticket Preise</Text>
+            <View style={styles.ticketPriceContainer}>
+              <Text style={styles.ticketType}>Eintritt</Text>
+              <Text style={styles.ticketPrice}>12.99€</Text>
+            </View>
+            <View style={styles.ticketPriceContainer}>
+              <Text style={styles.ticketType}>VIP Eintritt</Text>
+              <Text style={styles.ticketPrice}>29.99€</Text>
+            </View>
+            <View style={styles.ticketPriceContainer}>
+              <Text style={styles.ticketType}>Gruppe (5+ personen)</Text>
+              <Text style={styles.ticketPrice}>9.99€ pro person</Text>
+            </View>
+            <View style={styles.separator} />
+            <Text style={styles.modalDescription}>
+              {props.description || "Keine Beschreibung verfügbar..."}
+            </Text>
+          </View>
+        </ScrollView>
+        <View style={styles.modalFooter}>
+          <TouchableOpacity style={styles.actionButton} onPress={addToCalendar}>
+            <Ionicons name="calendar-outline" size={24} color={colors.primary} />
+            <Text style={styles.actionButtonText}>Zum Kalender</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={saveEvent}>
+            <Ionicons name="heart-outline" size={24} color={colors.primary} />
+            <Text style={styles.actionButtonText}>Event speichern</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.buyButton, { backgroundColor: colors.primary }]} onPress={buyTickets}>
+            <Text style={styles.buyButtonText}>Ticket kaufen</Text>
+          </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );
@@ -263,10 +279,19 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  overlay: {
+  overlay_left: {
     position: 'absolute',
     bottom: 16,
     left: 16,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  overlay_right: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
     backgroundColor: 'rgba(0,0,0,0.7)',
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -310,7 +335,7 @@ const styles = StyleSheet.create({
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.tint + '20',
+    backgroundColor: Colors.dark.primary + '20',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -357,7 +382,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 10,
     marginTop: 60,
-},
+  },
   closeButton: {
     padding: 8,
   },
@@ -372,7 +397,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-},
+  },
   modalRatingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -381,7 +406,7 @@ const styles = StyleSheet.create({
   modalRating: {
     marginLeft: 4,
     fontSize: 16,
-    color: Colors.light.tint,
+    color: Colors.light.primary,
   },
   modalSubtitle: {
     fontSize: 18,
@@ -429,7 +454,7 @@ const styles = StyleSheet.create({
   ticketPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.light.tint,
+    color: Colors.light.primary,
   },
   modalDescription: {
     fontSize: 16,
@@ -451,10 +476,10 @@ const styles = StyleSheet.create({
   actionButtonText: {
     marginTop: 4,
     fontSize: 12,
-    color: Colors.light.tint,
+    color: Colors.light.primary,
   },
   buyButton: {
-    backgroundColor: Colors.light.tint,
+    backgroundColor: Colors.light.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -467,9 +492,9 @@ const styles = StyleSheet.create({
   mapContainer: {
     height: 200,
     marginTop: 10,
-},
-map: {
+  },
+  map: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 25,
-}
+  }
 });

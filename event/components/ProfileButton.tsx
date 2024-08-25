@@ -23,7 +23,7 @@ export function ProfileButton({ style }: { style?: ViewStyle | ViewStyle[] })
 
     return (
         <Pressable onPress={handlePress} style={style}>
-            <Ionicons name="person-circle-outline" size={40} color={colors.text} />
+            <Ionicons name="person-circle-outline" size={40} color={colors.textPrimary} />
         </Pressable>
     );
 }

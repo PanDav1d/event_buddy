@@ -143,28 +143,28 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
                         key={index}
                         style={[
                             styles.tag,
-                            { backgroundColor: colors.backgroundSecondary },
-                            searchParams.tags.includes(tag) && { backgroundColor: colors.accent }
+                            { backgroundColor: colors.tagInactive },
+                            searchParams.tags.includes(tag) && { backgroundColor: colors.tagActive }
                         ]}
                         onPress={() => toggleTag(tag)} >
-                        <ThemedText style={{ color: colors.text }}>
+                        <ThemedText style={{ color: colors.textPrimary }}>
                             {tag}
                         </ThemedText>
                     </Pressable>
                 ))}
                 {!showAllTags && tagsToShow.length < allTags.length && (
                     <Pressable
-                        style={[styles.showMoreButton, { backgroundColor: colors.backgroundSecondary }]}
+                        style={[styles.showMoreButton, { backgroundColor: colors.backgroundLight }]}
                         onPress={() => setShowAllTags(true)}
                     >
-                        <ThemedText style={{ color: colors.text }}>Mehr...</ThemedText>
+                        <ThemedText style={{ color: colors.textPrimary }}>Mehr...</ThemedText>
                     </Pressable>
                 )}
                 {showAllTags && (
                     <Pressable
-                        style={[styles.showMoreButton, { backgroundColor: colors.backgroundSecondary }]}
+                        style={[styles.showMoreButton, { backgroundColor: colors.backgroundLight }]}
                         onPress={() => setShowAllTags(false)}>
-                        <ThemedText style={{ color: colors.text }}>Weniger...</ThemedText>
+                        <ThemedText style={{ color: colors.textPrimary }}>Weniger...</ThemedText>
                     </Pressable>
                 )}
             </View>
@@ -243,13 +243,13 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
     }
 
     return (
-        <SafeAreaView style={[styles.searchBar, { borderBottomColor: colors.backgroundSecondary }]} edges={['top']}>
+        <SafeAreaView style={[styles.searchBar, { borderBottomColor: colors.border }]} edges={['top']}>
             <View style={styles.searchContainer}>
-                <Pressable style={[styles.searchButton, { backgroundColor: colors.backgroundSecondary }]} onPress={() => setModalVisible(true)}>
-                    <Ionicons name="search-outline" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
-                    <ThemedText>Suchen und Filtern</ThemedText>
+                <Pressable style={[styles.searchButton, { backgroundColor: colors.tagInactive }]} onPress={() => setModalVisible(true)}>
+                    <Ionicons name="search-outline" size={24} color={colors.textPrimary} />
+                    <Text style={{ color: colors.textPrimary }}>Suchen und Filtern</Text>
                 </Pressable>
-                <ProfileButton style={[styles.profileButton, { backgroundColor: colors.backgroundSecondary }]} />
+                <ProfileButton style={[styles.profileButton, { backgroundColor: colors.tagInactive }]} />
             </View>
             <FilterBar onDateFilterChange={handleDateFilterChange} />
 
@@ -261,9 +261,9 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
                 <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
                     <View style={styles.modalHeader}>
                         <Pressable onPress={() => setModalVisible(false)}>
-                            <Ionicons name="close-outline" size={24} color={colors.text} />
+                            <Ionicons name="close-outline" size={24} color={colors.textPrimary} />
                         </Pressable>
-                        <ThemedText style={[styles.modalTitle, { color: colors.text }]}>Filter</ThemedText>
+                        <ThemedText style={[styles.modalTitle, { color: colors.textPrimary }]}>Filter</ThemedText>
                         <View style={{ width: 24 }} />
                     </View>
                     <KeyboardAvoidingView
@@ -299,8 +299,8 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
                                                 longitude: searchParams.longitude,
                                             }}
                                             radius={searchParams.radius * 1000}
-                                            fillColor="rgba(0, 0, 255, 0.1)"
-                                            strokeColor="rgba(0, 0, 255, 0.5)"
+                                            fillColor={colors.primaryTransparent}
+                                            strokeColor={colors.primary}
                                         />
                                     </MapView>
                                 </View>
@@ -315,8 +315,8 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
                                     value={searchParams.radius}
                                     onSlidingComplete={(value) => handleParamChange('radius', value, true)}
                                     onValueChange={(value) => handleParamChange('radius', value, false)}
-                                    minimumTrackTintColor={colors.accent}
-                                    maximumTrackTintColor="#000000"
+                                    minimumTrackTintColor={colors.primary}
+                                    maximumTrackTintColor={colors.backgroundLight}
                                 />
                             </View>
                         </ScrollView>

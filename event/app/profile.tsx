@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ThemedText } from '@/components/ThemedText';
 import { CreateEventParams, EventCard } from '@/constants/Types';
-import { Text, View, StyleSheet, useColorScheme, ImageBackground, Modal, TextInput, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { Text, View, StyleSheet, useColorScheme, ImageBackground, Modal, TextInput, TouchableOpacity, SafeAreaView, Dimensions, TouchableHighlight } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { FlatList, GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
@@ -53,7 +53,6 @@ export default function ProfileScreen()
 {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
-    const iconColor = Colors[colorScheme ?? 'light'].tint;
     const [modalVisible, setModalVisible] = useState(false);
     const [createEventParams, setCreateEventParams] = useState<CreateEventParams>(
         {
@@ -151,7 +150,7 @@ export default function ProfileScreen()
     };
 
     return (
-        <GestureHandlerRootView style={styles.container}>
+        <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
             <SafeAreaView style={styles.safeArea}>
                 <ScrollView style={styles.scrollView}>
                     <View style={styles.header}>
@@ -164,7 +163,7 @@ export default function ProfileScreen()
                         </ScrollView>
                     </View>
                     <View style={styles.menuSection}>
-                        {data.map((item) => ListButton(item, styles, iconColor, () => setModalVisible(true)))}
+                        {data.map((item) => ListButton(item, styles, colors.textPrimary, () => setModalVisible(true)))}
                     </View>
                 </ScrollView>
             </SafeAreaView>
@@ -173,11 +172,11 @@ export default function ProfileScreen()
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}
                 presentationStyle="pageSheet">
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
+                <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
                         <View style={styles.modalHeader}>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Ionicons name="close" size={24} color={iconColor} />
+                                <Ionicons name="close" size={24} color={colors.textPrimary} />
                             </TouchableOpacity>
                             <ThemedText style={styles.modalTitle}>Neues Event erstellen</ThemedText>
                         </View>
@@ -185,7 +184,7 @@ export default function ProfileScreen()
                             <View style={styles.inputContainer}>
                                 <ThemedText style={styles.inputLabel}>Titel</ThemedText>
                                 <TextInput
-                                    style={styles.input}
+                                    style={[styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
                                     value={createEventParams.title}
                                     onChangeText={(text) => setCreateEventParams({ ...createEventParams, title: text })}
                                     placeholder="Event Titel"
@@ -198,14 +197,14 @@ export default function ProfileScreen()
                                     value={new Date(createEventParams.unix_time)}
                                     mode="datetime"
                                     display="inline"
-                                    accentColor={colors.accent}
+                                    accentColor={colors.primary}
                                     onChange={handleDateChange}
                                 />
                             </View>
                             <View style={styles.inputContainer}>
                                 <ThemedText style={styles.inputLabel}>Ort</ThemedText>
                                 <TextInput
-                                    style={styles.input}
+                                    style={[styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
                                     value={createEventParams.location}
                                     onChangeText={(text) => setCreateEventParams({ ...createEventParams, location: text })}
                                     placeholder="Event Ort"
@@ -218,21 +217,21 @@ export default function ProfileScreen()
                                     onRegionChangeComplete={setMapRegion}>
                                     <Marker coordinate={mapRegion} />
                                 </MapView>
-                                <TouchableOpacity
-                                    style={styles.currentLocationButton}
+                                <TouchableHighlight
+                                    style={[styles.currentLocationButton, { backgroundColor: colors.backgroundLight }]}
                                     onPress={getCurrentLocation}>
-                                    <Ionicons name="locate" size={24} color="black" />
-                                </TouchableOpacity>
+                                    <Ionicons name="locate" size={24} color={colors.textPrimary} />
+                                </TouchableHighlight>
                             </View>
                             <View style={styles.inputContainer}>
                                 <ThemedText style={styles.inputLabel}>Beschreibung</ThemedText>
                                 <TextInput
-                                    style={[styles.input, styles.textArea]}
+                                    style={[styles.textArea, styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
                                     value={createEventParams.description}
                                     onChangeText={(text) => setCreateEventParams({ ...createEventParams, description: text })}
                                     placeholder="Event Beschreibung"
                                     multiline
-                                    numberOfLines={4}
+                                    numberOfLines={5}
                                 />
                             </View>
                             <View style={styles.inputContainer}>
@@ -242,14 +241,14 @@ export default function ProfileScreen()
                                         <TouchableOpacity
                                             key={tag}
                                             style={[
-                                                styles.tag,
-                                                selectedTags.includes(tag) && styles.selectedTag
+                                                styles.tag, { backgroundColor: colors.tagInactive },
+                                                selectedTags.includes(tag) && { backgroundColor: colors.tagActive }
                                             ]}
                                             onPress={() => toggleTag(tag)}
                                         >
-                                            <Text style={selectedTags.includes(tag) ? styles.selectedTagText : styles.tagText}>
+                                            <ThemedText>
                                                 {tag}
-                                            </Text>
+                                            </ThemedText>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
@@ -259,7 +258,7 @@ export default function ProfileScreen()
                     </View>
                 </View>
             </Modal>
-        </GestureHandlerRootView>
+        </GestureHandlerRootView >
     );
 }
 
@@ -345,9 +344,6 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
     },
     modalContent: {
-        backgroundColor: 'white',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
         padding: 20,
         height: '95%',
     },
@@ -373,11 +369,9 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ccc',
         borderRadius: 10,
         padding: 15,
         fontSize: 16,
-        backgroundColor: 'white',
     },
     textArea: {
         height: 100,
@@ -388,6 +382,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     map: {
+        borderRadius: 15,
         ...StyleSheet.absoluteFillObject,
     },
     tagContainer: {
@@ -395,13 +390,9 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
     },
     tag: {
-        backgroundColor: '#f0f0f0',
         borderRadius: 20,
         padding: 10,
         margin: 5,
-    },
-    selectedTag: {
-        backgroundColor: '#007AFF',
     },
     tagText: {
         color: '#333',
@@ -411,13 +402,11 @@ const styles = StyleSheet.create({
     },
     currentLocationButton: {
         position: 'absolute',
-        bottom: 16,
-        right: 16,
-        backgroundColor: 'white',
-        borderRadius: 20,
+        bottom: 8,
+        right: 8,
+        borderRadius: 10,
         padding: 10,
         elevation: 3,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
