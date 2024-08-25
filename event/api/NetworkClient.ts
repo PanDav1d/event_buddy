@@ -18,11 +18,9 @@ class NetworkClient {
 
     async getEvents(searchParams : SearchParams, user_id : number): Promise<EventCard[]>
     {
-        console.log(searchParams);
         try
         {
             const response = await this.client.get<EventCard[]>('/events.json/' + user_id, { params: searchParams});
-            console.log('Response: ', response.data);
             return response.data;
         }
         catch (error)
@@ -37,7 +35,6 @@ class NetworkClient {
         try
         {
             const response = await this.client.post(`/saved_events.json/${user_id}/${event_id}`);
-            console.log('Response: ', response.data);
         }
         catch (error)
         {
@@ -50,7 +47,6 @@ class NetworkClient {
         try
         {
             const response = await this.client.get<EventCard[]>(`/saved_events.json/${user_id}`);
-            console.log('Response: ', response.data);
             return response.data;
         }
         catch (error)
@@ -65,7 +61,6 @@ class NetworkClient {
         try
         {
             const response = await this.client.post(`/event.json`, createEventParams);
-            console.log('Response: ', response.data);
         }
         catch (error)
         {
