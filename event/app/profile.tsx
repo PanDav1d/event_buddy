@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ThemedText } from '@/components/ThemedText';
-import { EventCard } from '@/constants/Types';
-import { Text, View, StyleSheet, Pressable, useColorScheme, ImageBackground, Modal, TextInput, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { CreateEventParams, EventCard } from '@/constants/Types';
+import { Text, View, StyleSheet, useColorScheme, ImageBackground, Modal, TextInput, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { FlatList, GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
@@ -9,38 +9,36 @@ import { ListButton } from '@/components/ListButton';
 import SubmitButton from '@/components/SubmitButton';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MapView, { Marker } from 'react-native-maps';
-import { API_URL, API_URL_EVENT, API_URL_SAVED_EVENT } from '@/config';
 import { Stack } from 'expo-router';
 import * as Location from 'expo-location';
+import NetworkClient from '@/api/NetworkClient';
 
 const { width, height } = Dimensions.get('window');
-
-
 
 const data = [
     {
         id: 0,
         title: "Event erstellen",
         icon: 'create-outline',
-        onPress: () => console.log('Create event'),
+        onPress: () => console.log('Erstellen'),
     },
     {
         id: 2,
         title: 'Einstellungen',
         icon: 'settings-outline',
-        onPress: () => console.log('Settings'),
+        onPress: () => console.log('Einstellung'),
     },
     {
         id: 3,
-        title: 'Logout',
+        title: 'Abmelden',
         icon: 'log-out-outline',
-        onPress: () => console.log('Logout'),
+        onPress: () => console.log('Abmelden'),
     },
 ]
 
 const savedCardItem = (data: any) => (
     <View style={styles.savedCardItem}>
-        <ImageBackground source={{uri: data.image}} style={styles.savedCardItemImage}>
+        <ImageBackground source={{ uri: data.image }} style={styles.savedCardItemImage}>
             <View style={styles.cardOverlay}>
                 <ThemedText style={styles.savedCardItemText}>{data.title}</ThemedText>
                 <ThemedText style={styles.savedCardItemDate}>{data.date}</ThemedText>
@@ -51,15 +49,24 @@ const savedCardItem = (data: any) => (
 
 const availableTags = ['Musik', 'Sport', 'Kultur', 'Essen', 'Bildung'];
 
-export default function ProfileScreen() {
+export default function ProfileScreen()
+{
     const colorScheme = useColorScheme();
+    const colors = Colors[colorScheme ?? 'light'];
     const iconColor = Colors[colorScheme ?? 'light'].tint;
     const [modalVisible, setModalVisible] = useState(false);
-    const [eventTitle, setEventTitle] = useState('');
-    const [eventDate, setEventDate] = useState(new Date());
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [eventLocation, setEventLocation] = useState('');
-    const [eventDescription, setEventDescription] = useState('');
+    const [createEventParams, setCreateEventParams] = useState<CreateEventParams>(
+        {
+            title: '',
+            description: '',
+            unix_time: new Date().getTime(),
+            image_url: 'https://picsum.photos/id/1018/200/300',
+            location: '',
+            latitude: 0,
+            longitude: 0,
+            organizer: 1,
+        }
+    );
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [mapRegion, setMapRegion] = useState({
         latitude: 52.520008,
@@ -69,38 +76,33 @@ export default function ProfileScreen() {
     });
     const [savedCards, setSavedCards] = useState<EventCard[]>([]);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         fetchSavedEvents();
     }, []);
 
-    const fetchSavedEvents = async () => {
-        try {
+    const fetchSavedEvents = async () =>
+    {
+        try
+        {
             const userId = 1; // Replace with actual user ID
-            const response = await fetch(`${API_URL_SAVED_EVENT}${userId}`);
-            console.log(`${API_URL_SAVED_EVENT}${userId}`);
-            const savedEventIds = await response.json();
-            
-            const fetchedEvents = await Promise.all(
-                savedEventIds.map(async (savedEvent: any) => {
-                    const eventResponse = await fetch(`${API_URL_EVENT}${savedEvent.event_id}`);
-                    console.log(`${API_URL_EVENT}${savedEvent.event_id}`);
-                    return await eventResponse.json();
-                })
-            );
-            
+            const fetchedEvents = await NetworkClient.getSavedEvents(userId);
             setSavedCards(fetchedEvents);
-        } catch (error) {
+        } catch (error)
+        {
             console.error('Error fetching saved events:', error);
         }
     };
 
-    const getCurrentLocation = async () => {
+    const getCurrentLocation = async () =>
+    {
         let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
+        if (status !== 'granted')
+        {
             console.log('Permission to access location was denied');
             return;
         }
-    
+
         let location = await Location.getCurrentPositionAsync({});
         setMapRegion({
             latitude: location.coords.latitude,
@@ -110,39 +112,37 @@ export default function ProfileScreen() {
         });
     };
 
-    const handleCreateEvent = async () => {
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    title: eventTitle,
-                    unix_time: Math.floor(eventDate.getTime() / 1000),
-                    location: eventLocation,
-                    description: eventDescription,
-                    latitude: mapRegion.latitude,
-                    longitude: mapRegion.longitude,
-                    organizer: "Current User",  // Add this line
-                    image_url: "https://picsum.photos/200/300",   // Add this line
-                }),
+    const handleCreateEvent = async () =>
+    {
+        try
+        {
+            const calculated_time = Math.floor(createEventParams.unix_time / 1000);
+            setCreateEventParams({
+                ...createEventParams,
+                unix_time: calculated_time,
+                latitude: mapRegion.latitude,
+                longitude: mapRegion.longitude,
             });
-            const data = await response.json();
-            console.log('Event created:', data);
+            console.log("Trying to create event with params:", createEventParams);
+            await NetworkClient.createEvent(createEventParams)
             setModalVisible(false);
-        } catch (error) {
+        } catch (error)
+        {
             console.error('Error creating event:', error);
         }
     };
 
-    const handleDateChange = (event: any, selectedDate: Date | undefined) => {
-        const currentDate = selectedDate || eventDate;
-        setShowDatePicker(false);
-        setEventDate(currentDate);
+    const handleDateChange = (event: any, selectedDate: Date | undefined) =>
+    {
+        const currentDate = selectedDate || new Date(createEventParams.unix_time);
+        setCreateEventParams({
+            ...createEventParams,
+            unix_time: currentDate.getTime(),
+        });
     };
 
-    const toggleTag = (tag: string) => {
+    const toggleTag = (tag: string) =>
+    {
         setSelectedTags(prevTags =>
             prevTags.includes(tag)
                 ? prevTags.filter(t => t !== tag)
@@ -186,31 +186,28 @@ export default function ProfileScreen() {
                                 <ThemedText style={styles.inputLabel}>Titel</ThemedText>
                                 <TextInput
                                     style={styles.input}
-                                    value={eventTitle}
-                                    onChangeText={setEventTitle}
+                                    value={createEventParams.title}
+                                    onChangeText={(text) => setCreateEventParams({ ...createEventParams, title: text })}
                                     placeholder="Event Titel"
                                 />
                             </View>
                             <View style={styles.inputContainer}>
                                 <ThemedText style={styles.inputLabel}>Datum</ThemedText>
-                                <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
-                                    <Text>{eventDate.toLocaleDateString()}</Text>
-                                </TouchableOpacity>
-                                {showDatePicker && (
-                                    <DateTimePicker
-                                        value={eventDate}
-                                        mode="date"
-                                        display="default"
-                                        onChange={handleDateChange}
-                                    />
-                                )}
+                                <DateTimePicker
+                                    style={{ alignSelf: 'flex-start' }}
+                                    value={new Date(createEventParams.unix_time)}
+                                    mode="datetime"
+                                    display="inline"
+                                    accentColor={colors.accent}
+                                    onChange={handleDateChange}
+                                />
                             </View>
                             <View style={styles.inputContainer}>
                                 <ThemedText style={styles.inputLabel}>Ort</ThemedText>
                                 <TextInput
                                     style={styles.input}
-                                    value={eventLocation}
-                                    onChangeText={setEventLocation}
+                                    value={createEventParams.location}
+                                    onChangeText={(text) => setCreateEventParams({ ...createEventParams, location: text })}
                                     placeholder="Event Ort"
                                 />
                             </View>
@@ -224,15 +221,15 @@ export default function ProfileScreen() {
                                 <TouchableOpacity
                                     style={styles.currentLocationButton}
                                     onPress={getCurrentLocation}>
-                                        <Ionicons name="locate" size={24} color="black" />
-                                    </TouchableOpacity>
+                                    <Ionicons name="locate" size={24} color="black" />
+                                </TouchableOpacity>
                             </View>
                             <View style={styles.inputContainer}>
                                 <ThemedText style={styles.inputLabel}>Beschreibung</ThemedText>
                                 <TextInput
                                     style={[styles.input, styles.textArea]}
-                                    value={eventDescription}
-                                    onChangeText={setEventDescription}
+                                    value={createEventParams.description}
+                                    onChangeText={(text) => setCreateEventParams({ ...createEventParams, description: text })}
                                     placeholder="Event Beschreibung"
                                     multiline
                                     numberOfLines={4}

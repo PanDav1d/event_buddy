@@ -8,7 +8,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ThemedText } from './ThemedText';
 import MapView, { Marker } from 'react-native-maps';
 
-export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () => void, isSaved: boolean }) { 
+export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () => void }) { 
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -18,7 +18,10 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
   const opacityValue = useRef(new Animated.Value(1)).current;
   const translateYValue = useRef(new Animated.Value(0)).current;
 
-    const mapRef = useRef<MapView>(null);
+  const [isSaved, setIsSaved] = useState(props.is_saved);
+  const [isSavedAmount, setIsSavedAmount] = useState(props.amount_saved);
+
+  const mapRef = useRef<MapView>(null);
 
   const toggleModal = () => {
     if (modalVisible) {
@@ -85,8 +88,14 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
             <View style={styles.overlay}>
               <Text style={styles.price}>Ab 12.99€</Text>
             </View>
-            <TouchableOpacity style={styles.heartButton} onPress={props.onSave}>
-              <Ionicons name={props.isSaved ? 'heart' : 'heart-outline'} size={24} color={props.isSaved ? 'red' : 'white'} />
+            <TouchableOpacity style={styles.heartButton} onPress={() => {
+              setIsSavedAmount(isSaved ? isSavedAmount - 1 : isSavedAmount + 1);
+              setIsSaved(!isSaved);
+              if(props.onSave){
+                props.onSave();
+              }}}>
+              <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={24} color={isSaved ? 'red' : 'white'} />
+              {isSavedAmount == 0 ? '' : <Text style={[styles.price, {textAlign: 'center'}]}>{isSavedAmount}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={styles.shareButton} onPress={onShare}>
               <Ionicons name="share-outline" size={24} color="white" />

@@ -10,19 +10,23 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+export default function RootLayout()
+{
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  useEffect(() => {
-    if (loaded) {
+  useEffect(() =>
+  {
+    if (loaded)
+    {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
 
-  if (!loaded) {
+  if (!loaded)
+  {
     return null;
   }
 
@@ -31,6 +35,12 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
+        <Stack.Screen name="profile" options={{
+          headerTransparent: true,
+          headerBackButtonMenuEnabled: false,
+          headerBackTitle: "Zurück",
+          headerTitle: '',
+        }} />
       </Stack>
     </ThemeProvider>
   );

@@ -12,21 +12,21 @@ import Slider from '@react-native-community/slider';
 import { CalendarPicker } from "@/components/CalendarPicker";
 import { ProfileButton } from "@/components/ProfileButton";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { DateQuickTab } from "@/constants/DateQuickTabs";
 
 
-interface SearchBarProps {
+interface SearchBarProps
+{
     onSearchChange: (params: SearchParams) => void;
 }
 
-export function SearchBar({ onSearchChange }: SearchBarProps) {
+export function SearchBar({ onSearchChange }: SearchBarProps)
+{
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
 
-    const [text, setText] = React.useState("");
-    const [activeTab, setActiveTab] = React.useState("All");
     const [modalVisible, setModalVisible] = React.useState(false);
     const [showAllTags, setShowAllTags] = useState(false);
-    const tabs = ["All", "Music Festival", "Film Festival", "Food Festival", "Nightclub"];
     const slideAnimation = useRef(new Animated.Value(0)).current;
 
     const allTags = ["Music", "Film", "Food", "Nightlife", "Art", "Sports", "Technology", "Fashion", "Education", "Health"];
@@ -36,19 +36,20 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
         latitude: 52.520008,
         longitude: 13.404954,
         radius: 10,
-        date_range: {
-            start: new Date(),
-            end: new Date()
-        }
+        start_date: Math.floor(new Date().getTime() / 1000),
+        end_date: Math.floor(new Date().getTime() / 1000)
     });
-    
+
 
     const mapRef = useRef<MapView>(null);
 
-    useEffect(() => {
-        (async () => {
+    useEffect(() =>
+    {
+        (async () =>
+        {
             let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
+            if (status !== 'granted')
+            {
                 console.log('Permission to access location was denied');
                 return;
             }
@@ -57,20 +58,23 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
             let location = await Location.getCurrentPositionAsync({});
             setSearchParams(prevParams => ({
                 ...prevParams,
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude
             }));
         })();
     }, []);
 
-    useEffect(() => {
-        if (modalVisible) {
+    useEffect(() =>
+    {
+        if (modalVisible)
+        {
             Animated.timing(slideAnimation, {
                 toValue: 1,
                 duration: 300,
                 useNativeDriver: true,
             }).start();
-        } else {
+        } else
+        {
             Animated.timing(slideAnimation, {
                 toValue: 0,
                 duration: 300,
@@ -79,24 +83,29 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
         }
     }, [modalVisible]);
 
-    const handleSearch = () => {
+    const handleSearch = () =>
+    {
         onSearchChange(searchParams);
         setModalVisible(false);
     }
 
-    const handleParamChange = (key: string, value: any, updateMap?: boolean) => {
+    const handleParamChange = (key: string, value: any, updateMap?: boolean) =>
+    {
         setSearchParams(prevParams => ({
             ...prevParams,
             [key]: value
         }));
 
-        if (key === 'radius' && updateMap) {
+        if (key === 'radius' && updateMap)
+        {
             updateMapRegion(value);
         }
     }
 
-    const updateMapRegion = (radius: number) => {
-        if (mapRef.current) {
+    const updateMapRegion = (radius: number) =>
+    {
+        if (mapRef.current)
+        {
             const latitude = searchParams.latitude;
             const longitude = searchParams.longitude;
             const latDelta = radius * 2 / 111.32;
@@ -110,8 +119,10 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
         }
     }
 
-    const toggleTag = (tag: string) => {
-        setSearchParams(prevParams => {
+    const toggleTag = (tag: string) =>
+    {
+        setSearchParams(prevParams =>
+        {
             const newTags = prevParams.tags.includes(tag)
                 ? prevParams.tags.filter(t => t !== tag)
                 : [...prevParams.tags, tag];
@@ -119,11 +130,12 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
         });
     }
 
-    const renderTags = () => {
+    const renderTags = () =>
+    {
         const selectedTags = searchParams.tags;
         const unselectedTags = allTags.filter(tag => !selectedTags.includes(tag));
         const tagsToShow = showAllTags ? [...selectedTags, ...unselectedTags] : [...selectedTags, ...unselectedTags.slice(0, Math.max(0, 5 - selectedTags.length))];
-        
+
         return (
             <View style={styles.tagContainer}>
                 {tagsToShow.map((tag, index) => (
@@ -131,63 +143,115 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
                         key={index}
                         style={[
                             styles.tag,
-                            searchParams.tags.includes(tag) && {backgroundColor: colors.accent}
+                            { backgroundColor: colors.backgroundSecondary },
+                            searchParams.tags.includes(tag) && { backgroundColor: colors.accent }
                         ]}
                         onPress={() => toggleTag(tag)} >
-                        <ThemedText style={searchParams.tags.includes(tag) ? styles.selectedTagText : styles.tagText}>
+                        <ThemedText style={{ color: colors.text }}>
                             {tag}
                         </ThemedText>
                     </Pressable>
                 ))}
                 {!showAllTags && tagsToShow.length < allTags.length && (
                     <Pressable
-                        style={styles.showMoreButton}
+                        style={[styles.showMoreButton, { backgroundColor: colors.backgroundSecondary }]}
                         onPress={() => setShowAllTags(true)}
                     >
-                        <ThemedText style={styles.showMoreText}>Mehr...</ThemedText>
+                        <ThemedText style={{ color: colors.text }}>Mehr...</ThemedText>
                     </Pressable>
                 )}
                 {showAllTags && (
                     <Pressable
-                        style={styles.showMoreButton}
+                        style={[styles.showMoreButton, { backgroundColor: colors.backgroundSecondary }]}
                         onPress={() => setShowAllTags(false)}>
-                        <ThemedText style={styles.showMoreText}>Weniger...</ThemedText>
+                        <ThemedText style={{ color: colors.text }}>Weniger...</ThemedText>
                     </Pressable>
                 )}
             </View>
         );
     }
 
-    const handleMapRegionChange = (region: { latitude: any; longitude: any; }) => {
+    const handleMapRegionChange = (region: { latitude: any; longitude: any; }) =>
+    {
         setSearchParams(prevParams => ({
             ...prevParams,
-                latitude: region.latitude,
-                longitude: region.longitude
+            latitude: region.latitude,
+            longitude: region.longitude
         }));
     }
 
-    const handleDateChange = (startDate: Date | null, endDate: Date | null) => {
-        if (startDate && endDate) {
+    const handleDateChange = (startDate: number | null, endDate: number | null) =>
+    {
+        if (startDate && endDate)
+        {
             setSearchParams(prevParams => ({
                 ...prevParams,
-                date_range: {
-                    start: startDate,
-                    end: endDate
-                }
+                start_date: startDate,
+                end_date: endDate
             }));
         }
     }
 
+    const handleDateFilterChange = (filter: DateQuickTab) =>
+    {
+        const now = new Date();
+        let start = new Date(now);
+        let end = new Date(now);
+
+        switch (filter)
+        {
+            case DateQuickTab.today:
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+                break;
+            case DateQuickTab.tomorrow:
+                start.setDate(start.getDate() + 1);
+                start.setHours(0, 0, 0, 0);
+                end = new Date(start);
+                end.setHours(23, 59, 59, 999);
+                break;
+            case DateQuickTab.this_weekend:
+                const diffToNextFriday = 5 - now.getDay();
+                start.setDate(start.getDate() + diffToNextFriday);
+                start.setHours(0, 0, 0, 0);
+                end.setDate(start.getDate() + 2);
+                end.setHours(23, 59, 59, 999);
+                break;
+            case DateQuickTab.next_week:
+                const diffToNextWeek = 8 - now.getDay();
+                start.setDate(start.getDate() + diffToNextWeek);
+                start.setHours(0, 0, 0, 0);
+                end.setDate(start.getDate() + 6);
+                end.setHours(23, 59, 59, 999);
+                break;
+            case DateQuickTab.this_month:
+                start.setHours(0, 0, 0, 0);
+                end.setMonth(end.getMonth() + 1);
+                end.setDate(0);
+                end.setHours(23, 59, 59, 999);
+                break;
+        }
+        console.log(`Filtering between: ${start.toLocaleString()} until ${end.toLocaleString()}`);
+
+        const newParams = {
+            ...searchParams,
+            start_date: Math.floor(start.getTime() / 1000),
+            end_date: Math.floor(end.getTime() / 1000)
+        };
+        setSearchParams(newParams);
+        onSearchChange(newParams);
+    }
+
     return (
-        <SafeAreaView style={[styles.searchBar, {borderBottomColor: colors.backgroundSecondary}]}>
+        <SafeAreaView style={[styles.searchBar, { borderBottomColor: colors.backgroundSecondary }]} edges={['top']}>
             <View style={styles.searchContainer}>
-                <Pressable style={[styles.searchButton, {backgroundColor: colors.backgroundSecondary}]} onPress={() => setModalVisible(true)}>
+                <Pressable style={[styles.searchButton, { backgroundColor: colors.backgroundSecondary }]} onPress={() => setModalVisible(true)}>
                     <Ionicons name="search-outline" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
                     <ThemedText>Suchen und Filtern</ThemedText>
                 </Pressable>
-                <ProfileButton />
+                <ProfileButton style={[styles.profileButton, { backgroundColor: colors.backgroundSecondary }]} />
             </View>
-            <FilterBar />
+            <FilterBar onDateFilterChange={handleDateFilterChange} />
 
             <Modal
                 animationType="slide"
@@ -197,15 +261,14 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
                 <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
                     <View style={styles.modalHeader}>
                         <Pressable onPress={() => setModalVisible(false)}>
-                            <Ionicons name="close-outline" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
+                            <Ionicons name="close-outline" size={24} color={colors.text} />
                         </Pressable>
-                        <ThemedText style={styles.modalTitle}>Filter</ThemedText>
-                        <View style={{width: 24}} />
+                        <ThemedText style={[styles.modalTitle, { color: colors.text }]}>Filter</ThemedText>
+                        <View style={{ width: 24 }} />
                     </View>
-                    <KeyboardAvoidingView 
+                    <KeyboardAvoidingView
                         behavior={Platform.OS === "ios" ? "padding" : "height"}
-                        style={{flex: 1}}
-                    >
+                        style={{ flex: 1 }} >
                         <ScrollView>
                             <View style={styles.filterOption}>
                                 <ThemedText>Tags</ThemedText>
@@ -245,7 +308,7 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
                             <View style={styles.filterOption}>
                                 <ThemedText>Radius: {searchParams.radius} km</ThemedText>
                                 <Slider
-                                    style={{width: '100%', height: 40}}
+                                    style={{ width: '100%', height: 40 }}
                                     minimumValue={2}
                                     maximumValue={250}
                                     step={1}
@@ -256,9 +319,6 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
                                     maximumTrackTintColor="#000000"
                                 />
                             </View>
-
-                            <CalendarPicker onDateChange={handleDateChange} />
-
                         </ScrollView>
                         <SubmitButton title="Filter anwenden" onPress={handleSearch} />
                     </KeyboardAvoidingView>
@@ -269,19 +329,21 @@ export function SearchBar({ onSearchChange }: SearchBarProps) {
 }
 
 const styles = StyleSheet.create({
-    searchBar:{
+    searchBar: {
         flexDirection: 'column',
         alignItems: 'center',
         display: 'flex',
         gap: 10,
         borderBottomWidth: 1,
         paddingVertical: 10,
+        paddingBottom: 10,
     },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         width: '90%',
+        marginBottom: 8,
     },
     input: {
         borderColor: 'white',
@@ -289,7 +351,7 @@ const styles = StyleSheet.create({
         width: '80%',
         borderRadius: 15,
     },
-    searchButton:{
+    searchButton: {
         flexDirection: 'row',
         alignItems: 'center',
         display: 'flex',
@@ -299,13 +361,6 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         padding: 15,
         marginRight: 10,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
         elevation: 5,
     },
     profileButton: {
@@ -314,20 +369,10 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'white',
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
         elevation: 5,
     },
     modalContent: {
         flex: 1,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
         paddingLeft: 15,
         paddingRight: 15,
         paddingTop: 20,
@@ -352,27 +397,16 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     tag: {
-        backgroundColor: '#e0e0e0',
         borderRadius: 25,
         padding: 10,
         paddingLeft: 17,
         paddingRight: 17,
         margin: 5,
     },
-    tagText: {
-        color: '#333',
-    },
-    selectedTagText: {
-        color: 'white',
-    },
     showMoreButton: {
-        backgroundColor: '#f0f0f0',
         borderRadius: 20,
         padding: 10,
         margin: 5,
-    },
-    showMoreText: {
-        color: '#222',
     },
     mapContainer: {
         height: 200,

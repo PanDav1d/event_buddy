@@ -4,32 +4,12 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { SearchBar } from '@/components/SearchBar';
 import React, { useEffect, useState, useCallback } from 'react';
 import { EventCard, SearchParams } from '@/constants/Types';
-import { API_URL, API_URL_SAVED_EVENT } from '@/config';
 import { EventItem } from '@/components/EventItem';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import NetworkClient from '@/api/NetworkClient';
 
 const CARD_MARGIN = 24;
-
-const serializeSearchParams = (params: SearchParams): string => {
-  const serialized = new URLSearchParams();
-  
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      if (key === 'date_range' && typeof value === 'object') {
-        const start = Math.floor(new Date(value.start).getTime() / 1000);
-        const end = Math.floor(new Date(value.end).getTime() / 1000);
-        serialized.append(key, JSON.stringify({ start, end }));
-      } else if (typeof value === 'object') {
-        serialized.append(key, JSON.stringify(value));
-      } else {
-        serialized.append(key, value.toString());
-      }
-    }
-  });
-
-  return serialized.toString();
-};
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -39,7 +19,6 @@ export default function HomeScreen() {
   const [currLongitude, setCurrLongitude] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [savedEventIds, setSavedEventIds] = useState<number[]>([]);
 
   const [refreshing, setRefreshing] = useState(false);
   const [apiData, setApiData] = useState<EventCard[]>([]);
@@ -64,10 +43,8 @@ export default function HomeScreen() {
           tags: [""],
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
-          date_range: {
-            start: new Date(Date.now()),
-            end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-          },
+          start_date: Math.floor(Date.now() / 1000),
+          end_date: Math.floor((Date.now() + 14 * 24 * 60 * 60 * 1000) / 1000),
           radius: 20,
         });
       } catch (error) {
@@ -83,15 +60,8 @@ export default function HomeScreen() {
     if (!searchParams) return;
     
     try {
-      const queryString = serializeSearchParams(searchParams);
-      const response = await fetch(`${API_URL}?${queryString}`);
-      console.log(decodeURIComponent(`${API_URL}?${queryString}`));
-      console.log(`${API_URL}?${queryString}`);
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const jsonData = await response.json();
-      setApiData(jsonData);
+      const events = await NetworkClient.getEvents(searchParams, 1);
+      setApiData(events);
       setError(null);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -111,52 +81,8 @@ export default function HomeScreen() {
   }, [searchParams]);
 
   const saveEvent = async (eventId: number) => {
-    try {
-      const userId = 1; 
-      console.log(`${API_URL_SAVED_EVENT}${userId}/${eventId}`);
-      // Prüfen, ob das Event bereits gespeichert ist
-      const checkResponse = await fetch(`${API_URL_SAVED_EVENT}${userId}`);
-      if (!checkResponse.ok) {
-        throw new Error('Fehler beim Abrufen gespeicherter Events');
-      }
-      const savedEvents = await checkResponse.json();
-      const isEventSaved = savedEvents.some((event: any) => event.event_id === eventId);
-
-      let response;
-      if (isEventSaved) {
-        // Event entfernen
-        console.log(`Unsaving: ${API_URL_SAVED_EVENT}${userId}/${eventId}`)
-        response = await fetch(`${API_URL_SAVED_EVENT}${userId}/${eventId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) {
-          throw new Error('Fehler beim Entfernen des gespeicherten Events');
-        }
-        console.log('Event erfolgreich entfernt');
-        // Event-ID aus dem Zustand entfernen
-        setSavedEventIds(savedEventIds.filter(id => id !== eventId));
-      } else {
-        // Event speichern
-        console.log(`Saving: ${API_URL_SAVED_EVENT}${userId}/${eventId}`)
-        response = await fetch(`${API_URL_SAVED_EVENT}${userId}/${eventId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) {
-          throw new Error('Fehler beim Speichern des Events');
-        }
-        console.log('Event erfolgreich gespeichert');
-        // Event-ID zum Zustand hinzufügen
-        setSavedEventIds([...savedEventIds, eventId]);
-      }
-    } catch (error) {
-      console.error('Fehler beim Speichern/Entfernen des Events:', error);
-    }
+    const userId = 1; 
+    NetworkClient.saveEvent(userId, eventId);
   };
 
   const renderContent = () => {
@@ -164,7 +90,7 @@ export default function HomeScreen() {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.text} />
-          <Text style={[styles.loadingText, {color: colors.text}]}>Loading...</Text>
+          <Text style={[styles.loadingText, {color: colors.text}]}>Laden...</Text>
         </View>
       );
     }
@@ -190,7 +116,7 @@ export default function HomeScreen() {
     return (
       <FlatList
         data={apiData}
-        renderItem={({item}) => (<EventItem {...item} isSaved={savedEventIds.includes(item.id)} onSave={() => saveEvent(item.id)} />)}
+        renderItem={({item}) => (<EventItem {...item} onSave={() => saveEvent(item.id)} />)}
         style={styles.cardList}
         showsVerticalScrollIndicator={true}
         refreshControl={

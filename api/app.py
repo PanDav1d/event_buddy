@@ -123,6 +123,23 @@ def insert_saved_event(user_id, event_id):
     except Error as error:
         print("Error while inserting saved event: ", error)
 
+def isSaved(user_id, event_id):
+    query = '''
+    SELECT EXISTS(SELECT 1 FROM saved_event WHERE user_id = %s AND event_id = %s);
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(query, (user_id, event_id))
+            result = cursor.fetchone()[0]
+            cursor.close()
+            connection.close()
+            return result
+    except Error as error:
+        print("Error while checking saved event: ", error)
+        return False
+
 def remove_saved_event(user_id, event_id):
     delete_query = '''
     DELETE FROM saved_event
@@ -215,24 +232,28 @@ def get_any_events():
         print("Error while fetching events: ", error)
         return []
 
-def get_events(latitude, longitude, radius, start_date, end_date):
+def get_events(user_id, latitude, longitude, radius, start_date, end_date):
     select_query = """
-    SELECT *, (
+    SELECT e.*, (
         6371 * acos(
-            cos(radians(%s)) * cos(radians(latitude)) * cos(radians(longitude) - radians(%s)) +
-            sin(radians(%s)) * sin(radians(latitude))
+            cos(radians(%s)) * cos(radians(e.latitude)) * cos(radians(e.longitude) - radians(%s)) +
+            sin(radians(%s)) * sin(radians(e.latitude))
         )
-    ) AS distance
-    FROM event
-    WHERE unix_time >= %s AND unix_time <= %s
+    ) AS distance,
+    CASE WHEN se.event_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_saved,
+    COUNT(se.event_id) AS amount_saved
+    FROM event e
+    LEFT JOIN saved_event se ON e.id = se.event_id AND se.user_id = %s
+    WHERE e.unix_time >= %s AND e.unix_time <= %s
+    GROUP BY e.id
     HAVING distance <= %s
-    ORDER BY unix_time;
+    ORDER BY e.unix_time;
     """
     try:
         connection = create_connection()
         if connection is not None:
             cursor = connection.cursor(dictionary=True)
-            cursor.execute(select_query, (latitude, longitude, latitude, int(start_date), int(end_date), radius))
+            cursor.execute(select_query, (latitude, longitude, latitude, user_id, int(start_date), int(end_date), radius))
             events = cursor.fetchall()
             cursor.close()
             connection.close()
@@ -260,7 +281,10 @@ def get_user(user_id):
 
 def get_saved_events(user_id):
     select_query = '''
-    SELECT * FROM saved_event WHERE user_id = %s
+    SELECT se.*, e.*
+    FROM saved_event se
+    JOIN event e ON se.event_id = e.id
+    WHERE se.user_id = %s
     '''
     try:
         connection = create_connection()
@@ -290,51 +314,32 @@ def get_home():
 def health():
     return jsonify("OK")
 
-@app.route('/api/v1/events.json', methods=['GET'])
-def get_entries():
+@app.route('/api/v1/events.json/<int:user_id>', methods=['GET'])
+def get_entries(user_id):
     try:
         latitude = request.args.get('latitude')
         longitude = request.args.get('longitude')
         radius = request.args.get('radius')
-        date_range = request.args.get('date_range')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
 
-        if not latitude or not longitude or not radius or not date_range:
+        if not latitude or not longitude or not radius or not start_date or not end_date:
             return jsonify({"error": "Missing parameters"}), 400
 
-        try:
-            date_range = json.loads(date_range)
-        except json.JSONDecodeError:
-            return jsonify({"error": "Invalid date_range format"}), 400
-        
-        start_date = date_range.get('start')
-        end_date = date_range.get('end')
+        print(f"User: {user_id}, Latitude: {latitude}, Longitude: {longitude}, Radius: {radius}, Start Date: {start_date}, End Date: {end_date}")
 
-        if start_date is None or end_date is None:
-            return jsonify({"error": "Invalid date_range values"}), 400
-
-        try:
-            start_date = int(start_date)
-            end_date = int(end_date)
-        except ValueError:
-            return jsonify({"error": "Invalid date range format"}), 400
-
-        print(f"Latitude: {latitude}, Longitude: {longitude}, Radius: {radius}, Start Date: {start_date}, End Date: {end_date}")
-        
-        latitude = float(latitude)
-        longitude = float(longitude)
-        radius = float(radius)
-
-        data = get_events(latitude, longitude, radius, start_date, end_date)
+        data = get_events(user_id, latitude, longitude, radius, start_date, end_date)
         return jsonify(data), 200
     
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/v1/events.json', methods=['POST'])
+@app.route('/api/v1/event.json', methods=['POST'])
 def create_event():
     try:
         data = request.json
+        print(data)
         title = data.get('title')
         organizer = data.get('organizer')
         description = data.get('description')
@@ -344,9 +349,6 @@ def create_event():
         longitude = data.get('longitude')
 
         print(f"Title: {title}, Organizer: {organizer}, Description: {description}, Image URL: {image_url}, Unix Time: {unix_time}, Latitude: {latitude}, Longitude: {longitude}")
-
-        if not all([title, organizer, description, image_url, unix_time, latitude, longitude]):
-            return jsonify({"error": "Missing required fields"}), 400
 
         insert_event(title, organizer, description, image_url, unix_time, latitude, longitude)
         return jsonify({"message": "Event created successfully"}), 201
@@ -391,22 +393,15 @@ def api_get_saved_events(user_id):
 @app.route('/api/v1/saved_events.json/<int:user_id>/<int:event_id>', methods=['POST'])
 def api_set_saved_event(user_id, event_id):
     try:
-        insert_saved_event(user_id, event_id)
-        return jsonify({"message": "Event saved successfully"}), 201
+        if isSaved(user_id, event_id):
+            remove_saved_event(user_id, event_id)
+            return jsonify({"message": "Event removed from saved events"}), 200
+        else:
+            insert_saved_event(user_id, event_id)
+            return jsonify({"message": "Event added to saved events"}), 201
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500
-
-@app.route('/api/v1/saved_events.json/<int:user_id>/<int:event_id>', methods=['DELETE'])
-def api_remove_saved_event(user_id, event_id):
-    try:
-        remove_saved_event(user_id, event_id)
-        return jsonify({"message": "Event removed successfully"}), 200
-    except Exception as e:
-        print("Error:", str(e))
-        return jsonify({"error": str(e)}), 500
-
-
 
 create_event_table()
 create_user_table()
