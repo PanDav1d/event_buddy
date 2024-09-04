@@ -3,53 +3,30 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { EventCard } from '@/constants/Types';
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, ScrollView } from 'react-native';
+import { Modal, ScrollView, FlatList } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { ThemedText } from './ThemedText';
 import MapView, { Marker } from 'react-native-maps';
+import { useRouter } from 'expo-router';
+
+const screenWidth = Dimensions.get('window').width;
 
 export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () => void })
 {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const slideAnimation = useRef(new Animated.Value(0)).current;
   const scaleValue = useRef(new Animated.Value(1)).current;
   const opacityValue = useRef(new Animated.Value(1)).current;
   const translateYValue = useRef(new Animated.Value(0)).current;
 
   const [isSaved, setIsSaved] = useState(props.is_saved);
   const [isSavedAmount, setIsSavedAmount] = useState(props.amount_saved);
+  const [showInterestedFriends, setShowInterestedFriends] = useState(false);
 
   const mapRef = useRef<MapView>(null);
 
-  const toggleModal = () =>
-  {
-    if (modalVisible)
-    {
-      Animated.timing(slideAnimation, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }).start(() => setModalVisible(false));
-    } else
-    {
-      setModalVisible(true);
-    }
-  };
-
-  useEffect(() =>
-  {
-    if (modalVisible)
-    {
-      Animated.timing(slideAnimation, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [modalVisible]);
+  const router = useRouter();
 
   const onShare = async () =>
   {
@@ -82,8 +59,22 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
     console.log('Buy tickets');
   };
 
+  const handleEventPress = () =>
+  {
+    router.push({ pathname: '/event', params: { eventID: props.id } });
+  }
+
+  const renderInterestedFriend = ({ item }: { item: string }) => (
+    <View style={styles.interestedFriendItem}>
+      <View style={styles.interestedFriendAvatar}>
+        <ThemedText style={styles.interestedFriendInitial}>{item[0]}</ThemedText>
+      </View>
+      <ThemedText style={styles.interestedFriendName}>{item}</ThemedText>
+    </View>
+  );
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.backgroundAlt, borderRadius: 25, marginBottom: 20 }, props.style]}>
+    <View style={[styles.container, { backgroundColor: colors.backgroundAlt, borderRadius: 25 }, props.style]}>
       <Animated.View style={[
         styles.card,
         {
@@ -94,17 +85,18 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
           opacity: opacityValue,
         },
       ]}>
-        <TouchableOpacity onPress={toggleModal}>
+        <TouchableOpacity onPress={handleEventPress}>
           <View style={styles.imageContainer}>
             <Image source={{ uri: props.image_url }} style={styles.image} />
-            <View style={styles.overlay_left}>
-              <Text style={styles.price}>Ab 12.99€</Text>
-            </View>
-            <View style={styles.overlay_right}>
-              <Text style={styles.price}>
-                {new Date(Math.floor(props.unix_time / 1000)).toLocaleDateString('de-DE', { weekday: 'long', month: 'long', day: 'numeric' })}
-              </Text>
-
+            <View style={styles.overlayContainer}>
+              <View style={styles.overlayItem}>
+                <Text style={styles.price}>Ab 12.99€</Text>
+              </View>
+              <View style={styles.overlayItem}>
+                <Text style={styles.price}>
+                  {new Date(Math.floor(props.unix_time / 1000)).toLocaleDateString('de-DE', { weekday: 'long', month: 'long', day: 'numeric' })}
+                </Text>
+              </View>
             </View>
             <TouchableOpacity style={styles.heartButton} onPress={() =>
             {
@@ -116,7 +108,7 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
               }
             }}>
               <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={24} color={isSaved ? 'red' : 'white'} />
-              {isSavedAmount == 0 ? '' : <Text style={[styles.price, { textAlign: 'center' }]}>{isSavedAmount}</Text>}
+              {isSavedAmount > 0 && <Text style={styles.savedAmount}>{isSavedAmount}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={styles.shareButton} onPress={onShare}>
               <Ionicons name="share-outline" size={24} color="white" />
@@ -125,127 +117,56 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
           <View style={styles.contentContainer}>
             <View style={styles.titleRow}>
               <ThemedText style={styles.title} numberOfLines={2}>{props.title}</ThemedText>
-              <Pressable style={[{ backgroundColor: colors.buttonPrimary }, styles.buyButton]}><ThemedText>Ticket Kaufen</ThemedText></Pressable>
-              {/*<View style={styles.ratingContainer}>
+              <View style={styles.ratingContainer}>
                 <Ionicons name="flame" size={16} color={colors.textPrimary} />
-                <ThemedText style={styles.rating}>4.9</ThemedText>
-              </View>*/}
+                <ThemedText style={styles.rating}>Sponsored</ThemedText>
+              </View>
+            </View>
+            <View style={styles.interestedFriendsContainer}>
+              {props.interestedFriends && props.interestedFriends.length > 0 ? (
+                <TouchableOpacity onPress={() => setShowInterestedFriends(true)}>
+                  <View style={styles.interestedFriendsAvatars}>
+                    {props.interestedFriends.slice(0, 3).map((friend, index) => (
+                      <View key={index} style={[styles.interestedFriendAvatar, { marginLeft: index * -8 }]}>
+                        <Text style={styles.interestedFriendInitial}>{friend[0]}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <ThemedText style={styles.interestedFriendsText}>
+                    {props.interestedFriends.length} {props.interestedFriends.length === 1 ? 'Freund interessiert' : 'Freunde interessiert'}
+                  </ThemedText>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.placeholderContainer}>
+                  <ThemedText style={styles.placeholderText}>Sei der Erste, der Interesse zeigt!</ThemedText>
+                </View>
+              )}
             </View>
           </View>
         </TouchableOpacity>
       </Animated.View>
       <Modal
-        visible={modalVisible}
+        visible={showInterestedFriends}
+        transparent={true}
         animationType="slide"
-        presentationStyle="fullScreen"
-        onDismiss={() => setModalVisible(false)}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalHeader}>
-          <Pressable onPress={() => setModalVisible(false)}>
-            <Ionicons name="arrow-back" size={24} color={colorScheme === 'light' ? 'black' : 'white'} />
-          </Pressable>
-          <ThemedText style={styles.modalTitle} numberOfLines={1} ellipsizeMode="tail">{props.title}</ThemedText>
-          <View style={{ width: 24 }} />
-        </View>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <Image source={{ uri: props.image_url }} style={styles.modalImage} />
-          <View style={styles.modalContentContainer}>
-            <Text style={styles.modalTitle}>{props.title}</Text>
-            <View style={styles.modalRatingContainer}>
-              <Ionicons name="star" size={16} color={colors.primary} />
-              <Text style={styles.modalRating}>4.9 · Popular Event</Text>
+        onDismiss={() => setShowInterestedFriends(false)}
+        onRequestClose={() => setShowInterestedFriends(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { backgroundColor: colors.backgroundAlt }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Interessierte Freunde</ThemedText>
+              <TouchableOpacity onPress={() => setShowInterestedFriends(false)}>
+                <Ionicons name="close" size={24} color={colors.textPrimary} />
+              </TouchableOpacity>
             </View>
-            <Text style={styles.modalSubtitle}>{props.location}</Text>
-
-            {/*
-                <View style={styles.separator} />
-                <Text style={styles.modalSectionTitle}>Musik Genres</Text>
-                <MusicTag />
-
-                <View style={styles.separator} />
-                <Text style={styles.modalSectionTitle}>DJs</Text>
-                <DJWidget />
-
-                */}
-
-            <View style={styles.separator} />
-            <View style={styles.modalEventDetails}>
-              <View style={styles.modalEventInfo}>
-                <Ionicons name="calendar-outline" size={24} color="black" />
-                <View style={styles.modalEventInfoText}>
-                  <Text style={styles.modalEventInfoTitle}>Datum</Text>
-                  <Text style={styles.modalEventInfoSubtitle}>{new Date(props.unix_time * 1000).toISOString().split('T')[0]}</Text>
-                </View>
-              </View>
-              <View style={styles.modalEventInfo}>
-                <Ionicons name="time-outline" size={24} color="black" />
-                <View style={styles.modalEventInfoText}>
-                  <Text style={styles.modalEventInfoTitle}>Uhrzeit</Text>
-                  <Text style={styles.modalEventInfoSubtitle}>{new Date(props.unix_time * 1000).toISOString().split('T')[1].split('.')[0]}</Text>
-                </View>
-              </View>
-              <View style={styles.modalEventInfo}>
-                <Ionicons name="location-outline" size={24} color="black" />
-                <View style={styles.modalEventInfoText}>
-                  <Text style={styles.modalEventInfoTitle}>Standort</Text>
-                  <Text style={styles.modalEventInfoSubtitle}>{props.location}</Text>
-                </View>
-              </View>
-
-              <View style={styles.mapContainer}>
-                <MapView
-                  ref={mapRef}
-                  style={styles.map}
-                  initialRegion={{
-                    latitude: props.latitude,
-                    longitude: props.longitude,
-                    latitudeDelta: 0.02,
-                    longitudeDelta: 0.02,
-                  }}
-                  scrollEnabled={false}
-                  zoomEnabled={false}
-                >
-                  <Marker
-                    coordinate={{
-                      latitude: props.latitude,
-                      longitude: props.longitude,
-                    }}
-                  />
-                </MapView>
-              </View>
-            </View>
-            <View style={styles.separator} />
-            <Text style={styles.modalSectionTitle}>Ticket Preise</Text>
-            <View style={styles.ticketPriceContainer}>
-              <Text style={styles.ticketType}>Eintritt</Text>
-              <Text style={styles.ticketPrice}>12.99€</Text>
-            </View>
-            <View style={styles.ticketPriceContainer}>
-              <Text style={styles.ticketType}>VIP Eintritt</Text>
-              <Text style={styles.ticketPrice}>29.99€</Text>
-            </View>
-            <View style={styles.ticketPriceContainer}>
-              <Text style={styles.ticketType}>Gruppe (5+ personen)</Text>
-              <Text style={styles.ticketPrice}>9.99€ pro person</Text>
-            </View>
-            <View style={styles.separator} />
-            <Text style={styles.modalDescription}>
-              {props.description || "Keine Beschreibung verfügbar..."}
-            </Text>
+            <FlatList
+              data={props.interestedFriends}
+              renderItem={renderInterestedFriend}
+              keyExtractor={(item) => item}
+              style={styles.interestedFriendsList}
+            />
           </View>
-        </ScrollView>
-        <View style={styles.modalFooter}>
-          <TouchableOpacity style={styles.actionButton} onPress={addToCalendar}>
-            <Ionicons name="calendar-outline" size={24} color={colors.primary} />
-            <Text style={styles.actionButtonText}>Zum Kalender</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={saveEvent}>
-            <Ionicons name="heart-outline" size={24} color={colors.primary} />
-            <Text style={styles.actionButtonText}>Event speichern</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.buyButton, { backgroundColor: colors.primary }]} onPress={buyTickets}>
-            <Text style={styles.buyButtonText}>Ticket kaufen</Text>
-          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -256,6 +177,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
+    width: screenWidth * 0.85,
     justifyContent: 'center',
   },
   card: {
@@ -271,31 +193,27 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: 220,
+    height: 180,
     position: 'relative',
   },
   image: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
-  overlay_left: {
-    position: 'absolute',
-    bottom: 16,
-    left: 16,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+  overlayContainer: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    right: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  overlay_right: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+  overlayItem: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 16,
   },
   price: {
     color: 'white',
@@ -309,6 +227,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
     padding: 8,
     borderRadius: 24,
+    alignItems: 'center',
+  },
+  savedAmount: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 4,
   },
   shareButton: {
     position: 'absolute',
@@ -344,157 +269,77 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: 'bold',
   },
-  subtitle: {
-    color: '#717171',
-    marginBottom: 6,
-    fontSize: 16,
-  },
-  date: {
-    color: '#717171',
-    marginBottom: 12,
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  eventDetails: {
+  interestedFriendsContainer: {
     marginTop: 12,
+    height: 50,
+    justifyContent: 'center',
   },
-  eventInfo: {
+  interestedFriendsAvatars: {
     flexDirection: 'row',
+    marginBottom: 4,
+  },
+  interestedFriendAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Colors.dark.primary,
+    justifyContent: 'center',
     alignItems: 'center',
-    color: '#717171',
-    marginBottom: 6,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  interestedFriendInitial: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  interestedFriendsText: {
     fontSize: 14,
+  },
+  placeholderContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 14,
+    fontStyle: 'italic',
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalCard: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    height: '90%',
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    margin: 10,
-    marginTop: 60,
-  },
-  closeButton: {
-    padding: 8,
-  },
-  modalImage: {
-    width: '100%',
-    height: 300,
-    resizeMode: 'cover',
-  },
-  modalContentContainer: {
-    padding: 24,
+    marginBottom: 20,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
   },
-  modalRatingContainer: {
+  interestedFriendsList: {
+    maxHeight: '100%',
+    marginBottom: '10%',
+  },
+  interestedFriendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalRating: {
-    marginLeft: 4,
-    fontSize: 16,
-    color: Colors.light.primary,
-  },
-  modalSubtitle: {
-    fontSize: 18,
-    color: '#717171',
-    marginBottom: 16,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    marginVertical: 24,
-  },
-  modalEventDetails: {
-    marginBottom: 24,
-  },
-  modalEventInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalEventInfoText: {
-    marginLeft: 16,
-  },
-  modalEventInfoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  modalEventInfoSubtitle: {
-    fontSize: 14,
-    color: '#717171',
-  },
-  modalSectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  ticketPriceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 12,
   },
-  ticketType: {
+  interestedFriendName: {
+    marginLeft: 12,
     fontSize: 16,
-    color: '#404040',
   },
-  ticketPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.light.primary,
-  },
-  modalDescription: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#404040',
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-  },
-  actionButton: {
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    marginTop: 4,
-    fontSize: 12,
-    color: Colors.light.primary,
-  },
-  buyButton: {
-    backgroundColor: Colors.light.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  buyButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  mapContainer: {
-    height: 200,
-    marginTop: 10,
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 25,
-  }
 });

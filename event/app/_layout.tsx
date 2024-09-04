@@ -15,6 +15,7 @@ export default function RootLayout()
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Nunito: require("../assets/fonts/Nunito-VariableFont.ttf"),
   });
 
   useEffect(() =>
@@ -36,12 +37,17 @@ export default function RootLayout()
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
         <Stack.Screen name="profile" options={{
-          headerTransparent: true,
+          headerBlurEffect: "regular",
+          headerLargeTitleShadowVisible: false,
           headerBackButtonMenuEnabled: false,
           headerBackTitle: "Zurück",
-          headerTitle: '',
+          headerTitle: 'Profil',
+          headerLargeTitle: true,
+        }} />
+        <Stack.Screen name="event" options={{
+          headerShown: false,
         }} />
       </Stack>
-    </ThemeProvider>
+    </ThemeProvider >
   );
 }

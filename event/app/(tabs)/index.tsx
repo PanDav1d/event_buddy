@@ -4,10 +4,14 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { SearchBar } from '@/components/SearchBar';
 import React, { useEffect, useState, useCallback } from 'react';
 import { EventCard, SearchParams } from '@/constants/Types';
-import { EventItem } from '@/components/EventItem';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import NetworkClient from '@/api/NetworkClient';
+import { EventCarousel } from '@/components/EventCarousel';
+import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
+import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator';
+import { EventHighlight } from '@/components/EventHighlight';
+import SubmitButton from '@/components/SubmitButton';
 
 const CARD_MARGIN = 24;
 
@@ -120,7 +124,7 @@ export default function HomeScreen()
         </View>
       );
     }
-
+    /*
     if (apiData.length === 0)
     {
       return (
@@ -130,20 +134,62 @@ export default function HomeScreen()
         </View>
       );
     }
+    */
+    const sampleData: EventCard[] = [
+      {
+        id: 1,
+        title: "Sample Event 1",
+        organizer: "Sample Organizer 1",
+        description: "This is a sample event description",
+        image_url: "https://picsum.photos/id/158/200/300",
+        unix_time: 1725468526,
+        location: "Sample Location 1",
+        latitude: 52.520008,
+        longitude: 13.404954,
+        tags: ["sample", "event"],
+        is_saved: false,
+        amount_saved: 0,
+        interestedFriends: []
+      },
+      {
+        id: 2,
+        title: "Sample Event 2",
+        organizer: "Sample Organizer 2",
+        description: "Another sample event description",
+        image_url: "https://picsum.photos/id/158/200/300",
+        unix_time: 1725634126,
+        location: "Sample Location 2",
+        latitude: 48.856613,
+        longitude: 2.352222,
+        tags: ["sample", "event", "another"],
+        is_saved: true,
+        amount_saved: 5,
+        interestedFriends: ["Philipp"]
+      },
+      {
+        id: 3,
+        title: "Sample Event 2",
+        organizer: "Sample Organizer 2",
+        description: "Another sample event description",
+        image_url: "https://picsum.photos/id/158/200/300",
+        unix_time: 1725634126,
+        location: "Sample Location 2",
+        latitude: 48.856613,
+        longitude: 2.352222,
+        tags: ["sample", "event", "another"],
+        is_saved: true,
+        amount_saved: 5,
+        interestedFriends: ["Aaron", "Amelie", "Jannis", "Aaron", "Amelie", "Jannis"]
+      }
+    ]
 
     return (
-      <FlatList
-        data={apiData}
-        renderItem={({ item }) => (<EventItem {...item} onSave={() => saveEvent(item.id)} />)}
-        style={styles.cardList}
-        showsVerticalScrollIndicator={true}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={reloadContent}
-          />}
-        horizontal={false}
-      />
+      <GestureHandlerRootView>
+        <ScrollView>
+          <EventCarousel title="Highlights" data={sampleData} />
+          <EventCarousel title="Shows" data={sampleData} />
+        </ScrollView>
+      </GestureHandlerRootView>
     );
   };
 

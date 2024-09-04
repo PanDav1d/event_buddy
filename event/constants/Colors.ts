@@ -10,6 +10,7 @@ export const Colors = {
     primary: primaryColor,  // Markenfarbe Orange
     secondary: '#FFC107',
     tertiary: '#4CAF50',
+    inverse: '#000',
     
     background: '#FFFFFF',  // Haupt-Hintergrundfarbe
     backgroundAlt: '#FAFAFA',  // Alternative Hintergrundfarbe (leicht abgedunkelt)
@@ -64,6 +65,7 @@ export const Colors = {
     primary: primaryColor,  // Markenfarbe Orange
     secondary: '#FFC107',
     tertiary: '#4CAF50',
+    inverse: "#FFF",
     
     background: '#121212',  // Haupt-Hintergrundfarbe
     backgroundAlt: '#1F1F1F',  // Alternative Hintergrundfarbe (leicht aufgehellt)

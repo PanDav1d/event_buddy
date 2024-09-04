@@ -153,9 +153,6 @@ export default function ProfileScreen()
         <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
             <SafeAreaView style={styles.safeArea}>
                 <ScrollView style={styles.scrollView}>
-                    <View style={styles.header}>
-                        <ThemedText style={styles.title}>Profil</ThemedText>
-                    </View>
                     <View style={styles.savedEventsSection}>
                         <ThemedText style={styles.sectionTitle}>Gespeichert</ThemedText>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} >
