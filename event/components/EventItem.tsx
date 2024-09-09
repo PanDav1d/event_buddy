@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions, View, Text, Image, TouchableOpacity, ViewStyle, Share, Animated, Pressable } from 'react-native';
+import { StyleSheet, Dimensions, View, Text, Image, TouchableOpacity, ViewStyle, Share, Animated, Pressable, TouchableNativeFeedback, TouchableHighlight } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { EventCard } from '@/constants/Types';
@@ -8,6 +8,8 @@ import { useState, useRef, useEffect } from 'react';
 import { ThemedText } from './ThemedText';
 import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
+import BottomSheet from 'reanimated-bottom-sheet';
+
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -85,65 +87,69 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
           opacity: opacityValue,
         },
       ]}>
-        <TouchableOpacity onPress={handleEventPress}>
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: props.image_url }} style={styles.image} />
-            <View style={styles.overlayContainer}>
-              <View style={styles.overlayItem}>
-                <Text style={styles.price}>Ab 12.99€</Text>
-              </View>
-              <View style={styles.overlayItem}>
-                <Text style={styles.price}>
-                  {new Date(Math.floor(props.unix_time / 1000)).toLocaleDateString('de-DE', { weekday: 'long', month: 'long', day: 'numeric' })}
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity style={styles.heartButton} onPress={() =>
-            {
-              setIsSavedAmount(isSaved ? isSavedAmount - 1 : isSavedAmount + 1);
-              setIsSaved(!isSaved);
-              if (props.onSave)
-              {
-                props.onSave();
-              }
-            }}>
-              <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={24} color={isSaved ? 'red' : 'white'} />
-              {isSavedAmount > 0 && <Text style={styles.savedAmount}>{isSavedAmount}</Text>}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.shareButton} onPress={onShare}>
-              <Ionicons name="share-outline" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.contentContainer}>
-            <View style={styles.titleRow}>
-              <ThemedText style={styles.title} numberOfLines={2}>{props.title}</ThemedText>
-              <View style={styles.ratingContainer}>
-                <Ionicons name="flame" size={16} color={colors.textPrimary} />
-                <ThemedText style={styles.rating}>Sponsored</ThemedText>
-              </View>
-            </View>
-            <View style={styles.interestedFriendsContainer}>
-              {props.interestedFriends && props.interestedFriends.length > 0 ? (
-                <TouchableOpacity onPress={() => setShowInterestedFriends(true)}>
-                  <View style={styles.interestedFriendsAvatars}>
-                    {props.interestedFriends.slice(0, 3).map((friend, index) => (
-                      <View key={index} style={[styles.interestedFriendAvatar, { marginLeft: index * -8 }]}>
-                        <Text style={styles.interestedFriendInitial}>{friend[0]}</Text>
-                      </View>
-                    ))}
-                  </View>
-                  <ThemedText style={styles.interestedFriendsText}>
-                    {props.interestedFriends.length} {props.interestedFriends.length === 1 ? 'Freund interessiert' : 'Freunde interessiert'}
-                  </ThemedText>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.placeholderContainer}>
-                  <ThemedText style={styles.placeholderText}>Sei der Erste, der Interesse zeigt!</ThemedText>
+        <TouchableHighlight onPress={handleEventPress}>
+          <>
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: props.image_url }} style={styles.image} />
+              <View style={styles.overlayContainer}>
+                <View style={styles.overlayItem}>
+                  <Text style={styles.price}>Ab 12.99€</Text>
                 </View>
-              )}
+                <View style={styles.overlayItem}>
+                  <Text style={styles.price}>
+                    {new Date(Math.floor(props.unix_time / 1000)).toLocaleDateString('de-DE', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  </Text>
+                </View>
+              </View>
+              <TouchableHighlight style={styles.heartButton} onPress={() =>
+              {
+                setIsSavedAmount(isSaved ? isSavedAmount - 1 : isSavedAmount + 1);
+                setIsSaved(!isSaved);
+                if (props.onSave)
+                {
+                  props.onSave();
+                }
+              }}>
+                <>
+                  <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={24} color={isSaved ? 'red' : 'white'} />
+                  {isSavedAmount > 0 && <Text style={styles.savedAmount}>{isSavedAmount}</Text>}
+                </>
+              </TouchableHighlight>
+              <TouchableHighlight style={styles.shareButton} onPress={onShare}>
+                <Ionicons name="share-outline" size={24} color="white" />
+              </TouchableHighlight>
             </View>
-          </View>
-        </TouchableOpacity>
+            <View style={styles.contentContainer}>
+              <View style={styles.titleRow}>
+                <ThemedText style={styles.title} numberOfLines={2}>{props.title}</ThemedText>
+                <View style={styles.ratingContainer}>
+                  <Ionicons name="flame" size={16} color={colors.textPrimary} />
+                  <ThemedText style={styles.rating}>Sponsored</ThemedText>
+                </View>
+              </View>
+              <View style={styles.interestedFriendsContainer}>
+                {props.interestedFriends && props.interestedFriends.length > 0 ? (
+                  <TouchableOpacity onPress={() => setShowInterestedFriends(true)}>
+                    <View style={styles.interestedFriendsAvatars}>
+                      {props.interestedFriends.slice(0, 3).map((friend, index) => (
+                        <View key={index} style={[styles.interestedFriendAvatar, { marginLeft: index * -8 }]}>
+                          <Text style={styles.interestedFriendInitial}>{friend[0]}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    <ThemedText style={styles.interestedFriendsText}>
+                      {props.interestedFriends.length} {props.interestedFriends.length === 1 ? 'Freund interessiert' : 'Freunde interessiert'}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.placeholderContainer}>
+                    <ThemedText style={styles.placeholderText}>Sei der Erste, der Interesse zeigt!</ThemedText>
+                  </View>
+                )}
+              </View>
+            </View>
+          </>
+        </TouchableHighlight>
       </Animated.View>
       <Modal
         visible={showInterestedFriends}

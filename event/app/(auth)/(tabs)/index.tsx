@@ -9,9 +9,6 @@ import * as Location from 'expo-location';
 import NetworkClient from '@/api/NetworkClient';
 import { EventCarousel } from '@/components/EventCarousel';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
-import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator';
-import { EventHighlight } from '@/components/EventHighlight';
-import SubmitButton from '@/components/SubmitButton';
 
 const CARD_MARGIN = 24;
 
@@ -204,7 +201,6 @@ export default function HomeScreen()
 const styles = StyleSheet.create({
   header: {
     paddingTop: '15%',
-    padding: 25,
     shadowRadius: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -214,17 +210,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-  },
-  cardCollection: {
-    marginVertical: CARD_MARGIN / 2,
-    marginHorizontal: CARD_MARGIN,
-  },
-  cardList: {
-    flex: 1,
-    padding: 10,
-  },
-  contentContainer: {
-    paddingBottom: CARD_MARGIN,
   },
   errorContainer: {
     flex: 1,

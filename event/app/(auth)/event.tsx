@@ -1,5 +1,5 @@
 import { ThemedText } from '@/components/ThemedText';
-import { Text, View, StyleSheet, useColorScheme, ImageBackground, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Image } from 'react-native';
+import { Text, View, StyleSheet, useColorScheme, ImageBackground, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Image, Animated, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,6 +16,7 @@ export default function EventScreen()
     const router = useRouter();
 
     const [event, setEvent] = useState<EventCard>();
+    const scrollY = useRef(new Animated.Value(0)).current;
 
     useEffect(() =>
     {
@@ -25,48 +26,96 @@ export default function EventScreen()
             organizer: "City Events Co.",
             description: "Join us for a day of live music and fun in the sun!",
             image_url: "https://picsum.photos/id/158/200/300",
-            unix_time: 1656172800, // June 25, 2023, 12:00:00 PM UTC
+            unix_time: 1656172800,
             location: "Central Park, New York",
             latitude: 40.7829,
             longitude: -73.9654,
             tags: ["music", "festival", "summer"],
             is_saved: false,
             amount_saved: 0,
+            interestedFriends: []
         };
 
         setEvent(hardcodedEvent);
     }, [eventID]);
 
+    const headerOpacity = scrollY.interpolate({
+        inputRange: [0, 200],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+    });
+
+    const imageOpacity = scrollY.interpolate({
+        inputRange: [0, 200],
+        outputRange: [1, 0],
+        extrapolate: 'clamp',
+    });
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { backgroundColor: colors.background }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Animated.View style={[styles.header, { opacity: headerOpacity, backgroundColor: colors.background }]}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.headerBackButton}>
                     <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <ThemedText style={styles.headerTitle}>{event?.title || 'Event'}</ThemedText>
-            </View>
-            <ScrollView contentContainerStyle={styles.scrollViewContent}>
-                <View style={styles.imageContainer}>
+            </Animated.View>
+
+            <Animated.ScrollView
+                contentContainerStyle={styles.scrollViewContent}
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: true }
+                )}
+                scrollEventThrottle={16}
+            >
+                <Animated.View style={[styles.imageContainer, { opacity: imageOpacity }]}>
                     <Image
                         source={{ uri: event?.image_url }}
                         style={styles.image}
                     />
-                </View>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color={colors.background} />
+                    </TouchableOpacity>
+                </Animated.View>
                 <View style={styles.content}>
+                    <ThemedText style={styles.title}>{event?.title || 'Event'}</ThemedText>
+                    <ThemedText style={styles.organizer}>{event?.organizer || 'Organizer'}</ThemedText>
+
+                    <View style={styles.ratingContainer}>
+                        <Ionicons name="star" size={20} color={colors.primary} />
+                        <Ionicons name="star" size={20} color={colors.primary} />
+                        <Ionicons name="star" size={20} color={colors.primary} />
+                        <Ionicons name="star" size={20} color={colors.primary} />
+                        <Ionicons name="star-half" size={20} color={colors.primary} />
+                        <ThemedText style={styles.ratingText}>4.7 • 2.5K Bewertungen</ThemedText>
+                    </View>
+
+                    <View style={styles.actionButtonsContainer}>
+                        <TouchableOpacity style={styles.actionButton}>
+                            <Ionicons name="cloud-download-outline" size={24} color={colors.primary} />
+                            <ThemedText style={styles.actionButtonText}>Ticket kaufen</ThemedText>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.actionButton}>
+                            <Ionicons name="share-outline" size={24} color={colors.primary} />
+                            <ThemedText style={styles.actionButtonText}>Teilen</ThemedText>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.separator} />
+
+                    <ThemedText style={styles.sectionTitle}>Über dieses Event</ThemedText>
+                    <ThemedText style={styles.description}>
+                        {event?.description || "Keine Beschreibung verfügbar..."}
+                    </ThemedText>
+
+                    <View style={styles.separator} />
+
+                    <ThemedText style={styles.sectionTitle}>Event Details</ThemedText>
                     <View style={styles.eventDetails}>
                         <View style={styles.eventInfo}>
                             <Ionicons name="calendar-outline" size={24} color={colors.textPrimary} />
                             <View style={styles.eventInfoText}>
                                 <ThemedText style={styles.eventInfoTitle}>Datum</ThemedText>
-                                <ThemedText style={styles.eventInfoSubtitle}>
-                                    {event?.unix_time || 'TBA'}
-                                </ThemedText>
-                            </View>
-                        </View>
-                        <View style={styles.eventInfo}>
-                            <Ionicons name="time-outline" size={24} color={colors.textPrimary} />
-                            <View style={styles.eventInfoText}>
-                                <ThemedText style={styles.eventInfoTitle}>Uhrzeit</ThemedText>
                                 <ThemedText style={styles.eventInfoSubtitle}>
                                     {event?.unix_time || 'TBA'}
                                 </ThemedText>
@@ -107,6 +156,7 @@ export default function EventScreen()
                     </View>
 
                     <View style={styles.separator} />
+
                     <ThemedText style={styles.sectionTitle}>Ticket Preise</ThemedText>
                     <View style={styles.ticketPriceContainer}>
                         <ThemedText style={styles.ticketType}>Eintritt</ThemedText>
@@ -120,22 +170,10 @@ export default function EventScreen()
                         <ThemedText style={styles.ticketType}>Gruppe (5+ personen)</ThemedText>
                         <ThemedText style={styles.ticketPrice}>9.99€ pro person</ThemedText>
                     </View>
-                    <View style={styles.separator} />
-                    <ThemedText style={styles.description}>
-                        {event?.description || "Keine Beschreibung verfügbar..."}
-                    </ThemedText>
                 </View>
-            </ScrollView>
+            </Animated.ScrollView>
 
             <View style={[styles.footer, { backgroundColor: colors.backgroundAlt }]}>
-                <TouchableOpacity style={styles.actionButton}>
-                    <Ionicons name="calendar-outline" size={24} color={colors.primary} />
-                    <ThemedText style={styles.actionButtonText}>Zum Kalender</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton}>
-                    <Ionicons name="heart-outline" size={24} color={colors.primary} />
-                    <ThemedText style={styles.actionButtonText}>Event speichern</ThemedText>
-                </TouchableOpacity>
                 <TouchableOpacity style={[styles.buyButton, { backgroundColor: colors.primary }]}>
                     <ThemedText style={styles.buyButtonText}>Ticket kaufen</ThemedText>
                 </TouchableOpacity>
@@ -150,11 +188,17 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.light.background,
     },
     header: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 44 : StatusBar.currentHeight,
+        left: 0,
+        right: 0,
+        height: 60,
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
+        paddingHorizontal: 16,
+        zIndex: 1000,
     },
-    backButton: {
+    headerBackButton: {
         marginRight: 16,
     },
     headerTitle: {
@@ -174,8 +218,64 @@ const styles = StyleSheet.create({
         height: '100%',
         resizeMode: 'cover',
     },
+    backButton: {
+        position: 'absolute',
+        top: 16,
+        left: 16,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        borderRadius: 20,
+        padding: 8,
+    },
     content: {
         padding: 16,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 8,
+    },
+    organizer: {
+        fontSize: 18,
+        color: Colors.light.textSecondary,
+        marginBottom: 16,
+    },
+    ratingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    ratingText: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: Colors.light.textSecondary,
+    },
+    actionButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 24,
+    },
+    actionButton: {
+        flexDirection: 'column',
+        alignItems: 'center',
+    },
+    actionButtonText: {
+        marginTop: 4,
+        fontSize: 12,
+        color: Colors.light.primary,
+    },
+    separator: {
+        height: 1,
+        backgroundColor: Colors.light.textPrimary,
+        marginVertical: 24,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 16,
+    },
+    description: {
+        fontSize: 16,
+        lineHeight: 24,
     },
     eventDetails: {
         marginBottom: 24,
@@ -204,15 +304,6 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         borderRadius: 8,
     },
-    separator: {
-        height: 1,
-        marginVertical: 24,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 16,
-    },
     ticketPriceContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -226,30 +317,15 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: Colors.light.primary,
     },
-    description: {
-        fontSize: 16,
-        lineHeight: 24,
-    },
     footer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         padding: 16,
         borderTopWidth: 1,
-    },
-    actionButton: {
-        flexDirection: 'column',
-        alignItems: 'center',
-    },
-    actionButtonText: {
-        marginTop: 4,
-        fontSize: 12,
-        color: Colors.light.primary,
     },
     buyButton: {
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 8,
+        alignItems: 'center',
     },
     buyButtonText: {
         color: Colors.light.background,

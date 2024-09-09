@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { SessionProvider } from '@/components/ctx';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -12,42 +13,35 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout()
 {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    Nunito: require("../assets/fonts/Nunito-VariableFont.ttf"),
-  });
+    const colorScheme = useColorScheme();
+    const [loaded] = useFonts({
+        SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+        Nunito: require("../assets/fonts/Nunito-VariableFont.ttf"),
+    });
 
-  useEffect(() =>
-  {
-    if (loaded)
+    useEffect(() =>
     {
-      SplashScreen.hideAsync();
+        if (loaded)
+        {
+            SplashScreen.hideAsync();
+        }
+    }, [loaded]);
+
+    if (!loaded)
+    {
+        return null;
     }
-  }, [loaded]);
 
-  if (!loaded)
-  {
-    return null;
-  }
-
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-        <Stack.Screen name="profile" options={{
-          headerBlurEffect: "regular",
-          headerLargeTitleShadowVisible: false,
-          headerBackButtonMenuEnabled: false,
-          headerBackTitle: "Zurück",
-          headerTitle: 'Profil',
-          headerLargeTitle: true,
-        }} />
-        <Stack.Screen name="event" options={{
-          headerShown: false,
-        }} />
-      </Stack>
-    </ThemeProvider >
-  );
+    return (
+        <SessionProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <Stack>
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+                    <Stack.Screen name="register" options={{ headerShown: false }} />
+                    <Stack.Screen name="personalization" options={{ headerShown: false }} />
+                </Stack>
+            </ThemeProvider >
+        </SessionProvider>
+    );
 }

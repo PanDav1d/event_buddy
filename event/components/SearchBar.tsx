@@ -1,4 +1,4 @@
-import { View, StatusBar, Text, StyleSheet, Pressable, ScrollView, Modal, Animated, useColorScheme, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from "react-native";
+import { View, StatusBar, Text, StyleSheet, Pressable, ScrollView, Modal, Animated, useColorScheme, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TextInput } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import React, { useRef, useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,7 +9,6 @@ import { Colors } from "@/constants/Colors";
 import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import Slider from '@react-native-community/slider';
-import { CalendarPicker } from "@/components/CalendarPicker";
 import { ProfileButton } from "@/components/ProfileButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DateQuickTab } from "@/constants/DateQuickTabs";
@@ -39,6 +38,18 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
         start_date: Math.floor(new Date().getTime() / 1000),
         end_date: Math.floor(new Date().getTime() / 1000)
     });
+
+    const [searchText, setSearchText] = useState("");
+
+    const handleTextSearch = (text: string) =>
+    {
+        setSearchText(text);
+        // You can add debounce here if needed
+        setSearchParams(prevParams => ({
+            ...prevParams,
+            searchText: text
+        }));
+    };
 
 
     const mapRef = useRef<MapView>(null);
@@ -270,6 +281,15 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
                         behavior={Platform.OS === "ios" ? "padding" : "height"}
                         style={{ flex: 1 }} >
                         <ScrollView>
+                            <View style={styles.searchInputContainer}>
+                                <TextInput
+                                    style={[styles.searchInput, { backgroundColor: colors.tagInactive, color: colors.textPrimary }]}
+                                    placeholder="Suche nach Events..."
+                                    placeholderTextColor={colors.textSecondary}
+                                    value={searchText}
+                                    onChangeText={handleTextSearch}
+                                />
+                            </View>
                             <View style={styles.filterOption}>
                                 <ThemedText>Tags</ThemedText>
                                 {renderTags()}
@@ -415,5 +435,21 @@ const styles = StyleSheet.create({
     map: {
         ...StyleSheet.absoluteFillObject,
         borderRadius: 25,
+    },
+    searchInput: {
+        flex: 1,
+        height: 50,
+        borderRadius: 25,
+        paddingHorizontal: 20,
+        marginRight: 10,
+        fontSize: 16,
+        elevation: 5,
+    },
+    searchInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        marginBottom: 8,
     }
 });
