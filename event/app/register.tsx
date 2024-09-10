@@ -72,7 +72,7 @@ export default function Register()
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.button, { backgroundColor: colors.buttonSecondary }]}
-                    onPress={() => router.push('/sign-in')}
+                    onPress={() => router.back()}
                 >
                     <ThemedText style={[styles.buttonText, { color: colors.textInverse }]}>Back to Sign In</ThemedText>
                 </TouchableOpacity>

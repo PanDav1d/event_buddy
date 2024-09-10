@@ -8,6 +8,8 @@ import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from '@react-native-community/slider';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5, Entypo } from "@expo/vector-icons";
 import { BlurView } from 'expo-blur';
+import { GestureHandlerRootView, TextInput } from 'react-native-gesture-handler';
+import { EventSizeSelector } from '@/components/EventSizeSelector';
 
 const { width, height } = Dimensions.get('window');
 
@@ -16,20 +18,24 @@ export default function PersonalizationScreen()
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
 
-    const totalSteps = 6;
+    const totalSteps = 7;
 
     const [step, setStep] = useState(0);
+
+
+    const [username, setUsername] = useState('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [location, setLocation] = useState({ latitude: 52.520008, longitude: 13.404954 });
     const [radius, setRadius] = useState(10);
     const [includeInternational, setIncludeInternational] = useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [preferredLanguages, setPreferredLanguages] = useState<string[]>([]);
-    const [preferredEventSize, setPreferredEventSize] = useState('medium');
+    const [preferredEventSize, setPreferredEventSize] = useState(0);
     const [animation] = useState(new Animated.Value(0));
 
     useEffect(() =>
     {
+        animation.setValue(0);
         Animated.timing(animation, {
             toValue: 1,
             duration: 500,
@@ -99,6 +105,37 @@ export default function PersonalizationScreen()
         }
     };
 
+    const GridItem = ({ category, isSelected, onPress }: { category: { icon: string; name: string }, isSelected: boolean, onPress: () => void }) => (
+        <TouchableOpacity
+            style={[
+                styles.categoryButton,
+                { backgroundColor: isSelected ? colors.tagActive : colors.tagInactive }
+            ]}
+            onPress={onPress}
+        >
+            <FontAwesome5 name={category.icon} size={24} color={colors.textPrimary} />
+            <ThemedText style={styles.categoryButtonText}>{category.name}</ThemedText>
+        </TouchableOpacity>
+    );
+
+    const Grid = ({ items, numColumns, renderItem }: { items: any[], numColumns: number, renderItem: (item: any) => React.ReactNode }) =>
+    {
+        const rows = Math.ceil(items.length / numColumns);
+        return (
+            <View style={styles.gridContainer}>
+                {[...Array(rows)].map((_, rowIndex) => (
+                    <View key={rowIndex} style={styles.gridRow}>
+                        {items.slice(rowIndex * numColumns, (rowIndex + 1) * numColumns).map((item, index) => (
+                            <View key={index} style={styles.gridItem}>
+                                {renderItem(item)}
+                            </View>
+                        ))}
+                    </View>
+                ))}
+            </View>
+        );
+    };
+
     const renderStep = () =>
     {
         const opacity = animation.interpolate({
@@ -108,7 +145,7 @@ export default function PersonalizationScreen()
 
         const translateY = animation.interpolate({
             inputRange: [0, 1],
-            outputRange: [50, 0],
+            outputRange: [150, 0],
         });
 
         switch (step)
@@ -116,25 +153,35 @@ export default function PersonalizationScreen()
             case 0:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
-                        <ThemedText style={styles.stepTitle}>Welche Veranstaltungen interessieren Sie?</ThemedText>
-                        <ScrollView contentContainerStyle={styles.buttonContainer}>
-                            {allCategories.map((category, index) => (
-                                <TouchableOpacity
-                                    key={index}
-                                    style={[
-                                        styles.categoryButton,
-                                        { backgroundColor: selectedCategories.includes(category.name) ? colors.tagActive : colors.tagInactive }
-                                    ]}
-                                    onPress={() => toggleCategory(category.name)}
-                                >
-                                    <FontAwesome5 name={category.icon} size={24} color={colors.textPrimary} />
-                                    <ThemedText style={styles.categoryButtonText}>{category.name}</ThemedText>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
+                        <ThemedText style={styles.stepTitle}>Wie möchten Sie genannt werden?</ThemedText>
+                        <TextInput
+                            style={[styles.input, { borderColor: colors.border, backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
+                            value={username}
+                            onChangeText={setUsername}
+                            placeholder="Ihr Nutzername"
+                        />
                     </Animated.View>
                 );
             case 1:
+                return (
+                    <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
+                        <ThemedText style={styles.stepTitle}>Welche Veranstaltungen interessieren Sie?</ThemedText>
+                        <ScrollView contentContainerStyle={styles.buttonContainer}>
+                            <Grid
+                                items={allCategories}
+                                numColumns={2}
+                                renderItem={(category) => (
+                                    <GridItem
+                                        category={category}
+                                        isSelected={selectedCategories.includes(category.name)}
+                                        onPress={() => toggleCategory(category.name)}
+                                    />
+                                )}
+                            />
+                        </ScrollView>
+                    </Animated.View>
+                );
+            case 2:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Wo befinden Sie sich?</ThemedText>
@@ -153,7 +200,7 @@ export default function PersonalizationScreen()
                         </View>
                     </Animated.View>
                 );
-            case 2:
+            case 3:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Wie weit möchten Sie maximal reisen?</ThemedText>
@@ -191,15 +238,16 @@ export default function PersonalizationScreen()
                         </View>
                     </Animated.View>
                 );
-            case 3:
+            case 4:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Weitere Einstellungen</ThemedText>
                         <View style={styles.listContainer}>
                             <View style={[styles.listItem, { backgroundColor: colors.backgroundAlt }]}>
                                 <Ionicons name="globe-outline" size={24} color={colors.primary} />
-                                <ThemedText style={styles.listItemText}>Internationale Events einbeziehen</ThemedText>
+                                <ThemedText style={styles.listItemText}>Internationale Events</ThemedText>
                                 <Switch
+                                    style={styles.listItemSwitch}
                                     value={includeInternational}
                                     onValueChange={setIncludeInternational}
                                     trackColor={{ false: colors.backgroundLight, true: colors.primary }}
@@ -208,7 +256,7 @@ export default function PersonalizationScreen()
                             </View>
                             <View style={[styles.listItem, { backgroundColor: colors.backgroundAlt }]}>
                                 <Ionicons name="notifications-outline" size={24} color={colors.primary} />
-                                <ThemedText style={styles.listItemText}>Benachrichtigungen aktivieren</ThemedText>
+                                <ThemedText style={styles.listItemText}>Benachrichtigungen</ThemedText>
                                 <Switch
                                     value={notificationsEnabled}
                                     onValueChange={setNotificationsEnabled}
@@ -219,7 +267,7 @@ export default function PersonalizationScreen()
                         </View>
                     </Animated.View>
                 );
-            case 4:
+            case 5:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Bevorzugte Sprachen</ThemedText>
@@ -240,28 +288,17 @@ export default function PersonalizationScreen()
                         </ScrollView>
                     </Animated.View>
                 );
-            case 5:
+            case 6:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Bevorzugte Veranstaltungsgröße</ThemedText>
-                        <View style={styles.eventSizeContainer}>
-                            {eventSizes.map((size, index) => (
-                                <TouchableOpacity
-                                    key={index}
-                                    style={[
-                                        styles.eventSizeButton,
-                                        { backgroundColor: preferredEventSize === size.name ? colors.tagActive : colors.tagInactive }
-                                    ]}
-                                    onPress={() => setPreferredEventSize(size.name)}
-                                >
-                                    <FontAwesome5 name={size.icon} size={24} color={colors.textPrimary} />
-                                    <ThemedText style={styles.eventSizeButtonText}>{size.name}</ThemedText>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
+                        <EventSizeSelector
+                            value={preferredEventSize}
+                            onChange={(value) => setPreferredEventSize(value)}
+                        />
                     </Animated.View>
                 );
-            case 6:
+            case 7:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Alles klar, du bist jetzt startklar!</ThemedText>
@@ -273,29 +310,31 @@ export default function PersonalizationScreen()
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.content}>
-                <View style={styles.progressContainer}>
-                    {[0, 1, 2, 3, 4, 5].map((s) => (
-                        <View
-                            key={s}
-                            style={[
-                                styles.progressDot,
-                                { backgroundColor: s <= step ? colors.primary : colors.backgroundLight }
-                            ]}
-                        />
-                    ))}
+            <GestureHandlerRootView>
+                <View style={styles.content}>
+                    <View style={styles.progressContainer}>
+                        {[0, 1, 2, 3, 4, 5, 6, 7].map((s) => (
+                            <View
+                                key={s}
+                                style={[
+                                    styles.progressDot,
+                                    { backgroundColor: s <= step ? colors.primary : colors.backgroundLight }
+                                ]}
+                            />
+                        ))}
+                    </View>
+                    {renderStep()}
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: colors.buttonPrimary }]}
+                        onPress={handleNext}
+                    >
+                        <ThemedText style={[styles.buttonText, { color: colors.buttonText }]}>
+                            {step < totalSteps ? 'Weiter' : 'Fertig'}
+                        </ThemedText>
+                        <Entypo name="chevron-right" size={24} color={colors.buttonText} />
+                    </TouchableOpacity>
                 </View>
-                {renderStep()}
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: colors.buttonPrimary }]}
-                    onPress={handleNext}
-                >
-                    <ThemedText style={[styles.buttonText, { color: colors.buttonText }]}>
-                        {step < 5 ? 'Weiter' : 'Fertig'}
-                    </ThemedText>
-                    <Entypo name="chevron-right" size={24} color={colors.buttonText} />
-                </TouchableOpacity>
-            </View>
+            </GestureHandlerRootView>
         </SafeAreaView>
     );
 }
@@ -326,7 +365,6 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
         borderRadius: 20,
-        padding: 20,
         marginBottom: 20,
     },
     stepTitle: {
@@ -343,19 +381,21 @@ const styles = StyleSheet.create({
     categoryButton: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'flex-start',
         borderRadius: 15,
         padding: 15,
-        margin: 5,
-        width: '45%',
+        aspectRatio: 4 / 2,
     },
     categoryButtonText: {
         marginLeft: 10,
         fontSize: 14,
         fontWeight: '600',
+        lineHeight: 20,
     },
     mapContainer: {
         width: '100%',
-        height: 300,
+        height: "auto",
+        aspectRatio: 0.9,
         borderRadius: 25,
         overflow: 'hidden',
         marginBottom: 20,
@@ -434,18 +474,40 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     listContainer: {
-        paddingHorizontal: 20,
+        width: '100%',
     },
     listItem: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         padding: 15,
         borderRadius: 10,
         marginBottom: 10,
     },
     listItemText: {
-        flex: 1,
         marginLeft: 15,
         fontSize: 16,
+    },
+    listItemSwitch: {
+        marginLeft: 10,
+    },
+    input: {
+        width: '100%',
+        height: 50,
+        borderWidth: 1,
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        fontSize: 16,
+    },
+    gridContainer: {
+        width: '100%',
+    },
+    gridRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+    },
+    gridItem: {
+        width: '48%', // Adjust as needed
     },
 });
