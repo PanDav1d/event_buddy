@@ -34,8 +34,9 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
   {
     try
     {
+      const eventLink = 'eventbuddy://event/' + props.id;
       await Share.share({
-        message: `Check out this event: ${props.title}`,
+        message: `Check out this event: ${props.title} \n ${eventLink}`,
       });
     } catch (error)
     {

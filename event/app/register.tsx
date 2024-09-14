@@ -1,7 +1,6 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { router } from 'expo-router';
-import { View, StyleSheet, TouchableOpacity, TextInput, useColorScheme } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, useColorScheme, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSession } from '@/components/ctx';
@@ -11,6 +10,7 @@ import { Colors } from '@/constants/Colors';
 export default function Register()
 {
     const { signUp } = useSession();
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,7 +27,7 @@ export default function Register()
 
         try
         {
-            await signUp(email, password);
+            await signUp(username, email, password);
             router.push('/personalization');
         } catch (error)
         {
@@ -36,48 +36,63 @@ export default function Register()
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.content}>
-                <ThemedText style={styles.title}>Create Account</ThemedText>
-                <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
-                    placeholder="Email"
-                    placeholderTextColor={colors.textSecondary}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                />
-                <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
-                    placeholder="Password"
-                    placeholderTextColor={colors.textSecondary}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                />
-                <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
-                    placeholder="Confirm Password"
-                    placeholderTextColor={colors.textSecondary}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry
-                />
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: colors.buttonPrimary }]}
-                    onPress={handleRegister}
-                >
-                    <ThemedText style={[styles.buttonText, { color: colors.textInverse }]}>Register</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: colors.buttonSecondary }]}
-                    onPress={() => router.back()}
-                >
-                    <ThemedText style={[styles.buttonText, { color: colors.textInverse }]}>Back to Sign In</ThemedText>
-                </TouchableOpacity>
-            </View>
-        </View>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={[styles.container, { backgroundColor: colors.background }]}
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={styles.content}>
+                    <ThemedText style={styles.title}>Neuen Account bei EventBuddy erstellen</ThemedText>
+                    <TextInput
+                        style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
+                        placeholder="Nutzername"
+                        placeholderTextColor={colors.textSecondary}
+                        value={username}
+                        onChangeText={setUsername}
+                        keyboardType="default"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                    />
+                    <TextInput
+                        style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
+                        placeholder="Email"
+                        placeholderTextColor={colors.textSecondary}
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                    />
+                    <TextInput
+                        style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
+                        placeholder="Passwort"
+                        placeholderTextColor={colors.textSecondary}
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                    />
+                    <TextInput
+                        style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
+                        placeholder="Passwort wiederholen"
+                        placeholderTextColor={colors.textSecondary}
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        secureTextEntry
+                    />
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: colors.buttonPrimary }]}
+                        onPress={handleRegister}
+                    >
+                        <ThemedText style={[styles.buttonText, { color: colors.textInverse }]}>Account erstellen</ThemedText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: colors.buttonSecondary }]}
+                        onPress={() => router.back()}
+                    >
+                        <ThemedText style={[styles.buttonText, { color: colors.textInverse }]}>Zurück zum Anmelden</ThemedText>
+                    </TouchableOpacity>
+                </View>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -96,12 +111,14 @@ const styles = StyleSheet.create({
     },
     title: {
         padding: 20,
-        fontSize: 28,
+        fontSize: 38,
         fontWeight: 'bold',
         marginBottom: 30,
+        lineHeight: 40,
     },
     input: {
         width: '100%',
+        maxWidth: 500,
         height: 50,
         borderRadius: 10,
         paddingHorizontal: 15,
@@ -110,6 +127,7 @@ const styles = StyleSheet.create({
     },
     button: {
         width: '100%',
+        maxWidth: 500,
         paddingVertical: 12,
         borderRadius: 10,
         marginTop: 10,
@@ -117,6 +135,6 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '800',
     },
 });

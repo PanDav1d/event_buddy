@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { SessionProvider } from '@/components/ctx';
+import * as Linking from 'expo-linking';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -18,6 +19,15 @@ export default function RootLayout()
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
         Nunito: require("../assets/fonts/Nunito-VariableFont.ttf"),
     });
+
+    const linking = {
+        prefixes: ['eventbuddy://'],
+        config: {
+            screens: {
+                Event: 'event/:id',
+            }
+        }
+    };
 
     useEffect(() =>
     {

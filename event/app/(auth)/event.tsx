@@ -20,23 +20,19 @@ export default function EventScreen()
 
     useEffect(() =>
     {
-        const hardcodedEvent: EventCard = {
-            id: 1,
-            title: "Summer Music Festival",
-            organizer: "City Events Co.",
-            description: "Join us for a day of live music and fun in the sun!",
-            image_url: "https://picsum.photos/id/158/200/300",
-            unix_time: 1656172800,
-            location: "Central Park, New York",
-            latitude: 40.7829,
-            longitude: -73.9654,
-            tags: ["music", "festival", "summer"],
-            is_saved: false,
-            amount_saved: 0,
-            interestedFriends: []
+        const fetchEvent = async () =>
+        {
+            const event = await NetworkClient.getEvent(Number(eventID));
+            if (event != null)
+            {
+                setEvent(event);
+            } else
+            {
+                router.back();
+            }
         };
 
-        setEvent(hardcodedEvent);
+        fetchEvent();
     }, [eventID]);
 
     const headerOpacity = scrollY.interpolate({

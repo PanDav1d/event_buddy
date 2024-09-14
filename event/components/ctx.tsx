@@ -1,9 +1,10 @@
 import { useContext, createContext, type PropsWithChildren } from 'react';
 import { useStorageState } from '@/components/useStorageState';
+import NetworkClient from '@/api/NetworkClient';
 
 const AuthContext = createContext<{
-    signIn: (email: string, password: string) => void;
-    signUp: (email: string, password: string) => void;
+    signIn: (username: string, password: string) => void;
+    signUp: (username: string, email: string, password: string) => void;
     signOut: () => void;
     session?: UserSession | null;
     isLoading: boolean;
@@ -18,6 +19,7 @@ const AuthContext = createContext<{
 interface UserSession
 {
     username: string;
+    userID: number;
     token: string;
 }
 
@@ -43,32 +45,38 @@ export function SessionProvider({ children }: PropsWithChildren)
     return (
         <AuthContext.Provider
             value={{
-                signIn: (email: string, password: string) =>
+                signIn: async (username: string, password: string): Promise<boolean> =>
                 {
-                    // Perform sign-in logic here
-                    // Evaluate email and password
-                    if (email && password)
+                    if (username && password)
                     {
-                        // Here you would typically make an API call to validate credentials
-                        // For demonstration, we're just checking if both fields are non-empty
-                        setSession(JSON.stringify({ username: email, token: 'xxx' }));
+                        try
+                        {
+                            // Here you would typically make an API call to validate credentials
+                            const response = await NetworkClient.login(username, password);
+                            setSession(JSON.stringify({ username: username, userID: response?.user_id, token: 'xxx' }));
+                            return true;
+                        } catch (error)
+                        {
+                            console.error('Login failed:', error);
+                            return false;
+                        }
                     } else
                     {
-                        console.error('Invalid email or password');
+                        console.error('Invalid username or password');
+                        return false;
                     }
-                },
-                signUp: (email: string, password: string) =>
+                }, signUp: (username: string, email: string, password: string) =>
                 {
                     // Perform sign-up logic here
                     // Evaluate email and password
-                    if (email && password)
+                    if (username && email && password)
                     {
                         // Here you would typically make an API call to create a new user
-                        // For demonstration, we're just checking if both fields are non-empty
-                        setSession(JSON.stringify({ username: email, token: 'new-user-token' }));
+                        NetworkClient.register(username, email, password).then(response =>
+                            setSession(JSON.stringify({ username: username, userID: response?.user_id, token: 'new-user-token' })));
                     } else
                     {
-                        console.error('Invalid email or password for sign-up');
+                        console.error('Invalid username, email or password for sign-up');
                     }
                 },
                 signOut: () =>

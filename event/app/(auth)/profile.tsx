@@ -8,21 +8,24 @@ import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler
 import NetworkClient from '@/api/NetworkClient';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSession } from '@/components/ctx';
+import { useRouter } from 'expo-router';
 
 
 export default function ProfileScreen()
 {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
+    const router = useRouter();
     const { signOut } = useSession();
     const [savedCards, setSavedCards] = useState<EventCard[]>([]);
+
 
     const gridItems = [
         {
             id: 1,
             title: "Gespeicherte",
             icon: 'bookmark-outline',
-            onPress: () => console.log('Gespeicherte'),
+            onPress: () => router.push('/saved'),
             gradient: ['#FF9A8B', '#FF6A88'],
         },
         {

@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { CreateEventParams, EventCard, SearchParams } from '@/constants/Types';
+import * as Crypto from 'expo-crypto';
 
 const BASE_URL = 'https://eventbuddy.pythonanywhere.com/api/v1';
 
@@ -16,6 +17,19 @@ class NetworkClient {
         });
     }
 
+    async getEvent(eventID: number): Promise<EventCard | null>
+    {
+        try
+        {
+            const response = await this.client.get<EventCard>(`/event.json/${eventID}`);
+            return response.data;
+        }
+        catch (error)
+        {
+            console.error('Error while fetching event: ', error);
+            return null;
+        }
+    }
     async getEvents(searchParams : SearchParams, user_id : number): Promise<EventCard[]>
     {
         try
@@ -65,6 +79,39 @@ class NetworkClient {
         catch (error)
         {
             console.error('Error while creating event: ', error);
+        }
+    }
+
+    async register(username: string, email: string, password: string): Promise<{ user_id: number } | null> {
+        try {
+            const response = await this.client.post('/register', { username, email, password })
+            return response.data
+        } catch (error) {
+            console.error('Error during registration:', error)
+            return null
+        }
+    }
+
+
+    async login(username: string, password: string): Promise<{ user_id: number } | null> {
+        try {
+            const response = await this.client.post('/login', { username, password });
+            return response.data;
+        } catch (error) {
+            console.error('Error during login:', error);
+            return null;
+        }
+    }
+
+    async getSearchResults(text: string): Promise<{ id: string; title: string; }[]>
+    {
+        try {
+            const response = await this.client.post('/search', { text });
+            console.log(response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error during search:', error);
+            return [];
         }
     }
 }

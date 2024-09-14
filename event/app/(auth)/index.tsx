@@ -9,13 +9,17 @@ import * as Location from 'expo-location';
 import NetworkClient from '@/api/NetworkClient';
 import { EventCarousel } from '@/components/EventCarousel';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
+import { useSession } from '@/components/ctx';
+import { Redirect } from 'expo-router';
 
 const CARD_MARGIN = 24;
 
-export default function HomeScreen()
+export default function IndexScreen()
 {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+
+  const { session } = useSession();
 
   const [currLatitude, setCurrLatitude] = useState<number | null>(null);
   const [currLongitude, setCurrLongitude] = useState<number | null>(null);
@@ -23,9 +27,17 @@ export default function HomeScreen()
 
 
   const [refreshing, setRefreshing] = useState(false);
+
+
+
   const [apiData, setApiData] = useState<EventCard[]>([]);
   const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  if (!session)
+  {
+    return <Redirect href={"/sign-in"} />
+  }
 
   useEffect(() =>
   {
@@ -70,7 +82,7 @@ export default function HomeScreen()
 
     try
     {
-      const events = await NetworkClient.getEvents(searchParams, 1);
+      const events = await NetworkClient.getEvents(searchParams, session.userID);
       setApiData(events);
       setError(null);
     } catch (error)
@@ -88,7 +100,7 @@ export default function HomeScreen()
     }
   }, [searchParams]);
 
-  const reloadContent = useCallback(() =>
+  const onRefresh = useCallback(() =>
   {
     setRefreshing(true);
     fetchData().then(() => setRefreshing(false));
@@ -96,8 +108,7 @@ export default function HomeScreen()
 
   const saveEvent = async (eventId: number) =>
   {
-    const userId = 1;
-    NetworkClient.saveEvent(userId, eventId);
+    NetworkClient.saveEvent(session.userID, eventId);
   };
 
   const renderContent = () =>
@@ -121,7 +132,7 @@ export default function HomeScreen()
         </View>
       );
     }
-    /*
+
     if (apiData.length === 0)
     {
       return (
@@ -131,60 +142,12 @@ export default function HomeScreen()
         </View>
       );
     }
-    */
-    const sampleData: EventCard[] = [
-      {
-        id: 1,
-        title: "Sample Event 1",
-        organizer: "Sample Organizer 1",
-        description: "This is a sample event description",
-        image_url: "https://picsum.photos/id/158/200/300",
-        unix_time: 1725468526,
-        location: "Sample Location 1",
-        latitude: 52.520008,
-        longitude: 13.404954,
-        tags: ["sample", "event"],
-        is_saved: false,
-        amount_saved: 0,
-        interestedFriends: []
-      },
-      {
-        id: 2,
-        title: "Sample Event 2",
-        organizer: "Sample Organizer 2",
-        description: "Another sample event description",
-        image_url: "https://picsum.photos/id/158/200/300",
-        unix_time: 1725634126,
-        location: "Sample Location 2",
-        latitude: 48.856613,
-        longitude: 2.352222,
-        tags: ["sample", "event", "another"],
-        is_saved: true,
-        amount_saved: 5,
-        interestedFriends: ["Philipp"]
-      },
-      {
-        id: 3,
-        title: "Sample Event 2",
-        organizer: "Sample Organizer 2",
-        description: "Another sample event description",
-        image_url: "https://picsum.photos/id/158/200/300",
-        unix_time: 1725634126,
-        location: "Sample Location 2",
-        latitude: 48.856613,
-        longitude: 2.352222,
-        tags: ["sample", "event", "another"],
-        is_saved: true,
-        amount_saved: 5,
-        interestedFriends: ["Aaron", "Amelie", "Jannis", "Aaron", "Amelie", "Jannis"]
-      }
-    ]
 
     return (
       <GestureHandlerRootView>
-        <ScrollView>
-          <EventCarousel title="Highlights" data={sampleData} />
-          <EventCarousel title="Shows" data={sampleData} />
+        <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+          <EventCarousel title="Highlights" data={apiData} />
+          <EventCarousel title="Shows" data={apiData} />
         </ScrollView>
       </GestureHandlerRootView>
     );

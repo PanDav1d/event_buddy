@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, SetStateAction } from 'react';
 import { View, StyleSheet, TouchableOpacity, useColorScheme, ScrollView, Switch, Dimensions, Image, Animated, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -6,10 +6,15 @@ import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import Slider from '@react-native-community/slider';
-import { Ionicons, MaterialCommunityIcons, FontAwesome5, Entypo } from "@expo/vector-icons";
+import { MaterialCommunityIcons, FontAwesome5, Entypo } from "@expo/vector-icons";
 import { BlurView } from 'expo-blur';
 import { GestureHandlerRootView, TextInput } from 'react-native-gesture-handler';
 import { EventSizeSelector } from '@/components/EventSizeSelector';
+import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
+import { LocationObjectCoords } from 'expo-location';
+
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -21,6 +26,8 @@ export default function PersonalizationScreen()
     const totalSteps = 7;
 
     const [step, setStep] = useState(0);
+
+    const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
 
     const [username, setUsername] = useState('');
@@ -85,6 +92,12 @@ export default function PersonalizationScreen()
         );
     };
 
+    useEffect(() =>
+    {
+        getCurrentLocation();
+    }, []);
+
+
     const handleNext = () =>
     {
         if (step < totalSteps)
@@ -105,6 +118,22 @@ export default function PersonalizationScreen()
         }
     };
 
+    const getCurrentLocation = async () =>
+    {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted')
+        {
+            console.log('Permission to access location was denied');
+            return;
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        setCurrentLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+        });
+        setLocation({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+    };
     const GridItem = ({ category, isSelected, onPress }: { category: { icon: string; name: string }, isSelected: boolean, onPress: () => void }) => (
         <TouchableOpacity
             style={[
@@ -153,18 +182,6 @@ export default function PersonalizationScreen()
             case 0:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
-                        <ThemedText style={styles.stepTitle}>Wie möchten Sie genannt werden?</ThemedText>
-                        <TextInput
-                            style={[styles.input, { borderColor: colors.border, backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
-                            value={username}
-                            onChangeText={setUsername}
-                            placeholder="Ihr Nutzername"
-                        />
-                    </Animated.View>
-                );
-            case 1:
-                return (
-                    <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Welche Veranstaltungen interessieren Sie?</ThemedText>
                         <ScrollView contentContainerStyle={styles.buttonContainer}>
                             <Grid
@@ -181,7 +198,7 @@ export default function PersonalizationScreen()
                         </ScrollView>
                     </Animated.View>
                 );
-            case 2:
+            case 1:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Wo befinden Sie sich?</ThemedText>
@@ -197,10 +214,21 @@ export default function PersonalizationScreen()
                             >
                                 <Marker coordinate={location} />
                             </MapView>
+                            <TouchableOpacity
+                                style={styles.recenterButton}
+                                onPress={() =>
+                                {
+                                    if (currentLocation && 'latitude' in currentLocation && 'longitude' in currentLocation)
+                                    {
+                                        setLocation({ latitude: currentLocation.latitude, longitude: currentLocation.longitude });
+                                    }
+                                }}                            >
+                                <Ionicons name="locate" size={24} color={colors.primary} />
+                            </TouchableOpacity>
                         </View>
                     </Animated.View>
                 );
-            case 3:
+            case 2:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Wie weit möchten Sie maximal reisen?</ThemedText>
@@ -238,7 +266,7 @@ export default function PersonalizationScreen()
                         </View>
                     </Animated.View>
                 );
-            case 4:
+            case 3:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Weitere Einstellungen</ThemedText>
@@ -267,7 +295,7 @@ export default function PersonalizationScreen()
                         </View>
                     </Animated.View>
                 );
-            case 5:
+            case 4:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Bevorzugte Sprachen</ThemedText>
@@ -288,7 +316,7 @@ export default function PersonalizationScreen()
                         </ScrollView>
                     </Animated.View>
                 );
-            case 6:
+            case 5:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Bevorzugte Veranstaltungsgröße</ThemedText>
@@ -298,7 +326,7 @@ export default function PersonalizationScreen()
                         />
                     </Animated.View>
                 );
-            case 7:
+            case 6:
                 return (
                     <Animated.View style={[styles.stepContainer, { opacity, transform: [{ translateY }] }]}>
                         <ThemedText style={styles.stepTitle}>Alles klar, du bist jetzt startklar!</ThemedText>
@@ -307,33 +335,32 @@ export default function PersonalizationScreen()
                 );
         }
     };
-
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <GestureHandlerRootView>
-                <View style={styles.content}>
-                    <View style={styles.progressContainer}>
-                        {[0, 1, 2, 3, 4, 5, 6, 7].map((s) => (
-                            <View
-                                key={s}
-                                style={[
-                                    styles.progressDot,
-                                    { backgroundColor: s <= step ? colors.primary : colors.backgroundLight }
-                                ]}
-                            />
-                        ))}
-                    </View>
-                    {renderStep()}
-                    <TouchableOpacity
-                        style={[styles.button, { backgroundColor: colors.buttonPrimary }]}
-                        onPress={handleNext}
-                    >
-                        <ThemedText style={[styles.buttonText, { color: colors.buttonText }]}>
-                            {step < totalSteps ? 'Weiter' : 'Fertig'}
-                        </ThemedText>
-                        <Entypo name="chevron-right" size={24} color={colors.buttonText} />
-                    </TouchableOpacity>
+            <GestureHandlerRootView style={styles.gestureContainer}>
+                <View style={styles.progressContainer}>
+                    {[0, 1, 2, 3, 4, 5, 6, 7].map((s) => (
+                        <View
+                            key={s}
+                            style={[
+                                styles.progressDot,
+                                { backgroundColor: s <= step ? colors.primary : colors.backgroundLight }
+                            ]}
+                        />
+                    ))}
                 </View>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    {renderStep()}
+                </ScrollView>
+                <TouchableOpacity
+                    style={[styles.button, { backgroundColor: colors.buttonPrimary }]}
+                    onPress={handleNext}
+                >
+                    <ThemedText style={[styles.buttonText, { color: colors.buttonText }]}>
+                        {step < totalSteps ? 'Weiter' : 'Fertig'}
+                    </ThemedText>
+                    <Entypo name="chevron-right" size={24} color={colors.buttonText} />
+                </TouchableOpacity>
             </GestureHandlerRootView>
         </SafeAreaView>
     );
@@ -343,17 +370,19 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    content: {
+    gestureContainer: {
         flex: 1,
-        justifyContent: 'space-between',
-        alignItems: 'center',
+    },
+    scrollContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
         padding: 20,
     },
     progressContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        paddingVertical: 10,
     },
     progressDot: {
         width: 10,
@@ -466,7 +495,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         padding: 15,
         borderRadius: 25,
-        width: '100%',
+        margin: 20,
     },
     buttonText: {
         fontSize: 18,
@@ -510,4 +539,18 @@ const styles = StyleSheet.create({
     gridItem: {
         width: '48%', // Adjust as needed
     },
+    recenterButton: {
+        position: 'absolute',
+        bottom: 16,
+        right: 16,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 8,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+
 });

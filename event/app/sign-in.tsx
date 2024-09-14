@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { router } from 'expo-router';
-import { View, StyleSheet, TouchableOpacity, TextInput, useColorScheme } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, useColorScheme, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSession } from '@/components/ctx';
@@ -10,7 +10,7 @@ import { Colors } from '@/constants/Colors';
 export default function SignIn()
 {
     const { signIn } = useSession();
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
@@ -19,53 +19,55 @@ export default function SignIn()
     {
         try
         {
-            await signIn(email, password);
-            router.replace('/');
+            const success = await signIn(username, password);
+            router.replace('/');  // Changed from router.push to router.replace and updated the route
         } catch (error)
         {
             console.error('Sign in failed:', error);
         }
     };
-
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.content}>
-                <ThemedText style={styles.title}>Welcome Back</ThemedText>
-                <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
-                    placeholder="Email"
-                    placeholderTextColor={colors.textSecondary}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                />
-                <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
-                    placeholder="Password"
-                    placeholderTextColor={colors.textSecondary}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                />
-                <TouchableOpacity
-
-                    style={[styles.button, { backgroundColor: colors.buttonPrimary }]}
-                    onPress={handleSignIn}
-                >
-                    <ThemedText style={[styles.buttonText, { color: colors.textInverse }]}>Sign In</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: colors.buttonSecondary }]}
-                    onPress={() => router.push('/register')}
-                >
-                    <ThemedText style={[styles.buttonText, { color: colors.textInverse }]}>Register</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/forgot-password')}>
-                    <ThemedText style={styles.forgotPassword}>Forgot Password?</ThemedText>
-                </TouchableOpacity>
-            </View>
-        </View>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={[styles.container, { backgroundColor: colors.background }]}
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={styles.content}>
+                    <ThemedText style={styles.title}>Willkommen zurück bei EventBuddy</ThemedText>
+                    <TextInput
+                        style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
+                        placeholder="Nutzername"
+                        placeholderTextColor={colors.textSecondary}
+                        value={username}
+                        onChangeText={setUsername}
+                        keyboardType="default"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                    />
+                    <TextInput
+                        style={[styles.input, { backgroundColor: colors.backgroundAlt, color: colors.textPrimary }]}
+                        placeholder="Passwort"
+                        placeholderTextColor={colors.textSecondary}
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                    />
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: colors.buttonPrimary }]}
+                        onPress={handleSignIn}>
+                        <ThemedText style={[styles.buttonText, { color: colors.textInverse }]}>Anmelden</ThemedText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: colors.buttonSecondary }]}
+                        onPress={() => router.push('/register')}>
+                        <ThemedText style={[styles.buttonText, { color: colors.textInverse }]}>Account erstellen</ThemedText>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/forgot-password')}>
+                        <ThemedText style={styles.forgotPassword}>Forgot Password?</ThemedText>
+                    </TouchableOpacity>
+                </View>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -83,35 +85,33 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     title: {
-        padding: 20,
-        fontSize: 28,
+        lineHeight: 40,
+        paddingRight: 20,
+        fontSize: 38,
+        marginLeft: 0,
         fontWeight: 'bold',
         marginBottom: 30,
     },
     input: {
         width: '100%',
+        maxWidth: 500,
         height: 50,
         borderRadius: 10,
         paddingHorizontal: 15,
         marginBottom: 15,
         fontSize: 16,
     },
-
     button: {
         width: '100%',
+        maxWidth: 500,
         paddingVertical: 12,
-
-
-
-
         borderRadius: 10,
         marginTop: 10,
         alignItems: 'center',
     },
     buttonText: {
-
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '800',
     },
     forgotPassword: {
         marginTop: 15,

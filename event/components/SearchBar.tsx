@@ -1,4 +1,4 @@
-import { View, StatusBar, Text, StyleSheet, Pressable, ScrollView, Modal, Animated, useColorScheme, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TextInput } from "react-native";
+import { View, StatusBar, Text, StyleSheet, Pressable, ScrollView, Modal, Animated, useColorScheme, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import React, { useRef, useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,6 +12,8 @@ import Slider from '@react-native-community/slider';
 import { ProfileButton } from "@/components/ProfileButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DateQuickTab } from "@/constants/DateQuickTabs";
+import { useRouter } from "expo-router";
+import NetworkClient from "@/api/NetworkClient";
 
 
 interface SearchBarProps
@@ -23,6 +25,8 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
 {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
+
+    const router = useRouter();
 
     const [modalVisible, setModalVisible] = React.useState(false);
     const [showAllTags, setShowAllTags] = useState(false);
@@ -40,17 +44,22 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
     });
 
     const [searchText, setSearchText] = useState("");
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const [resultItems, setResultItems] = useState<{ id: string, title: string }[]>([]);
 
-    const handleTextSearch = (text: string) =>
+    const handleTextSearch = async (text: string) =>
     {
         setSearchText(text);
-        // You can add debounce here if needed
-        setSearchParams(prevParams => ({
-            ...prevParams,
-            searchText: text
-        }));
-    };
 
+        if (text.length > 0)
+        {
+            setShowSearchResults(true);
+        } else
+        {
+            setShowSearchResults(false);
+            return;
+        }
+    };
 
     const mapRef = useRef<MapView>(null);
 
@@ -191,18 +200,6 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
         }));
     }
 
-    const handleDateChange = (startDate: number | null, endDate: number | null) =>
-    {
-        if (startDate && endDate)
-        {
-            setSearchParams(prevParams => ({
-                ...prevParams,
-                start_date: startDate,
-                end_date: endDate
-            }));
-        }
-    }
-
     const handleDateFilterChange = (filter: DateQuickTab) =>
     {
         const now = new Date();
@@ -281,64 +278,90 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
                         behavior={Platform.OS === "ios" ? "padding" : "height"}
                         style={{ flex: 1 }} >
                         <ScrollView>
-                            <View style={styles.searchInputContainer}>
+                            <View style={styles.searchTextContainer}>
                                 <TextInput
                                     style={[styles.searchInput, { backgroundColor: colors.tagInactive, color: colors.textPrimary }]}
                                     placeholder="Suche nach Events..."
                                     placeholderTextColor={colors.textSecondary}
                                     value={searchText}
                                     onChangeText={handleTextSearch}
+                                    onSubmitEditing={async () => setResultItems(await NetworkClient.getSearchResults(searchText))}
                                 />
                             </View>
-                            <View style={styles.filterOption}>
-                                <ThemedText>Tags</ThemedText>
-                                {renderTags()}
-                            </View>
-                            <View style={styles.filterOption}>
-                                <ThemedText>Standort</ThemedText>
-                                <View style={styles.mapContainer}>
-                                    <MapView
-                                        ref={mapRef}
-                                        style={styles.map}
-                                        initialRegion={{
-                                            latitude: searchParams.latitude,
-                                            longitude: searchParams.longitude,
-                                            latitudeDelta: searchParams.radius * 2 / 111.32,
-                                            longitudeDelta: searchParams.radius * 2 / (111.32 * Math.cos(searchParams.latitude * (Math.PI / 180))),
-                                        }}
-                                        onRegionChangeComplete={handleMapRegionChange}>
-                                        <Marker
-                                            coordinate={{
-                                                latitude: searchParams.latitude,
-                                                longitude: searchParams.longitude,
-                                            }}
-                                        />
-                                        <Circle
-                                            center={{
-                                                latitude: searchParams.latitude,
-                                                longitude: searchParams.longitude,
-                                            }}
-                                            radius={searchParams.radius * 1000}
-                                            fillColor={colors.primaryTransparent}
-                                            strokeColor={colors.primary}
-                                        />
-                                    </MapView>
+                            {showSearchResults && (
+                                <View style={[styles.searchContainer]}>
+                                    <ScrollView style={styles.resultsContainer}>
+                                        {resultItems.map((item) => (
+                                            <TouchableOpacity key={item.id} style={styles.resultItem} onPress={() =>
+                                            {
+                                                setModalVisible(false);
+                                                setSearchText('');
+                                                setShowSearchResults(false);
+                                                router.push({ pathname: '/event', params: { eventID: item.id } });
+                                            }}>
+                                                <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
+                                                <ThemedText style={styles.resultItemText}>{item.title}</ThemedText>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
                                 </View>
-                            </View>
-                            <View style={styles.filterOption}>
-                                <ThemedText>Radius: {searchParams.radius} km</ThemedText>
-                                <Slider
-                                    style={{ width: '100%', height: 40 }}
-                                    minimumValue={2}
-                                    maximumValue={250}
-                                    step={1}
-                                    value={searchParams.radius}
-                                    onSlidingComplete={(value) => handleParamChange('radius', value, true)}
-                                    onValueChange={(value) => handleParamChange('radius', value, false)}
-                                    minimumTrackTintColor={colors.primary}
-                                    maximumTrackTintColor={colors.backgroundLight}
-                                />
-                            </View>
+
+                            ) || (
+                                    <>
+                                        <View style={styles.filterOption}>
+                                            <ThemedText>Tags</ThemedText>
+                                            {renderTags()}
+                                        </View>
+                                        <View style={styles.filterOption}>
+                                            <ThemedText>Standort</ThemedText>
+                                            <View style={styles.mapContainer}>
+                                                <MapView
+                                                    ref={mapRef}
+                                                    style={styles.map}
+                                                    initialRegion={{
+                                                        latitude: searchParams.latitude,
+                                                        longitude: searchParams.longitude,
+                                                        latitudeDelta: searchParams.radius * 2 / 111.32,
+                                                        longitudeDelta: searchParams.radius * 2 / (111.32 * Math.cos(searchParams.latitude * (Math.PI / 180))),
+                                                    }}
+                                                    onRegionChangeComplete={handleMapRegionChange}>
+                                                    <Marker
+                                                        coordinate={{
+                                                            latitude: searchParams.latitude,
+                                                            longitude: searchParams.longitude,
+                                                        }}
+                                                    />
+                                                    <Circle
+                                                        center={{
+                                                            latitude: searchParams.latitude,
+                                                            longitude: searchParams.longitude,
+                                                        }}
+                                                        radius={searchParams.radius * 1000}
+                                                        fillColor={colors.primaryTransparent}
+                                                        strokeColor={colors.primary}
+                                                    />
+                                                </MapView>
+                                            </View>
+                                        </View>
+                                        <View style={styles.filterOption}>
+                                            <ThemedText>Radius: {searchParams.radius} km</ThemedText>
+                                            <Slider
+                                                style={{ width: '100%', height: 40 }}
+                                                minimumValue={2}
+                                                maximumValue={250}
+                                                step={1}
+                                                value={searchParams.radius}
+                                                onSlidingComplete={(value) => handleParamChange('radius', value, true)}
+                                                onValueChange={(value) => handleParamChange('radius', value, false)}
+                                                minimumTrackTintColor={colors.primary}
+                                                maximumTrackTintColor={colors.backgroundLight}
+                                            />
+                                        </View>
+                                    </>
+
+                                )
+                            }
+
                         </ScrollView>
                         <SubmitButton title="Filter anwenden" onPress={handleSearch} />
                     </KeyboardAvoidingView>
@@ -445,11 +468,22 @@ const styles = StyleSheet.create({
         fontSize: 16,
         elevation: 5,
     },
-    searchInputContainer: {
+
+    searchTextContainer: {
+        overflow: 'hidden',
+        borderRadius: 25,
+        marginBottom: 10,
+    },
+    resultsContainer: {
+        paddingHorizontal: 15,
+    },
+    resultItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-        marginBottom: 8,
-    }
+        paddingVertical: 10,
+    },
+    resultItemText: {
+        marginLeft: 10,
+        fontSize: 16,
+    },
 });

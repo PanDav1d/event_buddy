@@ -3,6 +3,7 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 import yaml
+import hashlib
 
 app = Flask(__name__)
 
@@ -46,7 +47,7 @@ def create_user_table():
         CREATE TABLE IF NOT EXISTS user (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50),
-            password VARCHAR(50),
+            password VARCHAR(80),
             first_name VARCHAR(50),
             last_name VARCHAR(50),
             email VARCHAR(50),
@@ -106,6 +107,27 @@ def insert_user(username, password, first_name, last_name, email, profile_image_
             connection.close()
     except Error as error:
         print("Error while inserting user: ", error)
+
+def get_user_by_username(username):
+    select_query = '''
+        SELECT * FROM user WHERE username = %s;
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(select_query, (username,))
+            user = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            return user
+    except Error as error:
+        print("Error while fetching user: ", error)
+        return None
+
+def verify_password(password, hashed_password):
+    return hashlib.sha256(password.encode()).hexdigest() == hashed_password
+
 
 def insert_saved_event(user_id, event_id):
     insert_query = '''
@@ -281,10 +303,13 @@ def get_user(user_id):
 
 def get_saved_events(user_id):
     select_query = '''
-    SELECT se.*, e.*
+    SELECT se.*, e.*,
+    CASE WHEN se.event_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_saved,
+    COUNT(se.event_id) AS amount_saved
     FROM saved_event se
     JOIN event e ON se.event_id = e.id
     WHERE se.user_id = %s
+    GROUP BY e.id
     '''
     try:
         connection = create_connection()
@@ -298,6 +323,24 @@ def get_saved_events(user_id):
     except Error as error:
         print("Error while fetching saved events: ", error)
         return []
+
+def search_events(text):
+    select_query = '''
+    SELECT id, title FROM event WHERE title LIKE %s
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(select_query, ('%' + text + '%',))
+            events = cursor.fetchall()
+            cursor.close
+            connection.close()
+            return events
+    except Error as error:
+        print("Error while fetching events: ", error)
+        return []
+
 
 
 
@@ -313,6 +356,52 @@ def get_home():
 @app.route("/api/v1/health", methods=['GET'])
 def health():
     return jsonify("OK")
+
+@app.route("/api/v1/register", methods=['POST'])
+def register():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+
+    if not username or not password or not email:
+        return jsonify({"error": "Missing parameters"}), 400
+    if get_user_by_username(username):
+        return jsonify({"error": "Username already exists"}), 400
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+    user_id = insert_user(username, hashed_password, None, None, email, None)
+
+    if user_id:
+        return jsonify({"message": "User registered successfully", "user_id": user_id}), 201
+    return jsonify({"error": "Failed to register user"}), 500
+
+@app.route("/api/v1/login", methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    print(f"Login attempt for username: {username}")
+
+    if not username or not password:
+        print("Missing username or password")
+        return jsonify({"error": "Missing parameters"}), 400
+
+    print("Fetching user from database")
+    user = get_user_by_username(username)
+
+    if user:
+        print(f"User found: {user}")
+        if verify_password(password, user['password']):
+            print("Password verified successfully")
+            return jsonify({"message": "Login successful", "user_id": user['id']}), 200
+        else:
+            print("Password verification failed")
+    else:
+        print("User not found")
+
+    return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/api/v1/events.json/<int:user_id>', methods=['GET'])
 def get_entries(user_id):
@@ -339,7 +428,6 @@ def get_entries(user_id):
 def create_event():
     try:
         data = request.json
-        print(data)
         title = data.get('title')
         organizer = data.get('organizer')
         description = data.get('description')
@@ -347,8 +435,6 @@ def create_event():
         unix_time = data.get('unix_time')
         latitude = data.get('latitude')
         longitude = data.get('longitude')
-
-        print(f"Title: {title}, Organizer: {organizer}, Description: {description}, Image URL: {image_url}, Unix Time: {unix_time}, Latitude: {latitude}, Longitude: {longitude}")
 
         insert_event(title, organizer, description, image_url, unix_time, latitude, longitude)
         return jsonify({"message": "Event created successfully"}), 201
@@ -402,6 +488,20 @@ def api_set_saved_event(user_id, event_id):
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/v1/search', methods=['POST'])
+def api_search():
+    try:
+        data = request.json
+        text = data.get('text')
+
+        results = search_events(text)
+        return jsonify(results), 200
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+
 
 create_event_table()
 create_user_table()

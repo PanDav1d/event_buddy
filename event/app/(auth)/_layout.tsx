@@ -27,13 +27,23 @@ export default function AuthLayout()
 
   return (
     <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{
+        headerShown: false,
+      }} />
       <Stack.Screen name="profile" options={{
         headerBlurEffect: "systemMaterial",
         headerLargeTitleShadowVisible: false,
         headerBackButtonMenuEnabled: false,
         headerBackTitle: "Zurück",
         headerTitle: 'Profil von ' + session.username,
+        headerLargeTitle: true,
+      }} />
+      <Stack.Screen name="saved" options={{
+        headerBlurEffect: "systemMaterial",
+        headerLargeTitleShadowVisible: false,
+        headerBackButtonMenuEnabled: false,
+        headerBackTitle: "Zurück",
+        headerTitle: 'Deine Gespeicherten',
         headerLargeTitle: true,
       }} />
       <Stack.Screen name="event" options={{
