@@ -41,20 +41,31 @@ class NetworkClient {
             return null;
         }
     }
-    async getEvents(searchParams : SearchParams, user_id : number): Promise<EventCard[]>
-    {
-        try
-        {
-            const response = await this.client.get<EventCard[]>(`/events.json/${user_id}`, { params: searchParams});
-            console.log('Response data:', response.data);
-            return response.data;
-        }
-        catch (error)
-        {
+    async getEvents(searchParams: SearchParams, user_id: number): Promise<{[category: string]: EventCard[]}> {
+        try {
+            console.log(searchParams);
+            const response = await this.client.get<EventCard[]>(`/events.json/${user_id}`, { params: searchParams });
+            const eventsByCategory: {[category: string]: EventCard[]} = {};
+            const categories = await this.client.get<string[]>('/categories.json');
+
+            for (const category of categories.data){
+                console.log(category);
+                for (const event of response.data){
+                    if (event.category === category){
+                        if (!eventsByCategory[category]){
+                            eventsByCategory[category] = [];
+                        }
+                        eventsByCategory[category].push(event);
+                    }
+                }
+            }
+            return eventsByCategory;
+        } catch (error) {
             console.error('Error while fetching events: ', error);
-            return [];
+            return {};
         }
     }
+    
 
     async saveEvent(user_id:number, event_id:number): Promise<void>
     {
@@ -72,7 +83,9 @@ class NetworkClient {
     {
         try
         {
+            console.log("getting saved events");
             const response = await this.client.get<EventCard[]>(`/saved_events.json/${user_id}`);
+            console.log(response.data);
             return response.data;
         }
         catch (error)
@@ -137,6 +150,27 @@ class NetworkClient {
             return [];
         }
     }
+    async getCategories(): Promise<string[]> {
+        try {
+            const response = await this.client.get<string[]>('/categories.json');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            return [];
+        }
+    }
+    async refreshToken(): Promise<string | null> {
+        try {
+            const response = await this.client.post('/refresh-token');
+            const newToken = response.data.access_token;
+            this.setToken(newToken);
+            return newToken;
+        } catch (error) {
+            console.error('Error refreshing token:', error);
+            return null;
+        }
+    }
+    
 }
 
 export default new NetworkClient();

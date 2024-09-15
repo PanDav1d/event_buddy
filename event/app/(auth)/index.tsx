@@ -23,6 +23,7 @@ export default function IndexScreen()
 
   const [currLatitude, setCurrLatitude] = useState<number | null>(null);
   const [currLongitude, setCurrLongitude] = useState<number | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
 
@@ -30,7 +31,7 @@ export default function IndexScreen()
 
 
 
-  const [apiData, setApiData] = useState<EventCard[]>([]);
+  const [apiData, setApiData] = useState<{ [key: string]: EventCard[] }>({});
   const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,15 +83,17 @@ export default function IndexScreen()
 
     try
     {
-      const events = await NetworkClient.getEvents(searchParams, session.userID);
-      setApiData(events);
+      const eventsByCategory = await NetworkClient.getEvents(searchParams, session.userID);
+      setApiData(eventsByCategory);
+      setCategories(Object.keys(eventsByCategory));
       setError(null);
     } catch (error)
     {
       console.error('Error fetching data:', error);
       setError('Network Issue');
     }
-  }
+  };
+
 
   useEffect(() =>
   {
@@ -133,21 +136,12 @@ export default function IndexScreen()
       );
     }
 
-    if (apiData.length === 0)
-    {
-      return (
-        <View style={styles.errorContainer}>
-          <Ionicons name="search-outline" size={100} color={colors.textPrimary} />
-          <Text style={[styles.errorText, { color: colors.textPrimary }]}>Keine Events gefunden</Text>
-        </View>
-      );
-    }
-
     return (
       <GestureHandlerRootView>
         <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-          <EventCarousel title="Highlights" data={apiData} />
-          <EventCarousel title="Shows" data={apiData} />
+          {categories.map(category => (
+            <EventCarousel key={category} title={category} data={apiData[category]} />
+          ))}
         </ScrollView>
       </GestureHandlerRootView>
     );

@@ -1,8 +1,8 @@
 from flask import Flask, json, jsonify, request
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_refresh_token, jwt_required, create_access_token, get_jwt_identity
 import mysql.connector
 from mysql.connector import Error
-from datetime import datetime
+from datetime import datetime, timedelta
 import yaml
 import hashlib
 
@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 jwt_secret_key = "my_secret_key"
 app.config['JWT_SECRET_KEY'] = jwt_secret_key
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=14)
 jwt = JWTManager(app)
 
 # there is a different version on the server running cause external files didnt worked out well
@@ -102,6 +103,80 @@ def create_event_table():
     except Error as error:
         print("Error while creating table: ", error)
 
+def create_category_table():
+    create_table_query = """
+        CREATE TABLE IF NOT EXISTS category (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(50) UNIQUE,
+                description VARCHAR(150),
+                order_index INT
+            );
+    """
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(create_table_query)
+            connection.commit()
+            print("Database 'category' has been created.")
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while creating table: ", error)
+
+def create_event_category_table():
+    create_table_query = """
+        CREATE TABLE IF NOT EXISTS event_category (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            event_id INT,
+            category_id INT,
+            FOREIGN KEY (event_id) REFERENCES event(id),
+            FOREIGN KEY (category_id) REFERENCES category(id)
+        );
+    """
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(create_table_query)
+            connection.commit()
+            print("Database 'event_category' has been created.")
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while creating table: ", error)
+
+def insert_category(name, description):
+    insert_query = """
+        INSERT INTO category (name, description) VALUES (%s, %s);
+    """
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(insert_query, (name, description))
+            connection.commit()
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while inserting category: ", error)
+    
+def get_all_categories():
+    select_query = """
+        SELECT * FROM category ORDER BY order_index ASC;
+    """
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(select_query)
+            categories = cursor.fetchall()
+            cursor.close()
+            connection.close()
+            return categories
+    except Error as error:
+        print("Error while fetching categories: ", error)
+
 def insert_user(username, password, first_name, last_name, email, profile_image_url):
     insert_query = '''
     INSERT INTO user (username, password, first_name, last_name, email, profile_image_url)
@@ -137,7 +212,6 @@ def get_user_by_username(username):
 
 def verify_password(password, hashed_password):
     return hashlib.sha256(password.encode()).hexdigest() == hashed_password
-
 
 def insert_saved_event(user_id, event_id):
     insert_query = '''
@@ -266,26 +340,30 @@ def get_any_events():
 
 def get_events(user_id, latitude, longitude, radius, start_date, end_date):
     select_query = """
-    SELECT e.*, (
+    SELECT e.*, c.name as category, (
         6371 * acos(
             cos(radians(%s)) * cos(radians(e.latitude)) * cos(radians(e.longitude) - radians(%s)) +
             sin(radians(%s)) * sin(radians(e.latitude))
         )
     ) AS distance,
     CASE WHEN se.event_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_saved,
-    COUNT(se.event_id) AS amount_saved
+    COUNT(DISTINCT se.id) AS amount_saved
     FROM event e
-    LEFT JOIN saved_event se ON e.id = se.event_id AND se.user_id = %s
+    LEFT JOIN saved_event se ON e.id = se.event_id
+    LEFT JOIN event_category ec ON e.id = ec.event_id
+    LEFT JOIN category c ON ec.category_id = c.id
     WHERE e.unix_time >= %s AND e.unix_time <= %s
-    GROUP BY e.id
+    GROUP BY e.id, c.name
     HAVING distance <= %s
     ORDER BY e.unix_time;
     """
+    params = (latitude, longitude, latitude, int(start_date), int(end_date), radius)
+
     try:
         connection = create_connection()
         if connection is not None:
             cursor = connection.cursor(dictionary=True)
-            cursor.execute(select_query, (latitude, longitude, latitude, user_id, int(start_date), int(end_date), radius))
+            cursor.execute(select_query, params)
             events = cursor.fetchall()
             cursor.close()
             connection.close()
@@ -313,13 +391,16 @@ def get_user(user_id):
 
 def get_saved_events(user_id):
     select_query = '''
-    SELECT se.*, e.*,
-    CASE WHEN se.event_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_saved,
-    COUNT(se.event_id) AS amount_saved
+    SELECT e.*, GROUP_CONCAT(DISTINCT c.name) as categories,
+    TRUE AS is_saved,
+    (SELECT COUNT(*) FROM saved_event WHERE event_id = e.id) AS amount_saved
     FROM saved_event se
     JOIN event e ON se.event_id = e.id
+    LEFT JOIN event_category ec ON e.id = ec.event_id
+    LEFT JOIN category c ON ec.category_id = c.id
     WHERE se.user_id = %s
     GROUP BY e.id
+    ORDER BY e.unix_time
     '''
     try:
         connection = create_connection()
@@ -333,6 +414,7 @@ def get_saved_events(user_id):
     except Error as error:
         print("Error while fetching saved events: ", error)
         return []
+
 
 def search_events(text):
     select_query = '''
@@ -362,11 +444,6 @@ def search_events(text):
 def index():
     return "<p>EventBuddy API</p>"
 
-@app.route("/api/v1/home.json", methods=['GET'])
-def get_home():
-    events = get_any_events()
-    return jsonify(events)
-
 @app.route("/api/v1/health", methods=['GET'])
 def health():
     return jsonify("OK")
@@ -375,6 +452,13 @@ def health():
 @jwt_required()
 def protected_health():
     return jsonify("protected OK")
+
+@app.route('/api/v1/refresh-token', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh_token():
+    current_user = get_jwt_identity()
+    new_access_token = create_access_token(identity=current_user)
+    return jsonify(access_token=new_access_token), 200
 
 @app.route("/api/v1/register", methods=['POST'])
 def register():
@@ -401,20 +485,15 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    print("Received username:", username)
-
     if not username or not password:
         return jsonify(error="Missing parameters"), 400
 
     user = get_user_by_username(username)
 
-    print("User:", user)
-
     if user and verify_password(password, user['password']):
-        print("Verified password")
         access_token = create_access_token(identity=user['id'])
-        print("Access token:", access_token)
-        return jsonify(access_token=access_token, user_id=user['id'], message="Login successful"), 200
+        refresh_token = create_refresh_token(identity=user['id'])
+        return jsonify(access_token=access_token, refresh_token=refresh_token, user_id=user['id'], message="Login successful"), 200
     return jsonify(error="Invalid credentials"), 401
 
 @app.route('/api/v1/events.json/<int:user_id>', methods=['GET'])
@@ -429,8 +508,6 @@ def get_entries(user_id):
 
         if not latitude or not longitude or not radius or not start_date or not end_date:
             return jsonify({"error": "Missing parameters"}), 400
-
-        print(f"User: {user_id}, Latitude: {latitude}, Longitude: {longitude}, Radius: {radius}, Start Date: {start_date}, End Date: {end_date}")
 
         data = get_events(user_id, latitude, longitude, radius, start_date, end_date)
         return jsonify(data), 200
@@ -522,10 +599,16 @@ def api_search():
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/v1/categories.json', methods=['GET'])
+def api_get_categories():
+    categories = get_all_categories()
+    return jsonify([category[1] for category in categories]), 200
 
 
 create_event_table()
 create_user_table()
+create_category_table()
+create_event_category_table()
 create_saved_event_table()
 
-print("running")
+print("running...")

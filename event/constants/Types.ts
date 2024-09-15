@@ -12,6 +12,7 @@ export interface EventCard {
     is_saved: boolean,
     amount_saved: number,
     interestedFriends: string[],
+    category: string,
 }
 
 export interface CreateEventParams{

@@ -40,7 +40,7 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
         longitude: 13.404954,
         radius: 10,
         start_date: Math.floor(new Date().getTime() / 1000),
-        end_date: Math.floor(new Date().getTime() / 1000)
+        end_date: Math.floor(new Date().getTime() / 1000),
     });
 
     const [searchText, setSearchText] = useState("");
