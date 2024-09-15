@@ -1,4 +1,5 @@
 from flask import Flask, json, jsonify, request
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
@@ -6,6 +7,10 @@ import yaml
 import hashlib
 
 app = Flask(__name__)
+
+jwt_secret_key = "my_secret_key"
+app.config['JWT_SECRET_KEY'] = jwt_secret_key
+jwt = JWTManager(app)
 
 # there is a different version on the server running cause external files didnt worked out well
 def create_connection():
@@ -17,6 +22,11 @@ def create_connection():
     except Error as e:
         print(f"Error connecting to MySQL Database: {e}")
         return None
+
+
+
+
+
 
 
 def create_saved_event_table():
@@ -342,6 +352,10 @@ def search_events(text):
         return []
 
 
+############################
+## API Endpoints     ##
+############################
+
 
 
 @app.route("/")
@@ -356,6 +370,11 @@ def get_home():
 @app.route("/api/v1/health", methods=['GET'])
 def health():
     return jsonify("OK")
+
+@app.route("/api/v1/protected/health", methods=['GET'])
+@jwt_required()
+def protected_health():
+    return jsonify("protected OK")
 
 @app.route("/api/v1/register", methods=['POST'])
 def register():
@@ -382,28 +401,24 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    print(f"Login attempt for username: {username}")
+    print("Received username:", username)
 
     if not username or not password:
-        print("Missing username or password")
-        return jsonify({"error": "Missing parameters"}), 400
+        return jsonify(error="Missing parameters"), 400
 
-    print("Fetching user from database")
     user = get_user_by_username(username)
 
-    if user:
-        print(f"User found: {user}")
-        if verify_password(password, user['password']):
-            print("Password verified successfully")
-            return jsonify({"message": "Login successful", "user_id": user['id']}), 200
-        else:
-            print("Password verification failed")
-    else:
-        print("User not found")
+    print("User:", user)
 
-    return jsonify({"error": "Invalid credentials"}), 401
+    if user and verify_password(password, user['password']):
+        print("Verified password")
+        access_token = create_access_token(identity=user['id'])
+        print("Access token:", access_token)
+        return jsonify(access_token=access_token, user_id=user['id'], message="Login successful"), 200
+    return jsonify(error="Invalid credentials"), 401
 
 @app.route('/api/v1/events.json/<int:user_id>', methods=['GET'])
+@jwt_required()
 def get_entries(user_id):
     try:
         latitude = request.args.get('latitude')
@@ -425,6 +440,7 @@ def get_entries(user_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/event.json', methods=['POST'])
+@jwt_required()
 def create_event():
     try:
         data = request.json
@@ -444,6 +460,7 @@ def create_event():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/event.json/<int:id>', methods=['GET'])
+@jwt_required()
 def api_get_event(id):
     try:
         event = get_event(id)
@@ -455,6 +472,7 @@ def api_get_event(id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/profile.json/<int:id>', methods=['GET'])
+@jwt_required()
 def api_get_user(id):
     try:
         user = get_user(id)
@@ -466,6 +484,7 @@ def api_get_user(id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/saved_events.json/<int:user_id>', methods=['GET'])
+@jwt_required()
 def api_get_saved_events(user_id):
     try:
         events = get_saved_events(user_id)
@@ -477,6 +496,7 @@ def api_get_saved_events(user_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/saved_events.json/<int:user_id>/<int:event_id>', methods=['POST'])
+@jwt_required()
 def api_set_saved_event(user_id, event_id):
     try:
         if isSaved(user_id, event_id):
@@ -490,6 +510,7 @@ def api_set_saved_event(user_id, event_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/search', methods=['POST'])
+@jwt_required()
 def api_search():
     try:
         data = request.json

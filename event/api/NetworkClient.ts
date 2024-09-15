@@ -6,8 +6,9 @@ const BASE_URL = 'https://eventbuddy.pythonanywhere.com/api/v1';
 
 class NetworkClient {
     private client: AxiosInstance;
+    private token: string | null = null;
 
-    constructor(){
+    constructor() {
         this.client = axios.create({
             baseURL: BASE_URL,
             timeout: 10000,
@@ -15,6 +16,16 @@ class NetworkClient {
                 'Content-Type': 'application/json',
             }
         });
+    }
+
+    setToken(token: string) {
+        this.token = token;
+        this.client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+
+    clearToken() {
+        this.token = null;
+        delete this.client.defaults.headers.common['Authorization'];
     }
 
     async getEvent(eventID: number): Promise<EventCard | null>
@@ -34,7 +45,8 @@ class NetworkClient {
     {
         try
         {
-            const response = await this.client.get<EventCard[]>('/events.json/' + user_id, { params: searchParams});
+            const response = await this.client.get<EventCard[]>(`/events.json/${user_id}`, { params: searchParams});
+            console.log('Response data:', response.data);
             return response.data;
         }
         catch (error)
@@ -82,21 +94,32 @@ class NetworkClient {
         }
     }
 
-    async register(username: string, email: string, password: string): Promise<{ user_id: number } | null> {
+    async register(username: string, email: string, password: string): Promise<{ user_id: number, token: string } | null> {
         try {
-            const response = await this.client.post('/register', { username, email, password })
-            return response.data
+            const response = await this.client.post('/register', { username, email, password });
+            if (response.data.access_token) {
+                this.setToken(response.data.access_token);
+                return { user_id: response.data.user_id, token: response.data.access_token };
+            }
+            return null;
         } catch (error) {
-            console.error('Error during registration:', error)
-            return null
+            console.error('Error during registration:', error);
+            return null;
         }
     }
 
-
-    async login(username: string, password: string): Promise<{ user_id: number } | null> {
+    async login(username: string, password: string): Promise<{ user_id: number, token: string } | null> {
         try {
+            console.log("Logging in with username:", username);
             const response = await this.client.post('/login', { username, password });
-            return response.data;
+            console.log("Response data:", response.data);
+            if (response.data.access_token) {
+                console.log("Received token:", response.data.access_token);
+                this.setToken(response.data.access_token);
+                console.log("Token set in NetworkClient");
+                return { user_id: response.data.user_id, token: response.data.access_token };
+            }
+            return null;
         } catch (error) {
             console.error('Error during login:', error);
             return null;

@@ -2,20 +2,6 @@ import { useContext, createContext, type PropsWithChildren } from 'react';
 import { useStorageState } from '@/components/useStorageState';
 import NetworkClient from '@/api/NetworkClient';
 
-const AuthContext = createContext<{
-    signIn: (username: string, password: string) => void;
-    signUp: (username: string, email: string, password: string) => void;
-    signOut: () => void;
-    session?: UserSession | null;
-    isLoading: boolean;
-}>({
-    signIn: () => null,
-    signUp: () => null,
-    signOut: () => null,
-    session: null,
-    isLoading: false,
-});
-
 interface UserSession
 {
     username: string;
@@ -23,20 +9,19 @@ interface UserSession
     token: string;
 }
 
-// This hook can be used to access the user info.
-export function useSession()
-{
-    const value = useContext(AuthContext);
-    if (process.env.NODE_ENV !== 'production')
-    {
-        if (!value)
-        {
-            throw new Error('useSession must be wrapped in a <SessionProvider />');
-        }
-    }
-
-    return value;
-}
+const AuthContext = createContext<{
+    signIn: (username: string, password: string) => Promise<boolean>;
+    signUp: (username: string, email: string, password: string) => void;
+    signOut: () => void;
+    session?: UserSession | null;
+    isLoading: boolean;
+}>({
+    signIn: async () => false,
+    signUp: () => null,
+    signOut: () => null,
+    session: null,
+    isLoading: false,
+});
 
 export function SessionProvider({ children }: PropsWithChildren)
 {
@@ -51,29 +36,38 @@ export function SessionProvider({ children }: PropsWithChildren)
                     {
                         try
                         {
-                            // Here you would typically make an API call to validate credentials
                             const response = await NetworkClient.login(username, password);
-                            setSession(JSON.stringify({ username: username, userID: response?.user_id, token: 'xxx' }));
-                            return true;
+                            if (response?.user_id && response?.token)
+                            {
+                                setSession(JSON.stringify({
+                                    username: username,
+                                    userID: response.user_id,
+                                    token: response.token
+                                }));
+                                return true;
+                            }
                         } catch (error)
                         {
                             console.error('Login failed:', error);
-                            return false;
                         }
-                    } else
-                    {
-                        console.error('Invalid username or password');
-                        return false;
                     }
-                }, signUp: (username: string, email: string, password: string) =>
+                    return false;
+                },
+                signUp: (username: string, email: string, password: string) =>
                 {
-                    // Perform sign-up logic here
-                    // Evaluate email and password
                     if (username && email && password)
                     {
-                        // Here you would typically make an API call to create a new user
                         NetworkClient.register(username, email, password).then(response =>
-                            setSession(JSON.stringify({ username: username, userID: response?.user_id, token: 'new-user-token' })));
+                        {
+                            if (response?.user_id && response?.token)
+                            {
+                                setSession(JSON.stringify({
+                                    username: username,
+                                    userID: response.user_id,
+                                    token: response.token
+                                }));
+                            }
+                        });
                     } else
                     {
                         console.error('Invalid username, email or password for sign-up');
@@ -89,4 +83,17 @@ export function SessionProvider({ children }: PropsWithChildren)
             {children}
         </AuthContext.Provider>
     );
+}
+
+export function useSession()
+{
+    const value = useContext(AuthContext);
+    if (process.env.NODE_ENV !== 'production')
+    {
+        if (!value)
+        {
+            throw new Error('useSession must be wrapped in a <SessionProvider />');
+        }
+    }
+    return value;
 }
