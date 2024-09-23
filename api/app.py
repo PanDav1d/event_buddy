@@ -53,6 +53,53 @@ def create_saved_event_table():
     except Error as error:
         print("Error while creating table 'user': ", error)
 
+def create_event_statistics_table():
+    create_table_query = """
+        CREATE TABLE IF NOT EXISTS event_statistics (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            event_id INT,
+            actual_attendance INT,
+            popularity_score FLOAT,
+            engagement_rate FLOAT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (event_id) REFERENCES event(id)
+        );
+    """
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(create_table_query)
+            connection.commit()
+            print("table 'event_statistics' has been created.")
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while creating table 'event_statistics': ", error)
+
+def create_organizer_table():
+    create_table_query = """
+        CREATE TABLE IF NOT EXISTS organizer (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(50),
+            description VARCHAR(150),
+            verified BOOLEAN DEFAULT FALSE,
+            profile_image_url VARCHAR(255),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+    """
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(create_table_query)
+            connection.commit()
+            print("table 'organizer' has been created.")
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while creating table 'organizer': ", error)
+
 def create_user_table():
     create_table_query = """
         CREATE TABLE IF NOT EXISTS user (
@@ -62,7 +109,7 @@ def create_user_table():
             first_name VARCHAR(50),
             last_name VARCHAR(50),
             email VARCHAR(50),
-            profile_image_url VARCHAR(100),
+            profile_image_url VARCHAR(255),
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
     """
@@ -78,17 +125,74 @@ def create_user_table():
     except Error as error:
         print("Error while creating table 'user': ", error)
 
+def create_user_settings_table():
+    create_table_query = """
+        CREATE TABLE IF NOT EXISTS usersettings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            selected_categories JSON,
+            latitude FLOAT,
+            longitude FLOAT,
+            radius INT,
+            include_international BOOLEAN DEFAULT FALSE,
+            notifications_enabled BOOLEAN DEFAULT TRUE,
+            preferred_languages JSON,
+            preferred_event_size INT,
+            price_range INT,
+            preferred_times TEXT,
+            accessibility_needs BOOLEAN DEFAULT FALSE,
+            age_preference INT,
+            transport_preference INT,
+            indoor_outdoor_preference INT,
+            social_preference INT,
+            mood_preference INT,
+            weather_preference TEXT,
+            spontaneity_level INT,
+            interactivity_preference INT,
+            crowding_preference INT,
+            novelty_preference INT,
+            skill_level_preference INT,
+            FOREIGN KEY (user_id) REFERENCES user(id)
+        );
+    """
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+            cursor.execute(create_table_query)
+            connection.commit()
+            print("table 'user_settings' has been created.")
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while creating table 'user_settings': ", error)
+
 def create_event_table():
     create_table_query = """
         CREATE TABLE IF NOT EXISTS event (
             id INT AUTO_INCREMENT PRIMARY KEY,
             title VARCHAR(50),
-            organizer INT,
             description VARCHAR(250),
             image_url VARCHAR(100),
-            unix_time BIGINT,
             latitude FLOAT,
-            longitude FLOAT
+            longitude FLOAT,
+            organizer_id INT,
+            start_time BIGINT,
+            end_time BIGINT,
+            price_structure JSON,
+            category INT,
+            language JSON,
+            event_size INT,
+            accessibility_features JSON,
+            age_restriction INT,
+            indoor_outdoor INT,
+            interactivity_level INT,
+            expected_crowd_size INT,
+            novelty_factor INT,
+            skill_level_required INT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (organizer_id) REFERENCES organizer(id)
         );
         """
     try:
@@ -193,6 +297,45 @@ def insert_user(username, password, first_name, last_name, email, profile_image_
     except Error as error:
         print("Error while inserting user: ", error)
 
+def insert_user_settings(user_id, latitude, longitude, radius, include_international, notifications_enabled, preferred_languages, preferred_event_size, price_range, preferred_times, accessibility_needs, age_preference, transport_preference, indoor_outdoor_preference, interactivity_preference, novelty_preference, skill_level_preference, crowding_preference, mood_preference, social_preference):
+    insert_query = '''
+    INSERT INTO usersettings (user_id, latitude, longitude, radius, include_international, notifications_enabled, preferred_languages, preferred_event_size, price_range, preferred_times, accessibility_needs, age_preference, transport_preference, indoor_outdoor_preference, interactivity_preference, novelty_preference, skill_level_preference, crowding_preference, mood_preference, social_preference)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor()
+
+            # Benutze json.dumps() für JSON-Daten
+            cursor.execute(insert_query, (
+                user_id,
+                latitude,
+                longitude,
+                radius,
+                include_international,
+                notifications_enabled,
+                json.dumps(preferred_languages),  # JSON für preferred_languages
+                preferred_event_size,
+                price_range,
+                json.dumps(preferred_times),  # JSON für preferred_times, falls mehrere Zeiten
+                accessibility_needs,
+                age_preference,
+                transport_preference,
+                indoor_outdoor_preference,
+                interactivity_preference,
+                novelty_preference,
+                skill_level_preference,
+                crowding_preference,
+                mood_preference,
+                social_preference
+            ))
+            connection.commit()
+            cursor.close()
+            connection.close()
+    except Error as error:
+        print("Error while inserting user settings: ", error)
+
 def get_user_by_username(username):
     select_query = '''
         SELECT * FROM user WHERE username = %s;
@@ -262,21 +405,41 @@ def remove_saved_event(user_id, event_id):
     except Error as error:
         print("Error while deleting saved event: ", error)
 
-def insert_event(title, organizer, description, image_url, unix_time, latitude, longitude):
+def insert_event(title, organizer_id, description, image_url, start_time, end_time, latitude, longitude, price_structure, category, language, event_size, accessibility_features, age_restriction, indoor_outdoor, interactivity_level, skill_level_required):
     insert_query = '''
-    INSERT INTO event (title, organizer, description, image_url, unix_time, latitude, longitude) 
-    VALUES (%s, %s, %s, %s, %s, %s, %s);
+    INSERT INTO event (title, organizer_id, description, image_url, start_time, end_time, latitude, longitude, price_structure, category, language, event_size, accessibility_features, age_restriction, indoor_outdoor, interactivity_level, skill_level_required) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     '''
     try:
         connection = create_connection()
         if connection is not None:
             cursor = connection.cursor()
-            cursor.execute(insert_query, (title, organizer, description, image_url, unix_time, latitude, longitude))
+            cursor.execute(insert_query, (
+                title,
+                organizer_id,
+                description,
+                image_url,
+                start_time,
+                end_time,
+                latitude,
+                longitude,
+                json.dumps(price_structure),
+                category,
+                json.dumps(language),
+                event_size,
+                json.dumps(accessibility_features),
+                age_restriction,
+                indoor_outdoor,
+                interactivity_level,
+                skill_level_required
+            ))
             connection.commit()
-            cursor.close()
-            connection.close()
     except Error as error:
         print("Error while inserting event: ", error)
+    finally:
+        if connection is not None and connection.is_connected():
+            cursor.close()
+            connection.close()
 
 def insert_examples():
     events = [
@@ -352,11 +515,12 @@ def get_events(user_id, latitude, longitude, radius, start_date, end_date):
     LEFT JOIN saved_event se ON e.id = se.event_id
     LEFT JOIN event_category ec ON e.id = ec.event_id
     LEFT JOIN category c ON ec.category_id = c.id
-    WHERE e.unix_time >= %s AND e.unix_time <= %s
+    WHERE e.start_time >= %s AND e.start_time <= %s
     GROUP BY e.id, c.name
     HAVING distance <= %s
-    ORDER BY e.unix_time;
+    ORDER BY e.start_time;
     """
+    
     params = (latitude, longitude, latitude, int(start_date), int(end_date), radius)
 
     try:
@@ -364,6 +528,116 @@ def get_events(user_id, latitude, longitude, radius, start_date, end_date):
         if connection is not None:
             cursor = connection.cursor(dictionary=True)
             cursor.execute(select_query, params)
+            events = cursor.fetchall()
+            cursor.close()
+            connection.close()
+            return events
+    except Error as error:
+        print("Error while fetching events: ", error)
+        return []
+
+@app.route('/api/v1/events.json/<int:user_id>', methods=['GET'])
+def get_entries(user_id):
+    try:
+        latitude = float(request.args.get('latitude'))
+        longitude = float(request.args.get('longitude'))
+        radius = float(request.args.get('radius'))
+        start_date = int(request.args.get('start_date'))
+        end_date = int(request.args.get('end_date'))
+
+        if None in [latitude, longitude, radius, start_date, end_date]:
+            return jsonify({"error": "Missing parameters"}), 400
+
+        data = get_events(user_id, latitude, longitude, radius, start_date, end_date)
+        return jsonify(data), 200
+    
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+
+def get_foryou(user_id):
+    select_query = """
+        SELECT 
+            e.*, 
+            c.name as category,
+            CASE WHEN se.event_id IS NOT NULL THEN TRUE ELSE FALSE END AS is_saved,
+            COUNT(DISTINCT se.id) AS amount_saved,
+            (
+                CASE
+                    WHEN e.event_size = us.preferred_event_size THEN 10
+                    ELSE 0
+                END +
+                CASE
+                    WHEN e.language = us.preferred_languages THEN 10
+                    ELSE 0
+                END +
+                CASE
+                    WHEN e.age_restriction = us.age_preference THEN 10
+                    ELSE 0
+                END +
+                CASE
+                    WHEN e.indoor_outdoor = us.indoor_outdoor_preference THEN 10
+                    ELSE 0
+                END +
+                CASE
+                    WHEN e.interactivity_level = us.interactivity_preference THEN 10
+                    ELSE 0
+                END +
+                CASE
+                    WHEN e.expected_crowd_size = us.crowding_preference THEN 10
+                    ELSE 0
+                END +
+                CASE
+                    WHEN e.novelty_factor = us.novelty_preference THEN 10
+                    ELSE 0
+                END +
+                CASE
+                    WHEN e.skill_level_required = us.skill_level_preference THEN 10
+                    ELSE 0
+                END +
+                CASE
+                    WHEN e.networking_opportunities = us.networking_interest THEN 10
+                    ELSE 0
+                END +
+                CASE
+                    WHEN (
+                        6371 * acos(
+                            cos(radians(us.latitude)) * cos(radians(e.latitude)) * 
+                            cos(radians(e.longitude) - radians(us.longitude)) +
+                            sin(radians(us.latitude)) * sin(radians(e.latitude))
+                        )
+                    ) <= us.radius THEN 15
+                    ELSE 0
+                END
+            ) AS compatibility_score
+        FROM 
+            event e
+        LEFT JOIN 
+            saved_event se ON e.id = se.event_id
+        LEFT JOIN 
+            event_category ec ON e.id = ec.event_id
+        LEFT JOIN 
+            category c ON ec.category_id = c.id
+        JOIN 
+            usersettings us ON us.user_id = %s
+        WHERE 
+            e.start_time >= UNIX_TIMESTAMP()
+        GROUP BY 
+            e.id, c.name
+        HAVING 
+            compatibility_score > 0
+        ORDER BY 
+            compatibility_score DESC, e.start_time
+        LIMIT 50;
+        
+    """
+        
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(select_query, (user_id,))
             events = cursor.fetchall()
             cursor.close()
             connection.close()
@@ -389,6 +663,23 @@ def get_user(user_id):
         print("Error while fetching user: ", error)
         return None
 
+def get_organizer(organizer_id):
+    select_query = '''
+    SELECT * FROM organizer WHERE id = %s
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(select_query, (organizer_id,))
+            organizer = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            return organizer
+    except Error as error:
+        print("Error while fetching organizer: ", error)
+        return None
+
 def get_saved_events(user_id):
     select_query = '''
     SELECT e.*, GROUP_CONCAT(DISTINCT c.name) as categories,
@@ -400,7 +691,7 @@ def get_saved_events(user_id):
     LEFT JOIN category c ON ec.category_id = c.id
     WHERE se.user_id = %s
     GROUP BY e.id
-    ORDER BY e.unix_time
+    ORDER BY e.start_time
     '''
     try:
         connection = create_connection()
@@ -415,6 +706,22 @@ def get_saved_events(user_id):
         print("Error while fetching saved events: ", error)
         return []
 
+def get_statistics(event_id):
+    select_query = '''
+        SELECT * FROM event_statistics WHERE event_id = %s
+    '''
+    try:
+        connection = create_connection()
+        if connection is not None:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(select_query, (event_id))
+            statistics = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            return statistics
+    except Error as error:
+        print("Error while fetching statistics: ", error)
+        return None
 
 def search_events(text):
     select_query = '''
@@ -496,9 +803,64 @@ def login():
         return jsonify(access_token=access_token, refresh_token=refresh_token, user_id=user['id'], message="Login successful"), 200
     return jsonify(error="Invalid credentials"), 401
 
+@app.route("/api/v1/usersettings/<int:user_id>", methods=['POST'])
+def api_post_user_settings(user_id):
+    data = request.json
+
+    # Daten aus dem JSON-Request entnehmen
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    radius = data.get('radius')
+    include_international = data.get('include_international')
+    notifications_enabled = data.get('notifications_enabled')
+    preferred_languages = data.get('preferred_languages')
+    preferred_event_size = data.get('preferred_event_size')
+    price_range = data.get('price_range')
+    preferred_times = data.get('preferred_times')
+    accessibility_needs = data.get('accessibility_needs')
+    age_preference = data.get('age_preference')
+    transport_preference = data.get('transport_preference')
+    indoor_outdoor_preference = data.get('indoor_outdoor_preference')
+    interactivity_preference = data.get('interactivity_preference')
+    novelty_preference = data.get('novelty_preference')
+    skill_level_preference = data.get('skill_level_preference')
+    crowding_preference = data.get('crowding_preference')
+    mood_preference = data.get('mood_preference')
+    social_preference = data.get('social_preference')
+
+    try:
+        # Die Funktion aufrufen, um die Daten einzufügen
+        insert_user_settings(
+            user_id,
+            latitude,
+            longitude,
+            radius,
+            include_international,
+            notifications_enabled,
+            preferred_languages,
+            preferred_event_size,
+            price_range,
+            preferred_times,
+            accessibility_needs,
+            age_preference,
+            transport_preference,
+            indoor_outdoor_preference,
+            interactivity_preference,
+            novelty_preference,
+            skill_level_preference,
+            crowding_preference,
+            mood_preference,
+            social_preference
+        )
+        return jsonify({"message": "User settings inserted successfully"}), 200
+    except Exception as e:
+        # Fehlernachricht ausgeben, um Details zu erhalten
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/v1/events.json/<int:user_id>', methods=['GET'])
-@jwt_required()
-def get_entries(user_id):
+#@jwt_required()
+def api_get_entries(user_id):
     try:
         latitude = request.args.get('latitude')
         longitude = request.args.get('longitude')
@@ -517,19 +879,29 @@ def get_entries(user_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/event.json', methods=['POST'])
-@jwt_required()
+#@jwt_required()
 def create_event():
     try:
         data = request.json
         title = data.get('title')
-        organizer = data.get('organizer')
+        organizer_id = data.get('organizer_id')
         description = data.get('description')
         image_url = data.get('image_url')
-        unix_time = data.get('unix_time')
         latitude = data.get('latitude')
         longitude = data.get('longitude')
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+        price_structure = data.get('price_structure')
+        event_size = data.get('event_size')
+        language = data.get('language')
+        category = data.get('category')
+        accessibility_features = data.get('accessibility_features')
+        age_restriction = data.get('age_restriction')
+        indoor_outdoor = data.get('indoor_outdoor')
+        interactivity_level = data.get('interactivity_level')
+        skill_level_required = data.get('skill_level_required')
 
-        insert_event(title, organizer, description, image_url, unix_time, latitude, longitude)
+        insert_event(title,organizer_id,description,image_url, start_time, end_time, latitude, longitude, price_structure, category, language, event_size, accessibility_features, age_restriction, indoor_outdoor, interactivity_level,skill_level_required )
         return jsonify({"message": "Event created successfully"}), 201
 
     except Exception as e:
@@ -537,7 +909,7 @@ def create_event():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/event.json/<int:id>', methods=['GET'])
-@jwt_required()
+#@jwt_required()
 def api_get_event(id):
     try:
         event = get_event(id)
@@ -549,7 +921,7 @@ def api_get_event(id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/profile.json/<int:id>', methods=['GET'])
-@jwt_required()
+#@jwt_required()
 def api_get_user(id):
     try:
         user = get_user(id)
@@ -560,8 +932,16 @@ def api_get_user(id):
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/v1/organizer.json/<int:id>', methods=['GET'])
+#@jwt_required()
+def api_get_organizer(id):
+    organizer = get_organizer(id)
+    if organizer is None:
+        return jsonify({"error": "Organizer not found"}), 404
+    return jsonify(organizer), 200
+
 @app.route('/api/v1/saved_events.json/<int:user_id>', methods=['GET'])
-@jwt_required()
+#@jwt_required()
 def api_get_saved_events(user_id):
     try:
         events = get_saved_events(user_id)
@@ -573,7 +953,7 @@ def api_get_saved_events(user_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/saved_events.json/<int:user_id>/<int:event_id>', methods=['POST'])
-@jwt_required()
+#@jwt_required()
 def api_set_saved_event(user_id, event_id):
     try:
         if isSaved(user_id, event_id):
@@ -587,7 +967,7 @@ def api_set_saved_event(user_id, event_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/v1/search', methods=['POST'])
-@jwt_required()
+#@jwt_required()
 def api_search():
     try:
         data = request.json
@@ -599,14 +979,31 @@ def api_search():
         print("Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/v1/start/foryou/<int:user_id>', methods=['GET'])
+#@jwt_required()
+def api_get_foryou(user_id):
+    if not user_id:
+        return jsonify({"error": "User not found"}), 404
+    events = get_foryou(user_id)
+    return jsonify(events), 200
+
 @app.route('/api/v1/categories.json', methods=['GET'])
 def api_get_categories():
     categories = get_all_categories()
     return jsonify([category[1] for category in categories]), 200
 
+@app.route('/api/v1/statistics.json/<int:event_id>', methods=['GET'])
+def api_get_statistics(event_id):
+    statistics = get_statistics(event_id)
+    if statistics is None:
+        return jsonify({"error": "Event not found"}), 404
+    return jsonify(statistics), 200
 
+create_organizer_table()
 create_event_table()
 create_user_table()
+create_user_settings_table()
+create_event_statistics_table()
 create_category_table()
 create_event_category_table()
 create_saved_event_table()

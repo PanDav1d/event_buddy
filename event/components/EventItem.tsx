@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions, View, Text, Image, TouchableOpacity, ViewStyle, Share, Animated, Pressable, TouchableNativeFeedback, TouchableHighlight } from 'react-native';
+import { StyleSheet, Dimensions, View, Text, Image, TouchableOpacity, ViewStyle, Share, Animated, Pressable, TouchableNativeFeedback, TouchableHighlight, Touchable } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { EventCard } from '@/constants/Types';
@@ -9,6 +9,7 @@ import { ThemedText } from './ThemedText';
 import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import BottomSheet from 'reanimated-bottom-sheet';
+import SubmitButton from './SubmitButton';
 
 
 const screenWidth = Dimensions.get('window').width;
@@ -98,7 +99,7 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
                 </View>
                 <View style={styles.overlayItem}>
                   <Text style={styles.price}>
-                    {new Date(Math.floor(props.unix_time / 1000)).toLocaleDateString('de-DE', { weekday: 'long', month: 'long', day: 'numeric' })}
+                    {new Date(Math.floor(props.start_time / 1000)).toLocaleDateString('de-DE', { weekday: 'long', month: 'long', day: 'numeric' })}
                   </Text>
                 </View>
               </View>
@@ -129,7 +130,7 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
                 </View>
               </View>
               <View style={styles.interestedFriendsContainer}>
-                {props.interestedFriends && props.interestedFriends.length > 0 ? (
+                {props.interestedFriends && props.interestedFriends.length > 0 && (
                   <TouchableOpacity onPress={() => setShowInterestedFriends(true)}>
                     <View style={styles.interestedFriendsAvatars}>
                       {props.interestedFriends.slice(0, 3).map((friend, index) => (
@@ -142,11 +143,15 @@ export function EventItem(props: EventCard & { style?: ViewStyle, onSave?: () =>
                       {props.interestedFriends.length} {props.interestedFriends.length === 1 ? 'Freund interessiert' : 'Freunde interessiert'}
                     </ThemedText>
                   </TouchableOpacity>
-                ) : (
+                ) || isSaved && isSaved == true && (
                   <View style={styles.placeholderContainer}>
-                    <ThemedText style={styles.placeholderText}>Sei der Erste, der Interesse zeigt!</ThemedText>
+                    <ThemedText style={styles.placeholderText}>Teil das Event deinen Freunden</ThemedText>
                   </View>
-                )}
+                ) || (
+                    <View style={styles.placeholderContainer}>
+                      <ThemedText style={styles.placeholderText}>Sei der erste der daran Interessiert ist.</ThemedText>
+                    </View>
+                  )}
               </View>
             </View>
           </>

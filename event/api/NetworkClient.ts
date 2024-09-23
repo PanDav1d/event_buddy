@@ -83,9 +83,7 @@ class NetworkClient {
     {
         try
         {
-            console.log("getting saved events");
             const response = await this.client.get<EventCard[]>(`/saved_events.json/${user_id}`);
-            console.log(response.data);
             return response.data;
         }
         catch (error)
@@ -159,6 +157,17 @@ class NetworkClient {
             return [];
         }
     }
+
+    async getForYou(user_id: number): Promise<EventCard[]> {
+        try {
+            const response = await this.client.get(`/start/foryou/${user_id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching for you:', error);
+            return [];
+        }
+    }
+
     async refreshToken(): Promise<string | null> {
         try {
             const response = await this.client.post('/refresh-token');

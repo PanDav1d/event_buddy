@@ -1,19 +1,21 @@
 export interface EventCard {
-    id: number,
-    title: string,
-    organizer: string,
-    description: string,
-    image_url: string,
-    unix_time: number,
-    location: string,
-    latitude: number;
-    longitude: number;
-    tags: string[],
-    is_saved: boolean,
-    amount_saved: number,
-    interestedFriends: string[],
-    category: string,
+  id: number;
+  title: string;
+  organizer_id: number; // assuming you might want to reference the organizer ID
+  description: string;
+  image_url: string;
+  start_time: number; // changed from unix_time to start_time
+  end_time: number; // added to represent the event's end time
+  location: string; // you can define a more specific type if needed
+  latitude: number;
+  longitude: number;
+  tags: string[];
+  is_saved: boolean;
+  amount_saved: number;
+  interestedFriends: string[];
+  category: string;
 }
+
 
 export interface CreateEventParams{
   title: string,

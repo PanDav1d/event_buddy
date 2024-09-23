@@ -26,14 +26,12 @@ export default function IndexScreen()
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-
   const [refreshing, setRefreshing] = useState(false);
-
-
 
   const [apiData, setApiData] = useState<{ [key: string]: EventCard[] }>({});
   const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [forYouData, setForYouData] = useState<EventCard[]>([]);
 
   if (!session)
   {
@@ -77,7 +75,7 @@ export default function IndexScreen()
     })();
   }, []);
 
-  const fetchData = async () =>
+  const fetchData = useCallback(async () =>
   {
     if (!searchParams) return;
 
@@ -86,14 +84,15 @@ export default function IndexScreen()
       const eventsByCategory = await NetworkClient.getEvents(searchParams, session.userID);
       setApiData(eventsByCategory);
       setCategories(Object.keys(eventsByCategory));
+      const forYouEvents = await NetworkClient.getForYou(session.userID);
+      setForYouData(forYouEvents);
       setError(null);
     } catch (error)
     {
       console.error('Error fetching data:', error);
       setError('Network Issue');
     }
-  };
-
+  }, [searchParams, session.userID]);
 
   useEffect(() =>
   {
@@ -101,13 +100,13 @@ export default function IndexScreen()
     {
       fetchData();
     }
-  }, [searchParams]);
+  }, [searchParams, fetchData]);
 
   const onRefresh = useCallback(() =>
   {
     setRefreshing(true);
     fetchData().then(() => setRefreshing(false));
-  }, [searchParams]);
+  }, [fetchData]);
 
   const saveEvent = async (eventId: number) =>
   {
@@ -139,6 +138,7 @@ export default function IndexScreen()
     return (
       <GestureHandlerRootView>
         <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+          <EventCarousel title="Für dich" data={forYouData} />
           {categories.map(category => (
             <EventCarousel key={category} title={category} data={apiData[category]} />
           ))}
@@ -154,7 +154,6 @@ export default function IndexScreen()
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   header: {
     paddingTop: '15%',
