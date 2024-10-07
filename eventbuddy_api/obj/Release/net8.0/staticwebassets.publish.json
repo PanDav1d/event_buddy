@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "zzE0ywM+q6fT7oys2eSKw1MFpy1ulzV8gyCVcEUQxnI=",
+  "Source": "eventbuddy-api",
+  "BasePath": "_content/eventbuddy-api",
+  "Mode": "Default",
+  "ManifestType": "Publish",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

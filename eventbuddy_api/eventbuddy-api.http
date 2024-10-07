@@ -1,0 +1,6 @@
+@eventbuddy_api_HostAddress = http://localhost:5196
+
+GET {{eventbuddy_api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
