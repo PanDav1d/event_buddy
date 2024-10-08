@@ -34,12 +34,28 @@ public class UsersController(EventbuddyDbContext context) : ControllerBase
     [HttpGet("users/received_friend_requests")]
     public async Task<IResult> GetUserReceivedFriendRequests(int user_id)
     {
-        var user = await _context.User.Include(u => u.ReceivedFriendRequests).FirstOrDefaultAsync(u => u.Id == user_id);
+        var user = await _context.User
+            .Include(u => u.ReceivedFriendRequests)
+            .ThenInclude(fr => fr.FromUser)
+            .FirstOrDefaultAsync(u => u.Id == user_id);
+
         if (user == null)
             return Results.NotFound("User does not exist");
+
         if (user.ReceivedFriendRequests == null || user.ReceivedFriendRequests.Count == 0)
             return Results.Ok("No friend requests received");
-        return Results.Ok(user.ReceivedFriendRequests);
+
+        var friendRequests = user.ReceivedFriendRequests
+            .Where(fr => fr.Status == "pending")
+            .Select(fr => new
+            {
+                fr.Id,
+                fr.FromUserId,
+                FromUsername = fr.FromUser.Username,
+                fr.ToUserId,
+            });
+
+        return Results.Ok(friendRequests);
     }
 
     [HttpGet("users/friends")]

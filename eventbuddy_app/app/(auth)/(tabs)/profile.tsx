@@ -76,7 +76,7 @@ export default function ProfileScreen()
             id: 4,
             title: 'Freunde',
             icon: 'people-outline',
-            onPress: () => console.log('Freunde'),
+            onPress: () => router.push("/friends"),
             gradient: ['#FA709A', '#FEE140'],
         },
     ];

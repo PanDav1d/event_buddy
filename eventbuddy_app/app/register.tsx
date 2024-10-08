@@ -28,7 +28,7 @@ export default function Register()
         try
         {
             await signUp(username, email, password);
-            router.push('/personalization');
+            router.push('/');
         } catch (error)
         {
             console.error('Registration failed:', error);

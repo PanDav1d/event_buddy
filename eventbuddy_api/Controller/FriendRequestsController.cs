@@ -14,10 +14,20 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
     [HttpPost("friend_requests/send")]
     public async Task<IResult> SendFriendRequest(int fromUserId, int toUserId)
     {
+        var existingRequest = await _context.FriendRequest
+            .FirstOrDefaultAsync(fr =>
+                (fr.FromUserId == fromUserId && fr.ToUserId == toUserId) ||
+                (fr.FromUserId == toUserId && fr.ToUserId == fromUserId));
+
+        if (existingRequest != null)
+        {
+            return Results.BadRequest("A pending or accepted friend request already exists between these users.");
+        }
+
         var request = new FriendRequest
         {
             FromUserId = fromUserId,
-            ToUserId = toUserId
+            ToUserId = toUserId,
         };
         _context.FriendRequest.Add(request);
         await _context.SaveChangesAsync();
@@ -30,18 +40,22 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
         var request = await _context.FriendRequest.FindAsync(requestId);
         if (request == null) return Results.NotFound();
 
-        request.Status = status;
         if (status == "accepted" && user_id == request.ToUserId)
         {
+            request.Status = status;
             _context.Friendship.Add(new Friendship
             {
                 UserId1 = request.FromUserId,
                 UserId2 = request.ToUserId
             });
         }
-        else if ((status == "declined" && user_id == request.FromUserId) || user_id == request.FromUserId)
+        else if (status == "declined" && user_id == request.ToUserId)
         {
             _context.FriendRequest.Remove(request);
+        }
+        else
+        {
+            return Results.BadRequest("Invalid status or user is not authorized to respond to this request.");
         }
         await _context.SaveChangesAsync();
         return Results.Ok();

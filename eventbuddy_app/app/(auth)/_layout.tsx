@@ -36,6 +36,12 @@ export default function AuthLayout()
           headerLargeTitle: true,
           headerBackTitle: "Zurück"
         }} />
+      <Stack.Screen name="friends"
+        options={{
+          headerTitle: "Freunde",
+          headerLargeTitle: true,
+          headerBackTitle: "Zurück"
+        }} />
       {/*
       <Stack.Screen name="index" options={{
         headerShown: false,

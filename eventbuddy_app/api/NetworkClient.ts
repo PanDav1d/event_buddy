@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { CreateEventParams, EventCard, EventCardPreview, SearchParams } from '@/constants/Types';
 import * as Crypto from 'expo-crypto';
+import { FriendRequestStatus } from '@/constants/FriendRequestRespondEnum';
 
 const BASE_URL = 'https://eventbuddy.bsite.net/api/v1';
 
@@ -123,14 +124,10 @@ class NetworkClient {
         }
     }
 
-    async register(username: string, email: string, password: string): Promise<{ user_id: number, token: string } | null> {
+    async register(username: string, email: string, password: string, buddyname: string): Promise<string | null> {
         try {
-            const response = await this.client.post('/users/register', { username, email, password });
-            if (response.data.access_token) {
-                this.setToken(response.data.access_token);
-                return { user_id: response.data.user_id, token: response.data.access_token };
-            }
-            return null;
+            const response = await this.client.post('/users/register', { username, email, password, buddyname  });
+            return response.data;
         } catch (error) {
             console.error('Error during registration:', error);
             return null;
@@ -139,9 +136,7 @@ class NetworkClient {
 
     async login(username: string, password: string): Promise<{ user_id: number, token: string } | null> {
         try {
-            console.log("Logging in with username:", username);
             const response = await this.client.post(`/users/login?username=${username}&password=${password}`);
-            console.log("Response data:", response.data);
             if (response.data.access_token) {
                 console.log("Received token:", response.data.access_token);
                 this.setToken(response.data.access_token);
@@ -154,6 +149,19 @@ class NetworkClient {
             return null;
         }
     }
+
+    async search(user_id : number, q: string): Promise<{users: object[]; events :object[]} | null>
+    {
+        try{
+            const response = await this.client.get(`/search?user_id=${user_id}&q=${q}`);
+            console.log({users: response.data.users, events: response.data.events});
+            return {users: response.data.users, events: response.data.events};
+        } catch (error) {
+            console.error("Error in search:", error);
+            return null;
+        }
+    }
+
 
     async getSearchResults(text: string): Promise<{ id: string; title: string; }[]>
     {
@@ -178,6 +186,57 @@ class NetworkClient {
             return null;
         }
     }
+
+    
+    async sendFriendRequest(fromUserId: number, toUserId: number): Promise<boolean> {
+        try {
+            const response = await this.client.post(`/friend_requests/send?fromUserId=${fromUserId}&toUserId=${toUserId}`);
+            return response.status === 200;
+        } catch (error) {
+            console.error('Error sending friend request:', error);
+            return false;
+        }
+    }
+
+    async respondFriendRequest(userId: number, requestId: number, status: FriendRequestStatus): Promise<boolean> {
+        try {
+            const response = await this.client.post(`/friend_requests/respond?user_id=${userId}&requestId=${requestId}&status=${status.toString()}`);
+            return response.status === 200;
+        } catch (error) {
+            console.error('Error responding to friend request:', error);
+            return false;
+        }
+    }
+
+    async getFriendRequests(userId: number): Promise<any[] | string> {
+        try {
+            const response = await this.client.get(`/users/received_friend_requests?user_id=${userId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error getting friend requests:', error);
+            return [];
+        }
+    }
+
+    async getUserFriends(userId: number): Promise<any[] | string> {
+        try {
+            const response = await this.client.get(`/users/friends?user_id=${userId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error getting user friends:', error);
+            return [];
+        }
+    }
+
+    async removeFriend(userId: number, friendId: number): Promise<string> {
+            try {
+                const response = await this.client.delete(`/users/friends/delete?user_id=${userId}&friend_id=${friendId}`);
+                return response.data;
+            } catch (error) {
+                console.error('Error removing friend:', error);
+                return 'An error occurred while removing the friend.';
+            }
+        }
     
 }
 
