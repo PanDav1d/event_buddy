@@ -1,5 +1,3 @@
-using System;
-using eventbuddy_api;
 using eventbuddy_api.Data;
 using eventbuddy_api.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -18,10 +16,35 @@ public class UsersController(EventbuddyDbContext context) : ControllerBase
     {
         var user = await _context.User.Where(u => u.Id == user_id).FirstOrDefaultAsync();
         if (user == null)
-        {
             return Results.NotFound("User not found");
-        }
         return Results.Ok(user);
+    }
+
+    [HttpGet("users/sent_friend_requests")]
+    public async Task<IResult> GetUserSentFriendRequests(int user_id)
+    {
+        var user = await _context.User.Where(u => u.Id == user_id).FirstOrDefaultAsync();
+        if (user == null)
+            return Results.NotFound();
+        return Results.Ok(user.SentFriendRequests);
+    }
+
+    [HttpGet("users/received_friend_requests")]
+    public async Task<IResult> GetUserReceivedFriendRequests(int user_id)
+    {
+        var user = await _context.User.Where(u => u.Id == user_id).FirstOrDefaultAsync();
+        if (user == null)
+            return Results.NotFound();
+        return Results.Ok(user.ReceivedFriendRequests);
+    }
+
+    [HttpGet("users/friends")]
+    public async Task<IResult> GetUserFriends(int user_id)
+    {
+        var user = await _context.User.Where(u => u.Id == user_id).FirstOrDefaultAsync();
+        if (user == null)
+            return Results.NotFound();
+        return Results.Ok(user.Friendships);
     }
 
     [HttpPost("users/register")]
@@ -34,7 +57,7 @@ public class UsersController(EventbuddyDbContext context) : ControllerBase
     [HttpPost("users/login")]
     public async Task<IResult> LoginUser([FromQuery] string username, string password)
     {
-        var user = await _context.User.Where(u => u.Name == username).FirstOrDefaultAsync();
+        var user = await _context.User.Where(u => u.Username == username).FirstOrDefaultAsync();
         if (user == null)
         {
             return Results.NotFound("Username is not valid");

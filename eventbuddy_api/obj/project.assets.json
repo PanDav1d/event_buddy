@@ -4522,11 +4522,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/david/Developer/eventbuddy_new_api/eventbuddy_api/eventbuddy-api/eventbuddy-api.csproj",
+      "projectUniqueName": "/Users/david/Developer/event_buddy/eventbuddy_api/eventbuddy-api.csproj",
       "projectName": "eventbuddy-api",
-      "projectPath": "/Users/david/Developer/eventbuddy_new_api/eventbuddy_api/eventbuddy-api/eventbuddy-api.csproj",
+      "projectPath": "/Users/david/Developer/event_buddy/eventbuddy_api/eventbuddy-api.csproj",
       "packagesPath": "/Users/david/.nuget/packages/",
-      "outputPath": "/Users/david/Developer/eventbuddy_new_api/eventbuddy_api/eventbuddy-api/obj/",
+      "outputPath": "/Users/david/Developer/event_buddy/eventbuddy_api/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/david/.nuget/NuGet/NuGet.Config"

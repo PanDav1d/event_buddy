@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import { CreateEventParams, EventCard, EventCardPreview, SearchParams } from '@/constants/Types';
 import * as Crypto from 'expo-crypto';
 
-const BASE_URL = 'http://localhost:5196/api/v1';
+const BASE_URL = 'https://eventbuddy.bsite.net/api/v1';
 
 class NetworkClient {
     private client: AxiosInstance;
