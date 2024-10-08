@@ -1,6 +1,7 @@
 using eventbuddy_api.Data;
 using eventbuddy_api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace eventbuddy_api.Controller;
 
@@ -10,7 +11,7 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
 {
     private readonly EventbuddyDbContext _context = context;
 
-    [HttpPost("friend_request/send")]
+    [HttpPost("friend_requests/send")]
     public async Task<IResult> SendFriendRequest(int fromUserId, int toUserId)
     {
         var request = new FriendRequest
@@ -23,7 +24,7 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
         return Results.Ok();
     }
 
-    [HttpPost("friend_request/respond")]
+    [HttpPost("friend_requests/respond")]
     public async Task<IResult> RespondFriendRequest(int requestId, string status)
     {
         var request = await _context.FriendRequest.FindAsync(requestId);
@@ -34,12 +35,21 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
         {
             _context.Friendship.Add(new Friendship
             {
-                UserId1 = request.FromUser.Id,
-                UserId2 = request.ToUser.Id
+                UserId1 = request.FromUserId,
+                UserId2 = request.ToUserId
             });
         }
         await _context.SaveChangesAsync();
         return Results.Ok();
+    }
+
+    [HttpGet("friend_requests")]
+    public async Task<IResult> GetFriendRequests()
+    {
+        var requests = await _context.FriendRequest.ToListAsync();
+        if (requests.Count == 0)
+            return Results.Ok("No friend requests found");
+        return Results.Ok(requests);
     }
 
 }
