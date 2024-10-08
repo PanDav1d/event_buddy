@@ -25,19 +25,23 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
     }
 
     [HttpPost("friend_requests/respond")]
-    public async Task<IResult> RespondFriendRequest(int requestId, string status)
+    public async Task<IResult> RespondFriendRequest(int user_id, int requestId, string status)
     {
         var request = await _context.FriendRequest.FindAsync(requestId);
         if (request == null) return Results.NotFound();
 
         request.Status = status;
-        if (status == "accepted")
+        if (status == "accepted" && user_id == request.ToUserId)
         {
             _context.Friendship.Add(new Friendship
             {
                 UserId1 = request.FromUserId,
                 UserId2 = request.ToUserId
             });
+        }
+        else if ((status == "declined" && user_id == request.FromUserId) || user_id == request.FromUserId)
+        {
+            _context.FriendRequest.Remove(request);
         }
         await _context.SaveChangesAsync();
         return Results.Ok();
