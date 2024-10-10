@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ThemedText } from '@/components/ThemedText';
-import { View, StyleSheet, useColorScheme, SafeAreaView, FlatList, RefreshControl, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, StyleSheet, useColorScheme, SafeAreaView, FlatList, RefreshControl, TouchableOpacity, Dimensions, Share, Alert } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import NetworkClient from '@/api/NetworkClient';
 import { useSession } from '@/components/ctx';
 import { Ionicons } from '@expo/vector-icons';
 import { FriendRequestStatus } from '@/constants/FriendRequestRespondEnum';
+import { useRouter } from 'expo-router';
+import * as Contacts from 'expo-contacts';
 
 const { width, height } = Dimensions.get('window');
 
@@ -19,6 +21,7 @@ export default function FriendsScreen()
     const [requests, setRequests] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState('friends');
+    const router = useRouter();
 
     useEffect(() =>
     {
@@ -66,21 +69,37 @@ export default function FriendsScreen()
 
     const handleUnfollow = async (friendId: number) =>
     {
-        try
-        {
-            if (session?.userID)
-            {
-                setFriends(friends.filter((friend: any) => friend.id !== friendId));
-                await NetworkClient.removeFriend(session.userID, friendId);
-            } else
-            {
-                console.error('User ID is undefined');
-            }
-        } catch (error)
-        {
-            console.error('Error unfollowing friend:', error);
-            fetchFriends(); // Refresh the list in case of error
-        }
+        Alert.alert(
+            "Entfolgen",
+            "Bist du sicher, dass du diesen Freund entfernen möchtest?",
+            [
+                {
+                    text: "Abbrechen",
+                    style: "cancel"
+                },
+                {
+                    text: "Entfernen",
+                    onPress: async () =>
+                    {
+                        try
+                        {
+                            if (session?.userID)
+                            {
+                                setFriends(friends.filter((friend: any) => friend.id !== friendId));
+                                await NetworkClient.removeFriend(session.userID, friendId);
+                            } else
+                            {
+                                console.error('User ID is undefined');
+                            }
+                        } catch (error)
+                        {
+                            console.error('Error unfollowing friend:', error);
+                            fetchFriends(); // Refresh the list in case of error
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const handleRespondToRequest = async (requestId: number, status: FriendRequestStatus) =>
@@ -123,10 +142,6 @@ export default function FriendsScreen()
 
     const renderRequestItem = ({ item }: { item: { id: number; fromUsername: string; buddyname: string; profileImage: string; status: string } }) =>
     {
-        if (item.status != "pending")
-        {
-            return null
-        }
         return (
             <View style={[styles.listItem, { backgroundColor: colors.backgroundAlt }]}>
                 <View style={[styles.profileImage, { backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
@@ -147,6 +162,83 @@ export default function FriendsScreen()
             </View>
         );
     }
+
+    const handleImportContacts = async () =>
+    {
+        try
+        {
+            const { status } = await Contacts.requestPermissionsAsync();
+            if (status === 'granted')
+            {
+                const { data } = await Contacts.getContactsAsync({
+                    fields: [Contacts.Fields.PhoneNumbers],
+                });
+
+                if (data.length > 0)
+                {
+                    Alert.alert("Kontakte könnten hier importiert werden, diese Funktion ist aber noch in der Entwicklung.",);
+                    // Here you would typically send these contacts to your server
+                    // to check which ones are already using your app
+                    console.log('Contacts:', data);
+                    // For now, we'll just log the first contact's info
+                    const contact = data[0];
+                    console.log('First contact:', contact);
+                }
+            }
+        } catch (error)
+        {
+            console.error('Error importing contacts:', error);
+        }
+    };
+
+    const handleInviteFriends = async () =>
+    {
+        try
+        {
+            const result = await Share.share({
+                message: 'Hey! Join me on EventBuddy, the best app for planning events with friends! Download it here: [Your App Store Link]',
+            });
+            if (result.action === Share.sharedAction)
+            {
+                if (result.activityType)
+                {
+                    // shared with activity type of result.activityType
+                } else
+                {
+                    // shared
+                }
+            } else if (result.action === Share.dismissedAction)
+            {
+                // dismissed
+            }
+        } catch (error)
+        {
+            console.error('Error inviting friends:', error);
+        }
+    };
+
+    const renderFooter = () => (
+        <View style={styles.footerContainer}>
+            <TouchableOpacity
+                style={[styles.footerButton, { backgroundColor: colors.primary }]}
+                onPress={() => router.navigate("/explore")}
+            >
+                <ThemedText style={styles.footerButtonText}>Mehr Freunde hinzufügen</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.footerButton, { backgroundColor: colors.primary }]}
+                onPress={handleImportContacts}
+            >
+                <ThemedText style={styles.footerButtonText}>Kontakte importieren</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.footerButton, { backgroundColor: colors.primary }]}
+                onPress={handleInviteFriends}
+            >
+                <ThemedText style={styles.footerButtonText}>Freunde einladen</ThemedText>
+            </TouchableOpacity>
+        </View >
+    );
 
     return (
         <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -178,6 +270,7 @@ export default function FriendsScreen()
                                 Du hast noch keine Freunde. Füge Freunde hinzu, um sie hier zu sehen.
                             </ThemedText>
                         }
+                        ListFooterComponent={renderFooter}
                     />
                 ) : (
                     <FlatList
@@ -273,5 +366,22 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#8E8E8E',
         paddingHorizontal: 20,
+    },
+    footerContainer: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingVertical: 20,
+        paddingHorizontal: 10,
+    },
+    footerButton: {
+        padding: 10,
+        borderRadius: 5,
+        marginVertical: 5,
+        width: '60%',
+    },
+    footerButtonText: {
+        color: '#FFFFFF',
+        textAlign: 'center',
+        fontSize: 14,
     },
 });

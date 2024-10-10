@@ -1,4 +1,4 @@
-import { StyleSheet, View, FlatList, RefreshControl, Text, ActivityIndicator, Touchable, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, FlatList, RefreshControl, Text, ActivityIndicator, Touchable, TouchableOpacity, TouchableHighlight } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import React, { useEffect, useState, useCallback } from 'react';
@@ -6,7 +6,7 @@ import { EventCard, EventCardPreview } from '@/constants/Types';
 import { Ionicons } from '@expo/vector-icons';
 import NetworkClient from '@/api/NetworkClient';
 import { useSession } from '@/components/ctx';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { TitleSeperator } from '@/components/TitleSeperator';
@@ -61,18 +61,6 @@ export default function IndexScreen()
     fetchData().then(() => setRefreshing(false));
   }, [fetchData]);
 
-  const renderEventCard = ({ item }: { item: EventCardPreview }) => (
-    <View style={styles.eventCard}>
-      <ThemedText style={[styles.eventTitle, { color: colors.textPrimary }]}>ID:{item.id}</ThemedText>
-      <ThemedText style={[styles.eventTitle, { color: colors.textPrimary }]}>{item.title}</ThemedText>
-      <ThemedText style={[styles.eventTitle, { color: colors.textPrimary }]}>{item.description}</ThemedText>
-      <ThemedText style={[styles.eventTitle, { color: colors.textPrimary }]}>{new Date(item.start_date).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}</ThemedText>
-      <ThemedText style={[styles.eventTitle, { color: colors.textPrimary }]}>is Saved:{item.is_saved ? "true" : "false"}</ThemedText>
-      <ThemedText style={[styles.eventTitle, { color: colors.textPrimary }]}>save amount:{item.amount_saved}</ThemedText>
-      <TouchableOpacity onPress={() => NetworkClient.saveEvent(session.userID, item.id)}><Text style={{ color: colors.textTertiary }}>Like</Text></TouchableOpacity>
-    </View>
-  );
-
   const renderContent = () =>
   {
     if (isLoading)
@@ -108,8 +96,13 @@ export default function IndexScreen()
       <SafeAreaView>
         <Title title='Eventbuddy' />
         <ScrollView>
-          <ThemedText style={{ position: 'absolute', top: 14, right: 0, lineHeight: 0, backgroundColor: '#ffffffbb', zIndex: 999 }}>ID: {session.userID};{'\n'}username: {session.username};{'\n'}Token: {session.token}</ThemedText>
           {renderContent()}
+          <TouchableHighlight style={[styles.discoverButton, { backgroundColor: colors.primary, marginBottom: 150 }]} onPress={() => router.navigate("/explore")}>
+            <View style={styles.discoverButtonContent}>
+              <Ionicons name="search-outline" size={24} color={colors.textInverse} style={styles.discoverIcon} />
+              <ThemedText style={[styles.discoverText, { color: colors.textInverse }]}>Entdecke mehr</ThemedText>
+            </View>
+          </TouchableHighlight>
         </ScrollView>
       </SafeAreaView >
     </GestureHandlerRootView>
@@ -155,6 +148,25 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   eventTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  discoverButton: {
+    marginHorizontal: 16,
+    marginVertical: 20,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  discoverButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+  },
+  discoverIcon: {
+    marginRight: 8,
+  },
+  discoverText: {
     fontSize: 16,
     fontWeight: 'bold',
   },
