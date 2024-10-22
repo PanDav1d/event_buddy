@@ -12,6 +12,8 @@
 
 hier befindet sich der Code für die API sowie deren Konfiguration der mysql Datenbank.
 
+```dotnet publish -c Release --self-contained -r win-x64```
+
 
 ### ./event/
 

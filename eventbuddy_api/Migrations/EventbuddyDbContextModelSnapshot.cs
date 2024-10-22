@@ -30,14 +30,33 @@ namespace eventbuddy_api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AttendeeCount")
+                        .HasColumnType("int");
+
+                    b.Property<float>("AverageRating")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Crowdedness")
+                        .HasColumnType("real");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<float>("EventSize")
+                        .HasColumnType("real");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<float>("Interactivity")
+                        .HasColumnType("real");
 
                     b.Property<float?>("Latitude")
                         .HasColumnType("real");
@@ -45,7 +64,20 @@ namespace eventbuddy_api.Migrations
                     b.Property<float?>("Longitude")
                         .HasColumnType("real");
 
+                    b.Property<int?>("MaxTickets")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MusicStyles")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<float>("Noisiness")
+                        .HasColumnType("real");
+
                     b.Property<int>("OrganizerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoldTickets")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("StartDate")
@@ -137,6 +169,51 @@ namespace eventbuddy_api.Migrations
                     b.ToTable("SavedEvent");
                 });
 
+            modelBuilder.Entity("eventbuddy_api.Models.Ticket", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsValid")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PreviousOwnerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("QRCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ResoldAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SecurityHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UniqueIdentifier")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.ToTable("Ticket");
+                });
+
             modelBuilder.Entity("eventbuddy_api.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -151,13 +228,53 @@ namespace eventbuddy_api.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EventsAttended")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LastActiveDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Password")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<float>("PreferredCrowdedness")
+                        .HasColumnType("real");
+
+                    b.Property<float>("PreferredEventSize")
+                        .HasColumnType("real");
+
+                    b.Property<string>("PreferredEventTypes")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<float>("PreferredInteractivity")
+                        .HasColumnType("real");
+
+                    b.Property<string>("PreferredMusicStyles")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<float>("PreferredNoisiness")
+                        .HasColumnType("real");
+
+                    b.Property<float>("SocialScore")
+                        .HasColumnType("real");
+
+                    b.Property<float>("UserActivityLevel")
+                        .HasColumnType("real");
 
                     b.Property<string>("Username")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EventId");
 
                     b.ToTable("User");
                 });
@@ -198,6 +315,29 @@ namespace eventbuddy_api.Migrations
                     b.Navigation("User1");
 
                     b.Navigation("User2");
+                });
+
+            modelBuilder.Entity("eventbuddy_api.Models.Ticket", b =>
+                {
+                    b.HasOne("eventbuddy_api.Models.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
+            modelBuilder.Entity("eventbuddy_api.Models.User", b =>
+                {
+                    b.HasOne("eventbuddy_api.Models.Event", null)
+                        .WithMany("Attendees")
+                        .HasForeignKey("EventId");
+                });
+
+            modelBuilder.Entity("eventbuddy_api.Models.Event", b =>
+                {
+                    b.Navigation("Attendees");
                 });
 
             modelBuilder.Entity("eventbuddy_api.Models.User", b =>

@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { CreateEventParams, EventCard, EventCardPreview, SearchParams } from '@/constants/Types';
-import * as Crypto from 'expo-crypto';
+import { CreateEventParams, Event, EventCardPreview, SearchParams, Ticket } from '@/constants/Types';
 import { FriendRequestStatus } from '@/constants/FriendRequestRespondEnum';
 
 const BASE_URL = 'https://eventbuddy.bsite.net/api/v1';
@@ -29,11 +28,11 @@ class NetworkClient {
         delete this.client.defaults.headers.common['Authorization'];
     }
 
-    async getEvent(eventID: number): Promise<EventCard | null>
+    async getEvent(eventID: number): Promise<Event | null>
     {
         try
         {
-            const response = await this.client.get<EventCard>(`/events/${eventID}`);
+            const response = await this.client.get<Event>(`/events/${eventID}`);
             return response.data;
         }
         catch (error)
@@ -43,31 +42,30 @@ class NetworkClient {
         }
     }
 
-    async getEvents(user_id:number) : Promise<EventCardPreview[]>{
-        try{
+    async getEvents(user_id:number) : Promise<{status:String, items:EventCardPreview[]}>{
+        try {
             const response = await this.client.get(`/events?user_id=${user_id}`);
             let result : EventCardPreview[] = []
             for(let i = 0; i < response.data.length; i++){
                 const item = {
-                    id: response.data[i].eventId,
-                    title: response.data[i].eventTitle,
-                    image_url: response.data[i].eventImageUrl,
-                    description: response.data[i].eventDescription,
-                    start_date: response.data[i].eventStartDate,
-                    end_date: response.data[i].eventEndDate,
-                    interested_friends: response.data[i].eventInterestedFriends,
-                    amount_saved: response.data[i].savedAmount,
-                    is_saved: response.data[i].eventSaved,
+                    id: response.data[i].id,
+                    title: response.data[i].title,
+                    imageUrl: response.data[i].imageUrl,
+                    description: response.data[i].description,
+                    startDate: response.data[i].startDate,
+                    endDate: response.data[i].endDate,
+                    savedAmount: response.data[i].savedAmount,
+                    eventSaved: response.data[i].eventSaved,
+                    matchScore: response.data[i].matchScore
                 };
                 result.push(item);
             }
-            console.log(result);
-            return result;
-        }
-        catch (error)
-        {
-            console.error("Error while getting events: ", error);
-            return [];
+            return { status:"success", items:result };
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                return {status:"error", items:[]};
+            }
+            throw error;
         }
     }
 
@@ -93,13 +91,13 @@ class NetworkClient {
                 const item : EventCardPreview = {
                     id: response.data[i].id,
                     title: response.data[i].title,
-                    image_url: response.data[i].imageUrl,
+                    imageUrl: response.data[i].imageUrl,
                     description: response.data[i].description,
-                    start_date: response.data[i].startDate,
-                    end_date: response.data[i].endDate,
-                    interested_friends: response.data[i].interestedFriends,
-                    amount_saved: response.data[i].savedAmount,
-                    is_saved: response.data[i].eventSaved,
+                    startDate: response.data[i].startDate,
+                    endDate: response.data[i].endDate,
+                    savedAmount: response.data[i].savedAmount,
+                    eventSaved: response.data[i].eventSaved,
+                    matchScore: response.data[i].matchScore
                 };
                 result.push(item);
             }
@@ -116,7 +114,7 @@ class NetworkClient {
     {
         try
         {
-            const response = await this.client.post(`/event.json`, createEventParams);
+            const response = await this.client.post(`/events`, createEventParams);
         }
         catch (error)
         {
@@ -124,9 +122,29 @@ class NetworkClient {
         }
     }
 
-    async register(username: string, email: string, password: string, buddyname: string): Promise<string | null> {
+    async register(username: string, email: string, phone: string, password: string, buddyName: string, preferredEventSize: number, preferredInteractivity: number, preferredNoisiness: number, preferredCrowdedness: number, preferredMusicStyles: string[], preferredEventTypes: string[]): Promise<{} | null> {
         try {
-            const response = await this.client.post('/users/register', { username, email, password, buddyname  });
+            const response = await this.client.post('/users/register', {
+                id: 0,
+                username,
+                email,
+                phone,
+                password,
+                buddyName,
+                preferredEventSize,
+                preferredInteractivity,
+                preferredNoisiness,
+                preferredCrowdedness,
+                preferredMusicStyles,
+                preferredEventTypes,
+                userActivityLevel: 0,
+                socialScore: 0,
+                lastActiveDate: new Date().toISOString(),
+                eventsAttended: 0,
+                sentFriendRequests: [],
+                receivedFriendRequests: [],
+                friendships: []
+            });
             return response.data;
         } catch (error) {
             console.error('Error during registration:', error);
@@ -162,7 +180,6 @@ class NetworkClient {
         }
     }
 
-
     async getSearchResults(text: string): Promise<{ id: string; title: string; }[]>
     {
         try {
@@ -187,7 +204,6 @@ class NetworkClient {
         }
     }
 
-    
     async sendFriendRequest(fromUserId: number, toUserId: number): Promise<boolean> {
         try {
             const response = await this.client.post(`/friend_requests/send?fromUserId=${fromUserId}&toUserId=${toUserId}`);
@@ -229,15 +245,85 @@ class NetworkClient {
     }
 
     async removeFriend(userId: number, friendId: number): Promise<string> {
-            try {
-                const response = await this.client.delete(`/users/friends/delete?user_id=${userId}&friend_id=${friendId}`);
-                return response.data;
-            } catch (error) {
-                console.error('Error removing friend:', error);
-                return 'An error occurred while removing the friend.';
-            }
+        try {
+            const response = await this.client.delete(`/users/friends/delete?user_id=${userId}&friend_id=${friendId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error removing friend:', error);
+            return 'An error occurred while removing the friend.';
         }
-    
+    }
+
+    async addEvent(createEventParams: CreateEventParams): Promise<void> {
+        console.log(createEventParams);
+        try {
+            const response = await this.client.post('/events', createEventParams);
+            console.log('Event added successfully:', response.data);
+        } catch (error) {
+            console.error('Error while adding event:', error);
+            throw error;
+        }
+    }
+
+    async getUserTickets(userId: number): Promise<Ticket[]> {
+        try {
+            const response = await this.client.get(`/tickets/${userId}`);
+            console.log(response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching user tickets:', error);
+            return [];
+        }
+    }
+
+    async purchaseTicket(userId: number, eventId: number): Promise<any> {
+        const response = await this.client.post('/tickets/purchase', {
+            userId: userId,
+            eventId: eventId
+        });
+        return response.data;
+    }
+
+    async verifyTicket(qrCode: string): Promise<any> {
+        try {
+            console.log(qrCode);
+            const response = await this.client.post('/tickets/verify', { QRCode: qrCode });
+            return response;
+        } catch (error) {
+            console.error('Error verifying ticket:', error);
+            throw error;
+        }
+    }
+
+    async getUser(userId: number): Promise<any> {
+        try {
+            const response = await this.client.get(`/users?user_id=${userId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error getting user:', error);
+            throw error;
+        }
+    }
+
+    async changePassword(userId: number, currentPassword: string, newPassword: string): Promise<string> {
+        try {
+            const response = await this.client.put('/users/change_password', { user_id: userId, current_password: currentPassword, new_password: newPassword });
+            return response.data;
+        } catch (error) {
+            console.error('Error changing password:', error);
+            throw error;
+        }
+    }
+
+    async deleteUser(userId: number, password: string): Promise<string> {
+        try {
+            const response = await this.client.delete(`/users/delete?user_id=${userId}&password=${password}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            throw error;
+        }
+    }
 }
 
 export default new NetworkClient();

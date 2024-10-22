@@ -1,10 +1,12 @@
 using eventbuddy_api.Data;
 using eventbuddy_api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace eventbuddy_api.Controller;
 
+[Authorize]
 [ApiController]
 [Route("api/v1")]
 public class FriendRequestsController(EventbuddyDbContext context) : ControllerBase

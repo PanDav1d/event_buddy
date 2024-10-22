@@ -1,10 +1,12 @@
 using System;
 using eventbuddy_api.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace eventbuddy_api.Controller;
 
+[Authorize]
 [ApiController]
 [Route("api/v1")]
 public class SavedEventsController(EventbuddyDbContext context) : ControllerBase

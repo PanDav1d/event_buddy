@@ -1,7 +1,7 @@
 import { StyleSheet, Dimensions, View, Text, Image, TouchableOpacity, ViewStyle, Share, Animated, Pressable, TouchableNativeFeedback, TouchableHighlight, Touchable } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { EventCard, EventCardPreview } from '@/constants/Types';
+import { Event, EventCardPreview } from '@/constants/Types';
 import { Ionicons } from '@expo/vector-icons';
 import { Modal, ScrollView, FlatList } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
@@ -23,8 +23,8 @@ export function EventItem(props: EventCardPreview & { style?: ViewStyle, onSave?
   const opacityValue = useRef(new Animated.Value(1)).current;
   const translateYValue = useRef(new Animated.Value(0)).current;
 
-  const [isSaved, setIsSaved] = useState(props.is_saved);
-  const [isSavedAmount, setIsSavedAmount] = useState(props.amount_saved);
+  const [isSaved, setIsSaved] = useState(props.eventSaved);
+  const [isSavedAmount, setIsSavedAmount] = useState(props.savedAmount);
   const [showInterestedFriends, setShowInterestedFriends] = useState(false);
 
   const mapRef = useRef<MapView>(null);
@@ -92,14 +92,14 @@ export function EventItem(props: EventCardPreview & { style?: ViewStyle, onSave?
         <TouchableHighlight onPress={handleEventPress}>
           <>
             <View style={styles.imageContainer}>
-              <Image source={{ uri: props.image_url }} style={styles.image} />
+              <Image source={{ uri: props.imageUrl }} style={styles.image} />
               <View style={styles.overlayContainer}>
                 <View style={styles.overlayItem}>
-                  <Text style={styles.price}>Ab 12.99€</Text>
+                  <Text style={styles.price}>Kostenlos</Text>
                 </View>
                 <View style={styles.overlayItem}>
                   <Text style={styles.price}>
-                    {new Date(props.start_date).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    {new Date(props.startDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
                   </Text>
                 </View>
               </View>
@@ -126,24 +126,11 @@ export function EventItem(props: EventCardPreview & { style?: ViewStyle, onSave?
                 <ThemedText style={styles.title} numberOfLines={2}>{props.title}</ThemedText>
                 <View style={styles.ratingContainer}>
                   <Ionicons name="flame" size={16} color={colors.textPrimary} />
-                  <ThemedText style={styles.rating}>Sponsored</ThemedText>
+                  <ThemedText style={styles.rating}>{props.matchScore}</ThemedText>
                 </View>
               </View>
               <View style={styles.interestedFriendsContainer}>
-                {props.interested_friends && props.interested_friends.length > 0 && (
-                  <TouchableOpacity onPress={() => setShowInterestedFriends(true)}>
-                    <View style={styles.interestedFriendsAvatars}>
-                      {props.interested_friends.slice(0, 3).map((friend, index) => (
-                        <View key={index} style={[styles.interestedFriendAvatar, { marginLeft: index * -8 }]}>
-                          <Text style={styles.interestedFriendInitial}>{friend[0]}</Text>
-                        </View>
-                      ))}
-                    </View>
-                    <ThemedText style={styles.interestedFriendsText}>
-                      {props.interested_friends.length} {props.interested_friends.length === 1 ? 'Freund interessiert' : 'Freunde interessiert'}
-                    </ThemedText>
-                  </TouchableOpacity>
-                ) || isSaved && isSaved == true && (
+                {isSaved && isSaved == true && (
                   <View style={styles.placeholderContainer}>
                     <ThemedText style={styles.placeholderText}>Teil das Event deinen Freunden</ThemedText>
                   </View>
@@ -172,12 +159,6 @@ export function EventItem(props: EventCardPreview & { style?: ViewStyle, onSave?
                 <Ionicons name="close" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
-            <FlatList
-              data={props.interested_friends}
-              renderItem={renderInterestedFriend}
-              keyExtractor={(item) => item}
-              style={styles.interestedFriendsList}
-            />
           </View>
         </View>
       </Modal>

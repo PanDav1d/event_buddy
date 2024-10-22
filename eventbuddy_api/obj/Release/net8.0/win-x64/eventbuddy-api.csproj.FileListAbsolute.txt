@@ -448,3 +448,4 @@
 /Users/david/Developer/event_buddy/eventbuddy_api/obj/Release/net8.0/win-x64/eventbuddy-api.pdb
 /Users/david/Developer/event_buddy/eventbuddy_api/obj/Release/net8.0/win-x64/eventbuddy-api.genruntimeconfig.cache
 /Users/david/Developer/event_buddy/eventbuddy_api/obj/Release/net8.0/win-x64/ref/eventbuddy-api.dll
+/Users/david/Developer/event_buddy/eventbuddy_api/bin/Release/net8.0/win-x64/Microsoft.AspNetCore.Authentication.JwtBearer.dll

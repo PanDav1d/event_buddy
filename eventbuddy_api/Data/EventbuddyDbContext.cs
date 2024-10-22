@@ -16,6 +16,7 @@ namespace eventbuddy_api.Data
 
         public DbSet<Event> Event { get; set; }
         public DbSet<User> User { get; set; }
+        public DbSet<Ticket> Ticket { get; set; }
         public DbSet<SavedEvent> SavedEvent { get; set; }
         public DbSet<FriendRequest> FriendRequest { get; set; }
         public DbSet<Friendship> Friendship { get; set; }
@@ -45,6 +46,11 @@ namespace eventbuddy_api.Data
                 .WithMany(u => u.ReceivedFriendRequests)
                 .HasForeignKey(f => f.ToUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Ticket>()
+                .HasOne(t => t.Event)
+                .WithMany()
+                .HasForeignKey(t => t.EventId);
         }
     }
 }

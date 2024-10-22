@@ -2,7 +2,7 @@ import { StyleSheet, View, FlatList, RefreshControl, Text, ActivityIndicator, To
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import React, { useEffect, useState, useCallback } from 'react';
-import { EventCard, EventCardPreview } from '@/constants/Types';
+import { Event, EventCardPreview } from '@/constants/Types';
 import { Ionicons } from '@expo/vector-icons';
 import NetworkClient from '@/api/NetworkClient';
 import { useSession } from '@/components/ctx';
@@ -13,6 +13,7 @@ import { TitleSeperator } from '@/components/TitleSeperator';
 import { EventCarousel } from '@/components/EventCarousel';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import { Title } from '@/components/Title';
+import { all } from 'axios';
 
 const CARD_MARGIN = 8;
 
@@ -35,19 +36,10 @@ export default function IndexScreen()
 
   const fetchData = useCallback(async () =>
   {
-    try
-    {
-      const allEvents = await NetworkClient.getEvents(session.userID);
-      setEvents(allEvents);
-      setError(null);
-    } catch (error)
-    {
-      console.error('Error fetching data:', error);
-      setError('Network Issue');
-    } finally
-    {
-      setIsLoading(false);
-    }
+    const allEvents = await NetworkClient.getEvents(session.userID);
+    setEvents(allEvents.items);
+    setError(allEvents.status.toString());
+    setIsLoading(false);
   }, [session.userID]);
 
   useEffect(() =>
@@ -61,19 +53,67 @@ export default function IndexScreen()
     fetchData().then(() => setRefreshing(false));
   }, [fetchData]);
 
+  const renderSkeletonLoading = () => (
+    <View style={styles.skeletonContainer}>
+      <View style={styles.skeletonItem}>
+        <View style={styles.skeletonTitleSeparator} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.skeletonEventItem}>
+            <View style={styles.skeletonImage} />
+            <View style={styles.skeletonContent}>
+              <View style={styles.skeletonTitle} />
+              <View style={styles.skeletonText} />
+            </View>
+          </View>
+          <View style={styles.skeletonEventItem}>
+            <View style={styles.skeletonImage} />
+            <View style={styles.skeletonContent}>
+              <View style={styles.skeletonTitle} />
+              <View style={styles.skeletonText} />
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+      <View style={styles.skeletonItem}>
+        <View style={styles.skeletonTitleSeparator} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.skeletonEventItem}>
+            <View style={styles.skeletonImage} />
+            <View style={styles.skeletonContent}>
+              <View style={styles.skeletonTitle} />
+              <View style={styles.skeletonText} />
+            </View>
+          </View>
+          <View style={styles.skeletonEventItem}>
+            <View style={styles.skeletonImage} />
+            <View style={styles.skeletonContent}>
+              <View style={styles.skeletonTitle} />
+              <View style={styles.skeletonText} />
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    </View>
+  );
+
   const renderContent = () =>
   {
     if (isLoading)
     {
+      return renderSkeletonLoading();
+    }
+
+    if (events.length == 0)
+    {
       return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.textPrimary} />
-          <Text style={[styles.loadingText, { color: colors.textPrimary }]}>Laden...</Text>
+        <View style={styles.errorContainer}>
+          <Ionicons name="warning-outline" size={100} color={colors.textPrimary} />
+          <Text style={[styles.errorText, { color: colors.textPrimary }]}>Keine Events gefunden</Text>
         </View>
       );
     }
 
-    if (error)
+    if (error == "error")
     {
       return (
         <View style={styles.errorContainer}>
@@ -95,7 +135,16 @@ export default function IndexScreen()
     <GestureHandlerRootView>
       <SafeAreaView>
         <Title title='Eventbuddy' />
-        <ScrollView>
+        <ScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+        >
           {renderContent()}
           <TouchableHighlight style={[styles.discoverButton, { backgroundColor: colors.primary, marginBottom: 150 }]} onPress={() => router.navigate("/explore")}>
             <View style={styles.discoverButtonContent}>
@@ -169,5 +218,46 @@ const styles = StyleSheet.create({
   discoverText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  skeletonContainer: {
+    padding: 16,
+  },
+  skeletonItem: {
+    marginBottom: 30,
+  },
+  skeletonTitleSeparator: {
+    height: 24,
+    width: '60%',
+    backgroundColor: '#E1E9EE',
+    marginBottom: 20,
+    borderRadius: 4,
+  },
+  skeletonEventItem: {
+    width: 300,
+    marginRight: 10,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#F2F2F2',
+  },
+  skeletonImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#E1E9EE',
+  },
+  skeletonContent: {
+    padding: 20,
+  },
+  skeletonTitle: {
+    width: '80%',
+    height: 20,
+    backgroundColor: '#E1E9EE',
+    marginBottom: 10,
+    borderRadius: 4,
+  },
+  skeletonText: {
+    width: '60%',
+    height: 15,
+    backgroundColor: '#E1E9EE',
+    borderRadius: 4,
   },
 });

@@ -9,9 +9,15 @@ interface UserSession
     token: string;
 }
 
+interface LoginResponse
+{
+    user_id: number;
+    token: string;
+}
+
 const AuthContext = createContext<{
     signIn: (username: string, password: string) => Promise<boolean>;
-    signUp: (username: string, email: string, password: string) => void;
+    signUp: (username: string, email: string, phone: string, password: string, buddyName: string, preferredEventSize: number, preferredInteractivity: number, preferredNoisiness: number, preferredCrowdedness: number, preferredMusicStyles: string[], preferredEventTypes: string[]) => void;
     signOut: () => void;
     session?: UserSession | null;
     isLoading: boolean;
@@ -36,7 +42,7 @@ export function SessionProvider({ children }: PropsWithChildren)
                     {
                         try
                         {
-                            const response = await NetworkClient.login(username, password);
+                            const response = await NetworkClient.login(username, password) as LoginResponse;
                             if (response?.user_id && response?.token)
                             {
                                 setSession(JSON.stringify({
@@ -53,13 +59,13 @@ export function SessionProvider({ children }: PropsWithChildren)
                     }
                     return false;
                 },
-                signUp: (username: string, email: string, password: string) =>
+                signUp: (username: string, email: string, phone: string, password: string, buddyName: string, preferredEventSize: number, preferredInteractivity: number, preferredNoisiness: number, preferredCrowdedness: number, preferredMusicStyles: string[], preferredEventTypes: string[]) =>
                 {
                     if (username && email && password)
                     {
-                        NetworkClient.register(username, email, password).then(response =>
+                        NetworkClient.register(username, email, phone, password, buddyName, preferredEventSize, preferredInteractivity, preferredNoisiness, preferredCrowdedness, preferredMusicStyles, preferredEventTypes).then((response: {} | null) =>
                         {
-                            if (response?.user_id && response?.token)
+                            if (response && 'user_id' in response && 'token' in response)
                             {
                                 setSession(JSON.stringify({
                                     username: username,

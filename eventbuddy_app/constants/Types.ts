@@ -1,50 +1,74 @@
-export interface EventCard {
+export interface Event {
   id: number;
   title: string;
-  organizer_id: number;
   description: string;
-  image_url: string;
-  start_time: number;
-  end_time: number;
-  location: string;
+  imageUrl: string;
+  startDate: string;
+  endDate: string;
   latitude: number;
   longitude: number;
-  tags: string[];
-  is_saved: boolean;
-  amount_saved: number;
-  interestedFriends: string[];
-  category: string;
+  organizerId: number;
+  soldTickets: number;
+  maxTickets: number;
+  eventSize: number;
+  interactivity: number;
+  noisiness: number;
+  crowdedness: number;
+  musicStyles: string[];
+  eventType: string;
+  attendeeCount: number;
+  averageRating: number;
+  eventSaved: boolean;
+  savedAmount: number;
+  matchScore: number;
 }
 
 export interface EventCardPreview {
   id: number;
   title: string;
-  image_url : string,
   description: string;
-  start_date: Date;
-  end_date: Date;
-  interested_friends: string[];
-  amount_saved: number;
-  is_saved: boolean;
+  imageUrl: string;
+  startDate: string;
+  endDate: string;
+  eventSaved: boolean;
+  savedAmount: number;
+  matchScore: number;
 }
 
-
-export interface CreateEventParams{
-  title: string,
-  unix_time: number,
-  location: string,
-  description: string,
-  latitude: number,
-  longitude: number,
-  organizer: number,
-  image_url: string,
+export interface CreateEventParams {
+  id: number;
+  title: string;
+  description: string;
+  imageUrl: string;
+  latitude: number;
+  longitude: number;
+  organizerId: number;
+  startDate: string;
+  endDate: string;
+  soldTickets: number;
+  maxTickets: number;
+  eventSize: number;
+  interactivity: number;
+  noisiness: number;
+  crowdedness: number;
+  musicStyles: string[];
+  eventType: string;
+  attendeeCount: number;
+  averageRating: number;
+  attendees: [];
 }
 
 export interface SearchParams {
-  tags: string[],
-  latitude: number,
-  longitude: number,
-  start_date: number;
-  end_date: number;
-  radius: number,
+  userId: number;
+  startDate: string;
+  endDate: string;
+}
+
+
+export interface Ticket
+{
+    id: number;
+    eventId: number;
+    createdAt: string;
+    qrCode: string;
 }

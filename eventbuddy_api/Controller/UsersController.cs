@@ -1,13 +1,15 @@
 using eventbuddy_api.Data;
 using eventbuddy_api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace eventbuddy_api.Controller;
 
+[Authorize]
 [ApiController]
 [Route("api/v1")]
-public class UsersController(EventbuddyDbContext context) : ControllerBase
+public class UsersController(EventbuddyDbContext context, Token _tokenGenerator) : ControllerBase
 {
     private readonly EventbuddyDbContext _context = context;
 
@@ -111,10 +113,15 @@ public class UsersController(EventbuddyDbContext context) : ControllerBase
         }
     }
 
+    [AllowAnonymous]
     [HttpPost("users/register")]
     public async Task<IResult> RegisterUser([FromBody] User u)
     {
         u.Password = Hash.BuildSHA256(u.Password!);
+        u.LastActiveDate = DateTime.Now;
+        u.EventsAttended = 0;
+        u.UserActivityLevel = 0;
+        u.SocialScore = 0;
 
         await _context.User.AddAsync(u);
         await _context.SaveChangesAsync();
@@ -146,6 +153,7 @@ public class UsersController(EventbuddyDbContext context) : ControllerBase
         return Results.Ok("User deleted");
     }
 
+    [AllowAnonymous]
     [HttpPut("users/change_password")]
     public async Task<IResult> ChangeUserPassword(int user_id, string current_password, string new_password)
     {
@@ -159,6 +167,7 @@ public class UsersController(EventbuddyDbContext context) : ControllerBase
         return Results.Ok("Password changed");
     }
 
+    [AllowAnonymous]
     [HttpPost("users/login")]
     public async Task<IResult> LoginUser([FromQuery] string username, string password)
     {
@@ -167,6 +176,8 @@ public class UsersController(EventbuddyDbContext context) : ControllerBase
             return Results.NotFound("Username is not valid");
         if (!Hash.Verify(password, user.Password!))
             return Results.NotFound("Password is not valid");
-        return Results.Ok(new { user_id = user.Id, access_token = "abc" });
+        user.LastActiveDate = DateTime.Now;
+        await _context.SaveChangesAsync();
+        return Results.Ok(new { user_id = user.Id, access_token = _tokenGenerator.Generate(user) });
     }
 }

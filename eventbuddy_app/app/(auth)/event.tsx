@@ -6,7 +6,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import NetworkClient from '@/api/NetworkClient';
 import { useState, useRef, useEffect } from 'react';
 import MapView, { Marker } from 'react-native-maps';
-import { EventCard } from '@/constants/Types';
+import { Event } from '@/constants/Types';
+import { useSession } from '@/components/ctx';
 
 export default function EventScreen()
 {
@@ -14,8 +15,9 @@ export default function EventScreen()
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const router = useRouter();
+    const { session } = useSession();
 
-    const [event, setEvent] = useState<EventCard>();
+    const [event, setEvent] = useState<Event>();
     const scrollY = useRef(new Animated.Value(0)).current;
 
     useEffect(() =>
@@ -34,6 +36,34 @@ export default function EventScreen()
 
         fetchEvent();
     }, [eventID]);
+
+    const purchaseTicket = async () =>
+    {
+        try
+        {
+            if (!session?.userID || !eventID)
+            {
+                console.log('Missing required IDs:', { userID: session?.userID, eventID });
+                return;
+            }
+
+            console.log('Attempting purchase with:', { userID: session.userID, eventID });
+            const response = await NetworkClient.purchaseTicket(Number(session.userID), Number(eventID));
+
+            if (response)
+            {
+                router.push('/tickets');
+            }
+        } catch (error)
+        {
+            console.log('Purchase attempt failed with:', {
+                userID: session?.userID,
+                eventID,
+                error: error instanceof Error ? error.message : String(error)
+            });
+        }
+    }
+
 
     const headerOpacity = scrollY.interpolate({
         inputRange: [0, 200],
@@ -66,7 +96,7 @@ export default function EventScreen()
             >
                 <Animated.View style={[styles.imageContainer, { opacity: imageOpacity }]}>
                     <Image
-                        source={{ uri: event?.image_url }}
+                        source={{ uri: event?.imageUrl }}
                         style={styles.image}
                     />
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -75,7 +105,9 @@ export default function EventScreen()
                 </Animated.View>
                 <View style={styles.content}>
                     <ThemedText style={styles.title}>{event?.title || 'Event'}</ThemedText>
-                    <ThemedText style={styles.organizer}>{event?.organizer || 'Organizer'}</ThemedText>
+                    <ThemedText style={styles.organizer}>{event?.organizerId || 'Organizer'}</ThemedText>
+                    <ThemedText style={styles.organizer}>Max Tickets:-{event?.maxTickets}-</ThemedText>
+                    <ThemedText style={styles.organizer}>Sold Tickets:-{event?.soldTickets}-</ThemedText>
 
                     <View style={styles.ratingContainer}>
                         <Ionicons name="star" size={20} color={colors.primary} />
@@ -87,13 +119,13 @@ export default function EventScreen()
                     </View>
 
                     <View style={styles.actionButtonsContainer}>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Ionicons name="cloud-download-outline" size={24} color={colors.primary} />
-                            <ThemedText style={styles.actionButtonText}>Ticket kaufen</ThemedText>
+                        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.primary, borderRadius: 20, paddingVertical: 12, paddingHorizontal: 16 }]}>
+                            <Ionicons name="cloud-download-outline" size={24} color={colors.background} />
+                            <ThemedText style={[styles.actionButtonText, { color: colors.background }]}>Ticket kaufen</ThemedText>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.actionButton}>
+                        <TouchableOpacity style={[styles.actionButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.primary, borderRadius: 20, paddingVertical: 12, paddingHorizontal: 16 }]}>
                             <Ionicons name="share-outline" size={24} color={colors.primary} />
-                            <ThemedText style={styles.actionButtonText}>Teilen</ThemedText>
+                            <ThemedText style={[styles.actionButtonText, { color: colors.primary }]}>Teilen</ThemedText>
                         </TouchableOpacity>
                     </View>
 
@@ -113,7 +145,7 @@ export default function EventScreen()
                             <View style={styles.eventInfoText}>
                                 <ThemedText style={styles.eventInfoTitle}>Datum</ThemedText>
                                 <ThemedText style={styles.eventInfoSubtitle}>
-                                    {event?.unix_time || 'TBA'}
+                                    {event?.startDate || 'TBA'}
                                 </ThemedText>
                             </View>
                         </View>
@@ -122,7 +154,7 @@ export default function EventScreen()
                             <View style={styles.eventInfoText}>
                                 <ThemedText style={styles.eventInfoTitle}>Standort</ThemedText>
                                 <ThemedText style={styles.eventInfoSubtitle}>
-                                    {event?.location || 'TBA'}
+                                    {event?.latitude || 'TBA'}
                                 </ThemedText>
                             </View>
                         </View>
@@ -170,8 +202,8 @@ export default function EventScreen()
             </Animated.ScrollView>
 
             <View style={[styles.footer, { backgroundColor: colors.backgroundAlt }]}>
-                <TouchableOpacity style={[styles.buyButton, { backgroundColor: colors.primary }]}>
-                    <ThemedText style={styles.buyButtonText}>Ticket kaufen</ThemedText>
+                <TouchableOpacity style={[styles.buyButton, { backgroundColor: colors.primary }]} onPress={purchaseTicket}>
+                    <ThemedText style={[styles.buyButtonText, { color: colors.background }]}>Ticket kaufen</ThemedText>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -251,13 +283,13 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     actionButton: {
-        flexDirection: 'column',
+        flexDirection: 'row',
         alignItems: 'center',
     },
     actionButtonText: {
-        marginTop: 4,
-        fontSize: 12,
-        color: Colors.light.primary,
+        marginLeft: 8,
+        fontSize: 14,
+        fontWeight: 'bold',
     },
     separator: {
         height: 1,
@@ -324,7 +356,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     buyButtonText: {
-        color: Colors.light.background,
         fontSize: 16,
         fontWeight: 'bold',
     },

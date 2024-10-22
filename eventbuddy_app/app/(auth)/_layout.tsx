@@ -30,9 +30,19 @@ export default function AuthLayout()
       <Stack.Screen name="(tabs)" options={{
         headerShown: false,
       }} />
+      <Stack.Screen name="event"
+        options={{
+          headerShown: false
+        }} />
       <Stack.Screen name="saved"
         options={{
           headerTitle: "Gespeichert",
+          headerLargeTitle: true,
+          headerBackTitle: "Zurück"
+        }} />
+      <Stack.Screen name="tickets"
+        options={{
+          headerTitle: "Deine Tickets",
           headerLargeTitle: true,
           headerBackTitle: "Zurück"
         }} />
@@ -42,30 +52,6 @@ export default function AuthLayout()
           headerLargeTitle: true,
           headerBackTitle: "Zurück"
         }} />
-      {/*
-      <Stack.Screen name="index" options={{
-        headerShown: false,
-      }} />
-      <Stack.Screen name="profile" options={{
-        headerBlurEffect: "systemMaterial",
-        headerLargeTitleShadowVisible: false,
-        headerBackButtonMenuEnabled: false,
-        headerBackTitle: "Zurück",
-        headerTitle: 'Profil von ' + session.username,
-        headerLargeTitle: true,
-      }} />
-      <Stack.Screen name="saved" options={{
-        headerBlurEffect: "systemMaterial",
-        headerLargeTitleShadowVisible: false,
-        headerBackButtonMenuEnabled: false,
-        headerBackTitle: "Zurück",
-        headerTitle: 'Deine Gespeicherten',
-        headerLargeTitle: true,
-      }} />
-      <Stack.Screen name="event" options={{
-        headerShown: false,
-      }} />
-       */}
     </Stack>
   );
 }

@@ -328,6 +328,7 @@
 /Users/david/Developer/event_buddy/eventbuddy_api/bin/Release/net8.0/win-x64/publish/aspnetcorev2_inprocess.dll
 /Users/david/Developer/event_buddy/eventbuddy_api/bin/Release/net8.0/win-x64/publish/Azure.Core.dll
 /Users/david/Developer/event_buddy/eventbuddy_api/bin/Release/net8.0/win-x64/publish/Azure.Identity.dll
+/Users/david/Developer/event_buddy/eventbuddy_api/bin/Release/net8.0/win-x64/publish/Microsoft.AspNetCore.Authentication.JwtBearer.dll
 /Users/david/Developer/event_buddy/eventbuddy_api/bin/Release/net8.0/win-x64/publish/Microsoft.AspNetCore.OpenApi.dll
 /Users/david/Developer/event_buddy/eventbuddy_api/bin/Release/net8.0/win-x64/publish/Microsoft.Bcl.AsyncInterfaces.dll
 /Users/david/Developer/event_buddy/eventbuddy_api/bin/Release/net8.0/win-x64/publish/Microsoft.Data.SqlClient.dll
