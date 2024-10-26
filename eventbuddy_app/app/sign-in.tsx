@@ -120,10 +120,11 @@ const styles = StyleSheet.create({
     },
     title: {
         paddingTop: 22,
+        lineHeight: 34,
         fontSize: 32,
         fontWeight: '700',
         marginBottom: 32,
-        textAlign: 'center',
+        textAlign: 'left',
         letterSpacing: 0.5,
     },
     inputContainer: {

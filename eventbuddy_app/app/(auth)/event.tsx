@@ -1,13 +1,19 @@
 import { ThemedText } from '@/components/ThemedText';
-import { Text, View, StyleSheet, useColorScheme, ImageBackground, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Image, Animated, Platform, StatusBar } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Image, View, StyleSheet, useColorScheme, ScrollView, TouchableOpacity, SafeAreaView, Modal } from 'react-native';
 import { Colors } from '@/constants/Colors';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import NetworkClient from '@/api/NetworkClient';
-import { useState, useRef, useEffect } from 'react';
-import MapView, { Marker } from 'react-native-maps';
-import { Event } from '@/constants/Types';
+import { useState, useEffect } from 'react';
+import { Event, EventCardPreview } from '@/constants/Types';
 import { useSession } from '@/components/ctx';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import MapView, { Marker } from 'react-native-maps';
+import { EventItem } from '@/components/EventItem';
+import { TitleSeperator } from '@/components/TitleSeperator';
+import { EventCarousel } from '@/components/EventCarousel';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 
 export default function EventScreen()
 {
@@ -18,7 +24,17 @@ export default function EventScreen()
     const { session } = useSession();
 
     const [event, setEvent] = useState<Event>();
-    const scrollY = useRef(new Animated.Value(0)).current;
+    const [similarEvents, setSimiliarEvents] = useState<EventCardPreview[]>();
+    const [organizerEvents, setOrganizerEvents] = useState<EventCardPreview[]>();
+    const [modalVisible, setModalVisible] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1);
+    const [ticketQuantity, setTicketQuantity] = useState(1);
+    const isSoldOut = () =>
+    {
+        return event?.maxTickets && event?.soldTickets && event?.maxTickets <= event?.soldTickets;
+    };
+
+
 
     useEffect(() =>
     {
@@ -33,7 +49,6 @@ export default function EventScreen()
                 router.back();
             }
         };
-
         fetchEvent();
     }, [eventID]);
 
@@ -43,286 +58,774 @@ export default function EventScreen()
         {
             if (!session?.userID || !eventID)
             {
-                console.log('Missing required IDs:', { userID: session?.userID, eventID });
                 return;
             }
-
-            console.log('Attempting purchase with:', { userID: session.userID, eventID });
             const response = await NetworkClient.purchaseTicket(Number(session.userID), Number(eventID));
-
             if (response)
             {
                 router.push('/tickets');
             }
         } catch (error)
         {
-            console.log('Purchase attempt failed with:', {
-                userID: session?.userID,
-                eventID,
-                error: error instanceof Error ? error.message : String(error)
-            });
+            console.log('Purchase failed:', error);
         }
     }
 
-
-    const headerOpacity = scrollY.interpolate({
-        inputRange: [0, 200],
-        outputRange: [0, 1],
-        extrapolate: 'clamp',
-    });
-
-    const imageOpacity = scrollY.interpolate({
-        inputRange: [0, 200],
-        outputRange: [1, 0],
-        extrapolate: 'clamp',
-    });
-
-    return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <Animated.View style={[styles.header, { opacity: headerOpacity, backgroundColor: colors.background }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBackButton}>
-                    <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
-                </TouchableOpacity>
-                <ThemedText style={styles.headerTitle}>{event?.title || 'Event'}</ThemedText>
-            </Animated.View>
-
-            <Animated.ScrollView
-                contentContainerStyle={styles.scrollViewContent}
-                onScroll={Animated.event(
-                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                    { useNativeDriver: true }
-                )}
-                scrollEventThrottle={16}
-            >
-                <Animated.View style={[styles.imageContainer, { opacity: imageOpacity }]}>
-                    <Image
-                        source={{ uri: event?.imageUrl }}
-                        style={styles.image}
-                    />
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color={colors.background} />
-                    </TouchableOpacity>
-                </Animated.View>
-                <View style={styles.content}>
-                    <ThemedText style={styles.title}>{event?.title || 'Event'}</ThemedText>
-                    <ThemedText style={styles.organizer}>{event?.organizerId || 'Organizer'}</ThemedText>
-                    <ThemedText style={styles.organizer}>Max Tickets:-{event?.maxTickets}-</ThemedText>
-                    <ThemedText style={styles.organizer}>Sold Tickets:-{event?.soldTickets}-</ThemedText>
-
-                    <View style={styles.ratingContainer}>
-                        <Ionicons name="star" size={20} color={colors.primary} />
-                        <Ionicons name="star" size={20} color={colors.primary} />
-                        <Ionicons name="star" size={20} color={colors.primary} />
-                        <Ionicons name="star" size={20} color={colors.primary} />
-                        <Ionicons name="star-half" size={20} color={colors.primary} />
-                        <ThemedText style={styles.ratingText}>4.7 • 2.5K Bewertungen</ThemedText>
-                    </View>
-
-                    <View style={styles.actionButtonsContainer}>
-                        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.primary, borderRadius: 20, paddingVertical: 12, paddingHorizontal: 16 }]}>
-                            <Ionicons name="cloud-download-outline" size={24} color={colors.background} />
-                            <ThemedText style={[styles.actionButtonText, { color: colors.background }]}>Ticket kaufen</ThemedText>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.actionButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.primary, borderRadius: 20, paddingVertical: 12, paddingHorizontal: 16 }]}>
-                            <Ionicons name="share-outline" size={24} color={colors.primary} />
-                            <ThemedText style={[styles.actionButtonText, { color: colors.primary }]}>Teilen</ThemedText>
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.separator} />
-
-                    <ThemedText style={styles.sectionTitle}>Über dieses Event</ThemedText>
-                    <ThemedText style={styles.description}>
-                        {event?.description || "Keine Beschreibung verfügbar..."}
-                    </ThemedText>
-
-                    <View style={styles.separator} />
-
-                    <ThemedText style={styles.sectionTitle}>Event Details</ThemedText>
-                    <View style={styles.eventDetails}>
-                        <View style={styles.eventInfo}>
-                            <Ionicons name="calendar-outline" size={24} color={colors.textPrimary} />
-                            <View style={styles.eventInfoText}>
-                                <ThemedText style={styles.eventInfoTitle}>Datum</ThemedText>
-                                <ThemedText style={styles.eventInfoSubtitle}>
-                                    {event?.startDate || 'TBA'}
-                                </ThemedText>
+    const renderModalContent = () =>
+    {
+        switch (currentStep)
+        {
+            case 1:
+                return (
+                    <View style={styles.modalStepContainer}>
+                        <View style={styles.modalHeader}>
+                            <View style={styles.stepProgress}>
+                                {[1, 2, 3].map((step) => (
+                                    <View key={step} style={[
+                                        styles.stepDot,
+                                        currentStep >= step && styles.stepDotActive && { backgroundColor: colors.primary }
+                                    ]} />
+                                ))}
                             </View>
                         </View>
-                        <View style={styles.eventInfo}>
-                            <Ionicons name="location-outline" size={24} color={colors.textPrimary} />
-                            <View style={styles.eventInfoText}>
-                                <ThemedText style={styles.eventInfoTitle}>Standort</ThemedText>
-                                <ThemedText style={styles.eventInfoSubtitle}>
-                                    {event?.latitude || 'TBA'}
-                                </ThemedText>
+
+                        <View style={styles.modalHero}>
+                            <ThemedText style={styles.modalTitle}>Zusammenfassung</ThemedText>
+                            <ThemedText style={styles.modalSubtitle}>Prüfe die Event Details</ThemedText>
+                        </View>
+
+                        <View style={styles.ticketCard}>
+                            <View style={styles.ticketHeader}>
+                                <ThemedText style={styles.ticketTitle}>{event?.title}</ThemedText>
+                                <ThemedText style={styles.ticketPrice}>€{event?.price || 0}</ThemedText>
+                            </View>
+
+                            <View style={styles.ticketDetails}>
+                                <View style={styles.detailRow}>
+                                    <ThemedText style={styles.detailLabel}>Datum</ThemedText>
+                                    <ThemedText style={styles.detailValue}>{new Date(event?.startDate!).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}</ThemedText>
+                                </View>
+                                <View style={styles.detailRow}>
+                                    <ThemedText style={styles.detailLabel}>Verfügbar</ThemedText>
+                                    <ThemedText style={styles.detailValue}>
+                                        {event?.maxTickets ? event.maxTickets - (event?.soldTickets || 0) : 0} Tickets
+                                    </ThemedText>
+                                </View>
                             </View>
                         </View>
-                    </View>
+                        <View style={styles.quantitySelector}>
+                            <ThemedText style={styles.detailLabel}>Anzahl Tickets</ThemedText>
+                            <View style={styles.quantityControls}>
+                                <TouchableOpacity
+                                    style={[styles.quantityButton, { backgroundColor: colors.primary }]}
+                                    onPress={() => ticketQuantity > 1 && setTicketQuantity(prev => prev - 1)}
+                                >
+                                    <Ionicons name="remove" size={20} color="white" />
+                                </TouchableOpacity>
+                                <ThemedText style={styles.quantityText}>{ticketQuantity}</ThemedText>
+                                <TouchableOpacity
+                                    style={[styles.quantityButton, { backgroundColor: colors.primary }]}
+                                    onPress={() => ticketQuantity < (event?.maxTickets || 0) - (event?.soldTickets || 0) && setTicketQuantity(prev => prev + 1)}
+                                >
+                                    <Ionicons name="add" size={20} color="white" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
 
-                    <View style={styles.mapContainer}>
-                        <MapView
-                            style={styles.map}
-                            initialRegion={{
-                                latitude: event?.latitude || 0,
-                                longitude: event?.longitude || 0,
-                                latitudeDelta: 0.02,
-                                longitudeDelta: 0.02,
-                            }}
-                            scrollEnabled={false}
-                            zoomEnabled={false}
+
+                        <TouchableOpacity
+                            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+                            onPress={() => setCurrentStep(2)}
                         >
-                            {event && (
-                                <Marker
-                                    coordinate={{
-                                        latitude: event.latitude,
-                                        longitude: event.longitude,
+                            <ThemedText style={styles.primaryButtonText}>Weiter zur Bezahlung</ThemedText>
+                        </TouchableOpacity>
+                    </View>
+                );
+            case 2:
+                return (
+                    <View style={styles.modalStepContainer}>
+                        <View style={styles.modalHeader}>
+                            <View style={styles.stepProgress}>
+                                {[1, 2, 3].map((step) => (
+                                    <View key={step} style={[
+                                        styles.stepDot,
+                                        currentStep >= step && styles.stepDotActive && { backgroundColor: colors.primary }
+                                    ]} />
+                                ))}
+                            </View>
+                        </View>
+
+                        <View style={styles.modalHero}>
+                            <ThemedText style={styles.modalTitle}>Zahlungsmittel</ThemedText>
+                            <ThemedText style={styles.modalSubtitle}>Wähle deine Zahlungsmethode</ThemedText>
+                        </View>
+
+                        <View style={styles.paymentMethodsContainer}>
+                            <TouchableOpacity style={styles.paymentMethod}>
+                                <View style={styles.paymentMethodContent}>
+                                    <View style={styles.paymentMethodIcon}>
+                                        <Ionicons name='card-outline' size={26} color={'white'} />
+                                    </View>
+                                    <ThemedText style={styles.paymentMethodText}>Karte</ThemedText>
+                                </View>
+                                <View style={styles.paymentMethodCheck} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.paymentMethodsContainer}>
+                            <TouchableOpacity style={styles.paymentMethod}>
+                                <View style={styles.paymentMethodContent}>
+                                    <View style={styles.paymentMethodIcon}>
+                                        <Ionicons name='logo-paypal' size={26} color={'white'} />
+                                    </View>
+                                    <ThemedText style={styles.paymentMethodText}>PayPal</ThemedText>
+                                </View>
+                                <View style={styles.paymentMethodCheck} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.buttonGroup}>
+                            <TouchableOpacity
+                                style={styles.secondaryButton}
+                                onPress={() => setCurrentStep(1)}
+                            >
+                                <ThemedText style={styles.secondaryButtonText}>Zurück</ThemedText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+                                onPress={() => setCurrentStep(3)}
+                            >
+                                <ThemedText style={styles.primaryButtonText}>Fortfahren</ThemedText>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                );
+            case 3:
+                return (
+                    <View style={styles.modalStepContainer}>
+                        <View style={styles.modalHeader}>
+                            <View style={styles.stepProgress}>
+                                {[1, 2, 3].map((step) => (
+                                    <View key={step} style={[
+                                        styles.stepDot,
+                                        currentStep >= step && styles.stepDotActive && { backgroundColor: colors.primary }
+                                    ]} />
+                                ))}
+                            </View>
+                        </View>
+
+                        <View style={styles.modalHero}>
+                            <ThemedText style={styles.modalTitle}>Bestätigung</ThemedText>
+                            <ThemedText style={styles.modalSubtitle}>Überprüfe deinen Kauf</ThemedText>
+                        </View>
+
+                        <View style={styles.summaryCard}>
+                            <View style={styles.summarySection}>
+                                <ThemedText style={styles.summaryLabel}>Event</ThemedText>
+                                <ThemedText style={styles.summaryValue}>{event?.title}</ThemedText>
+                            </View>
+                            <View style={styles.summarySection}>
+                                <ThemedText style={styles.summaryLabel}>Datum</ThemedText>
+                                <ThemedText style={styles.summaryValue}>{new Date(event?.startDate!).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}</ThemedText>
+                            </View>
+                            <View style={styles.summaryDivider} />
+                            <View style={styles.summarySection}>
+                                <ThemedText style={styles.summaryLabel}>Brutto</ThemedText>
+                                <ThemedText style={styles.summaryTotal}>€{event?.price || 0}</ThemedText>
+                            </View>
+                        </View>
+
+                        <View style={styles.buttonGroup}>
+                            <TouchableOpacity
+                                style={styles.secondaryButton}
+                                onPress={() => setCurrentStep(2)}
+                            >
+                                <ThemedText style={styles.secondaryButtonText}>Zurück</ThemedText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+                                onPress={() =>
+                                {
+                                    purchaseTicket();
+                                    setModalVisible(false);
+                                    setCurrentStep(1);
+                                }}
+                            >
+                                <ThemedText style={styles.primaryButtonText}>Kauf abschliessen</ThemedText>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                );
+        }
+    };
+    return (
+        <GestureHandlerRootView>
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                <ScrollView>
+                    <View style={styles.heroSection}>
+                        <Image
+                            style={styles.eventImage}
+                            source={{ uri: event?.imageUrl || 'default-placeholder-url' }}
+                        />
+                        <LinearGradient
+                            colors={['transparent', 'rgba(0,0,0,1)']}
+                            style={styles.gradient}
+                            pointerEvents="none"
+                        />
+                        <View style={styles.headerButtons}>
+                            <TouchableOpacity
+                                style={styles.iconButton}
+                                onPress={() => router.back()}
+                            >
+                                <Ionicons name="arrow-back" size={24} color="white" />
+                            </TouchableOpacity>
+                            <View style={styles.rightButtons}>
+                                <TouchableOpacity
+                                    style={styles.iconButton}
+                                    onPress={() => {/* Implement save logic */ }}
+                                >
+                                    <Ionicons name="heart-outline" size={24} color="white" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.iconButton}
+                                    onPress={() => {/* Implement share logic */ }}
+                                >
+                                    <Ionicons name="share-outline" size={24} color="white" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        <View style={styles.heroContent}>
+                            <ThemedText style={styles.title}>{event?.title || 'Event'}</ThemedText>
+                            <View style={styles.organizerRow}>
+                                <View style={styles.organizerAvatar} />
+                                <ThemedText style={styles.organizer}>{event?.organizerId || 'Organizer'}</ThemedText>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.content}>
+                        <View style={[styles.quickInfoCard, { backgroundColor: colors.primary }]}>
+                            <View style={styles.infoRow}>
+                                <View style={styles.infoItem}>
+                                    <ThemedText style={styles.infoLabel}>Datum</ThemedText>
+                                    <ThemedText style={styles.infoValue}>{new Date(event?.startDate!).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'long' })}</ThemedText>
+                                </View>
+                                <View style={styles.infoSeparator} />
+                                <View style={styles.infoItem}>
+                                    <ThemedText style={styles.infoLabel}>Verfügbar</ThemedText>
+                                    <ThemedText style={styles.infoValue}>
+                                        {isSoldOut()
+                                            ? 'Ausverkauft'
+                                            : `${event?.maxTickets ? event.maxTickets - (event?.soldTickets || 0) : 0} Tickets`
+                                        }
+                                    </ThemedText>
+
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.section}>
+                            <ThemedText style={styles.sectionTitle}>Beschreibung</ThemedText>
+                            <ThemedText style={styles.description}>{event?.description}</ThemedText>
+                        </View>
+
+                        <View style={styles.section}>
+                            <ThemedText style={styles.sectionTitle}>Standort</ThemedText>
+                            <View style={styles.mapContainer}>
+                                <MapView
+                                    style={styles.map}
+                                    initialRegion={{
+                                        latitude: event?.latitude || 0,
+                                        longitude: event?.longitude || 0,
+                                        latitudeDelta: 0.02,
+                                        longitudeDelta: 0.02,
                                     }}
-                                />
-                            )}
-                        </MapView>
+                                    scrollEnabled={false}
+                                    zoomEnabled={false}
+                                >
+                                    {event && (
+                                        <Marker
+                                            coordinate={{
+                                                latitude: event.latitude,
+                                                longitude: event.longitude,
+                                            }}
+                                        />
+                                    )}
+                                </MapView>
+                            </View>
+                        </View>
                     </View>
 
-                    <View style={styles.separator} />
+                    <View style={styles.section}>
+                        <TitleSeperator title='Ähnliche Events' />
+                        <EventCarousel data={similarEvents} />
+                    </View>
 
-                    <ThemedText style={styles.sectionTitle}>Ticket Preise</ThemedText>
-                    <View style={styles.ticketPriceContainer}>
-                        <ThemedText style={styles.ticketType}>Eintritt</ThemedText>
-                        <ThemedText style={styles.ticketPrice}>12.99€</ThemedText>
+                    <View style={styles.section}>
+                        <TitleSeperator title={"Mehr von " + event?.organizerId} />
+                        <EventCarousel data={organizerEvents} />
                     </View>
-                    <View style={styles.ticketPriceContainer}>
-                        <ThemedText style={styles.ticketType}>VIP Eintritt</ThemedText>
-                        <ThemedText style={styles.ticketPrice}>29.99€</ThemedText>
+
+                </ScrollView>
+
+                <View style={styles.bottomSheet}>
+                    <View style={styles.priceContainer}>
+                        <ThemedText style={styles.priceLabel}>Preis</ThemedText>
+                        <ThemedText style={styles.price}>€{event?.price || 0}</ThemedText>
                     </View>
-                    <View style={styles.ticketPriceContainer}>
-                        <ThemedText style={styles.ticketType}>Gruppe (5+ personen)</ThemedText>
-                        <ThemedText style={styles.ticketPrice}>9.99€ pro person</ThemedText>
-                    </View>
+                    <TouchableOpacity
+                        style={[
+                            styles.buyButton,
+                            { backgroundColor: isSoldOut() ? '#ccc' : colors.buttonPrimary },
+                            isSoldOut() && { opacity: 0.5 }
+                        ]}
+                        onPress={() => !isSoldOut() && setModalVisible(true)}
+                        disabled={isSoldOut()}
+                    >
+                        <ThemedText style={styles.buyButtonText}>
+                            {isSoldOut() ? 'Ausverkauft' : 'Ticket kaufen'}
+                        </ThemedText>
+                    </TouchableOpacity>
+
                 </View>
-            </Animated.ScrollView>
-
-            <View style={[styles.footer, { backgroundColor: colors.backgroundAlt }]}>
-                <TouchableOpacity style={[styles.buyButton, { backgroundColor: colors.primary }]} onPress={purchaseTicket}>
-                    <ThemedText style={[styles.buyButtonText, { color: colors.background }]}>Ticket kaufen</ThemedText>
-                </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+            </SafeAreaView>
+            <Modal
+                animationType="slide"
+                presentationStyle="pageSheet"
+                visible={modalVisible}
+                onRequestClose={() =>
+                {
+                    setModalVisible(false);
+                    setCurrentStep(1);
+                }
+                }
+            >
+                <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity
+                            onPress={() =>
+                            {
+                                setModalVisible(false);
+                                setCurrentStep(1);
+                            }}
+                        >
+                            <ThemedText style={styles.closeButton}>Abbrechen</ThemedText>
+                        </TouchableOpacity>
+                        <ThemedText style={styles.stepIndicator}>Schritt {currentStep} von 3</ThemedText>
+                    </View>
+                    <View style={styles.modalContent}>
+                        {renderModalContent()}
+                    </View>
+                </SafeAreaView>
+            </Modal >
+        </GestureHandlerRootView>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.light.background,
     },
-    header: {
-        position: 'absolute',
-        top: Platform.OS === 'ios' ? 44 : StatusBar.currentHeight,
-        left: 0,
-        right: 0,
-        height: 60,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        zIndex: 1000,
-    },
-    headerBackButton: {
-        marginRight: 16,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    scrollViewContent: {
-        flexGrow: 1,
-    },
-    imageContainer: {
-        height: 300,
-        width: '100%',
+    heroSection: {
+        height: 380,
         position: 'relative',
     },
-    image: {
+    eventImage: {
         width: '100%',
         height: '100%',
-        resizeMode: 'cover',
     },
-    backButton: {
+    heroContent: {
         position: 'absolute',
-        top: 16,
-        left: 16,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        borderRadius: 20,
-        padding: 8,
-    },
-    content: {
-        padding: 16,
+        bottom: 24,
+        left: 24,
+        right: 24,
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 8,
+        fontSize: 34,
+        fontWeight: '700',
+        color: 'white',
+        paddingTop: 20,
+        marginBottom: 16,
+        letterSpacing: 0.3,
+    },
+    organizerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    organizerAvatar: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#rgba(255,255,255,0.3)',
     },
     organizer: {
-        fontSize: 18,
-        color: Colors.light.textSecondary,
-        marginBottom: 16,
+        fontSize: 16,
+        color: 'white',
+        opacity: 0.9,
     },
-    ratingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
+    content: {
+        padding: 24,
     },
-    ratingText: {
-        marginLeft: 8,
-        fontSize: 14,
-        color: Colors.light.textSecondary,
-    },
-    actionButtonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
+    quickInfoCard: {
+        borderRadius: 16,
+        padding: 20,
+        marginTop: -40,
         marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(200, 200, 200, 0.3)',
     },
-    actionButton: {
+    infoRow: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    actionButtonText: {
-        marginLeft: 8,
-        fontSize: 14,
-        fontWeight: 'bold',
+    infoItem: {
+        flex: 1,
+        alignItems: 'center',
     },
-    separator: {
-        height: 1,
-        backgroundColor: Colors.light.textPrimary,
-        marginVertical: 24,
+    infoSeparator: {
+        width: 1,
+        height: 40,
+        backgroundColor: 'rgba(200, 200, 200, 0.3)',
+    },
+    infoLabel: {
+        fontWeight: 800,
+        fontSize: 14,
+        opacity: 0.6,
+        marginBottom: 4,
+    },
+    infoValue: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    section: {
+        marginBottom: 32,
     },
     sectionTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 22,
+        fontWeight: '700',
         marginBottom: 16,
     },
     description: {
         fontSize: 16,
         lineHeight: 24,
+        opacity: 0.8,
     },
-    eventDetails: {
-        marginBottom: 24,
+    locationCard: {
+        backgroundColor: 'rgba(245, 245, 245, 0.5)',
+        borderRadius: 16,
+        overflow: 'hidden',
     },
-    eventInfo: {
+    mapPreview: {
+        height: 200,
+        backgroundColor: '#E0E0E0',
+    },
+    locationText: {
+        padding: 16,
+        fontSize: 16,
+    },
+    bottomSheet: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
+        padding: 20,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(200, 200, 200, 0.3)',
     },
-    eventInfoText: {
-        marginLeft: 16,
+    priceContainer: {
+        flex: 1,
     },
-    eventInfoTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    eventInfoSubtitle: {
+    priceLabel: {
         fontSize: 14,
-        color: Colors.light.textSecondary,
+        opacity: 0.6,
+    },
+    price: {
+        fontSize: 24,
+        fontWeight: '700',
+    },
+    buyButton: {
+        paddingHorizontal: 32,
+        paddingVertical: 16,
+        borderRadius: 14,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    buyButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    modalContainer: {
+        flex: 1,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 20,
+    },
+    closeButton: {
+        fontSize: 16,
+        color: '#007AFF',
+        fontWeight: '500',
+    },
+    stepIndicator: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    modalContent: {
+        flex: 1,
+        padding: 24,
+    },
+    modalTitle: {
+        paddingTop: 20,
+        fontSize: 28,
+        fontWeight: '700',
+        marginBottom: 8,
+    },
+    modalText: {
+        fontSize: 16,
+        marginBottom: 14,
+        lineHeight: 22,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 24,
+    },
+    modalButton: {
+        padding: 16,
+        borderRadius: 12,
+        width: '48%',
+        alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    backButton: {
+        backgroundColor: '#666',
+    },
+    modalButtonText: {
+        color: 'white',
+        fontWeight: '600',
+        fontSize: 16,
+        letterSpacing: 0.5,
+    },
+    paymentInfo: {
+        backgroundColor: 'rgba(245, 245, 245, 0.5)',
+        padding: 20,
+        borderRadius: 16,
+        marginVertical: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(200, 200, 200, 0.3)',
+    },
+    summaryContainer: {
+        backgroundColor: 'rgba(245, 245, 245, 0.5)',
+        padding: 20,
+        borderRadius: 16,
+        marginVertical: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(200, 200, 200, 0.3)',
+    },
+    dateContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(245, 245, 245, 0.5)',
+        padding: 16,
+        borderRadius: 12,
+        marginVertical: 12,
+    },
+    modalStepContainer: {
+        flex: 1,
+    },
+    stepProgress: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 8,
+        marginBottom: 32,
+    },
+    stepDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#E0E0E0',
+    },
+    stepDotActive: {
+        backgroundColor: '#007AFF',
+    },
+    modalHero: {
+        marginBottom: 32,
+    },
+    modalSubtitle: {
+        fontSize: 16,
+        opacity: 0.6,
+    },
+    ticketCard: {
+        backgroundColor: 'rgba(245, 245, 245, 0.5)',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(200, 200, 200, 0.3)',
+    },
+    ticketHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    ticketTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+    },
+    ticketPrice: {
+        fontSize: 24,
+        fontWeight: '700',
+    },
+    ticketDetails: {
+        gap: 12,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    detailLabel: {
+        opacity: 0.6,
+    },
+    detailValue: {
+        fontWeight: '500',
+    },
+    primaryButton: {
+        backgroundColor: '#007AFF',
+        borderRadius: 14,
+        padding: 16,
+        alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    primaryButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    secondaryButton: {
+        backgroundColor: 'rgba(120, 120, 128, 0.2)',
+        borderRadius: 14,
+        padding: 16,
+        alignItems: 'center',
+    },
+    secondaryButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    buttonGroup: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 'auto',
+    },
+    paymentMethodsContainer: {
+        gap: 12,
+        marginBottom: 24,
+    },
+    paymentMethod: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderRadius: 14,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(200, 200, 200, 0.3)',
+    },
+    paymentMethodContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    paymentMethodIcon: {
+        width: 32,
+        height: 32,
+        backgroundColor: '#007AFF',
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    paymentMethodText: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    paymentMethodCheck: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#007AFF',
+    },
+    summaryCard: {
+        backgroundColor: 'rgba(245, 245, 245, 0.1)',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(200, 200, 200, 0.3)',
+    },
+    summarySection: {
+        gap: 8,
+        marginVertical: 12,
+    },
+    summaryLabel: {
+        fontSize: 14,
+        opacity: 0.6,
+    },
+    summaryValue: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    summaryTotal: {
+        fontSize: 24,
+        fontWeight: '700',
+    },
+    summaryDivider: {
+        height: 1,
+        backgroundColor: 'rgba(200, 200, 200, 0.3)',
+        marginVertical: 12,
+    },
+    gradient: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: '50%',
+    },
+    headerButtons: {
+        position: 'absolute',
+        top: 50,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        zIndex: 10,
+    },
+    iconButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    rightButtons: {
+        flexDirection: 'row',
+        gap: 12,
     },
     mapContainer: {
         height: 200,
@@ -332,31 +835,31 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         borderRadius: 8,
     },
-    ticketPriceContainer: {
+    quantitySelector: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    ticketType: {
-        fontSize: 16,
-    },
-    ticketPrice: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: Colors.light.primary,
-    },
-    footer: {
-        padding: 16,
+        alignItems: 'center',
+        marginTop: 16,
+        paddingTop: 16,
+        marginBottom: 40,
         borderTopWidth: 1,
+        borderTopColor: 'rgba(200, 200, 200, 0.3)',
     },
-    buyButton: {
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 8,
+    quantityControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+    },
+    quantityButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    buyButtonText: {
-        fontSize: 16,
-        fontWeight: 'bold',
+    quantityText: {
+        fontSize: 18,
+        fontWeight: '600',
     },
+
 });

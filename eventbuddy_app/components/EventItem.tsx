@@ -106,7 +106,7 @@ export function EventItem({ data, style, onSave, onPress, type = EventItemType.b
             opacity: opacityValue,
           },
         ]}>
-          <TouchableNativeFeedback onPress={onPress || openEventDetails}>
+          <TouchableHighlight onPress={onPress ?? openEventDetails}>
             {type == EventItemType.big ? (
               <>
                 <View style={styles.imageContainer}>
@@ -198,7 +198,7 @@ export function EventItem({ data, style, onSave, onPress, type = EventItemType.b
                 ) : (<></>)}
               </View>
             )}
-          </TouchableNativeFeedback>
+          </TouchableHighlight>
         </Animated.View>
         <Modal
           visible={showInterestedFriends}
