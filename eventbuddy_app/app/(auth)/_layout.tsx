@@ -1,6 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
@@ -8,6 +8,9 @@ import { useSession } from '@/components/ctx';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { ThemedText } from '@/components/ThemedText';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { HeaderRightButton } from '@/components/HeaderRightButton';
 
 export default function AuthLayout()
 {
@@ -47,11 +50,12 @@ export default function AuthLayout()
           headerBackTitle: "Zurück"
         }} />
       <Stack.Screen name="friends"
-        options={{
+        options={({ navigation }) => ({
           headerTitle: "Freunde",
           headerLargeTitle: true,
-          headerBackTitle: "Zurück"
-        }} />
+          headerBackTitle: "Zurück",
+          headerRight: () => <HeaderRightButton />,
+        })} />
     </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ThemedText } from '@/components/ThemedText';
 import { EventCardPreview, CreateEventParams } from '@/constants/Types';
 import { View, StyleSheet, useColorScheme, Modal, TextInput, TouchableOpacity, SafeAreaView, Dimensions, Image, Animated, ViewStyle } from 'react-native';
@@ -14,6 +14,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import SubmitButton from '@/components/SubmitButton';
 import { CameraView, CameraType, Camera } from 'expo-camera';
 import Toast, { BaseToast } from 'react-native-toast-message';
+import Slider from '@react-native-community/slider';
 
 const { width, height } = Dimensions.get('window');
 
@@ -367,6 +368,64 @@ const styles = StyleSheet.create({
         height: 200,
         marginBottom: 10,
     },
+    slider: {
+        width: '100%',
+        height: 40,
+    },
+    sliderValue: {
+        fontSize: 16,
+        textAlign: 'center',
+        marginTop: 5,
+        marginBottom: 20,
+    },
+    tagInputContainer: {
+        marginBottom: 10,
+    },
+    tagInput: {
+        height: 40,
+        borderWidth: 1,
+        borderRadius: 7,
+        paddingHorizontal: 10,
+    },
+    tagsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginBottom: 20,
+    },
+    tag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 8,
+        borderRadius: 20,
+        margin: 4,
+    },
+    tagText: {
+        color: 'white',
+        marginRight: 5,
+    },
+    mapContainer: {
+        height: 250,
+        marginBottom: 20,
+    },
+    searchInput: {
+        height: 40,
+        borderWidth: 1,
+        borderRadius: 7,
+        paddingHorizontal: 10,
+        marginBottom: 10,
+    },
+    currentLocationButton: {
+        position: 'absolute',
+        right: 16,
+        bottom: 16,
+        padding: 12,
+        borderRadius: 30,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    }
 });
 
 const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
@@ -395,6 +454,50 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
     });
     const [location, setLocation] = useState<{ latitude: number; longitude: number }>({ latitude: 0, longitude: 0 });
     const { session } = useSession();
+    const colorScheme = useColorScheme();
+    const colors = Colors[colorScheme ?? 'light'];
+    const [newMusicStyle, setNewMusicStyle] = useState('');
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const mapRef = useRef<MapView>(null);
+
+
+    const moveToCurrentLocation = async () =>
+    {
+        let currentLocation = await Location.getCurrentPositionAsync({});
+        mapRef.current?.animateToRegion({
+            latitude: currentLocation.coords.latitude,
+            longitude: currentLocation.coords.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+        });
+        setLocation({
+            latitude: currentLocation.coords.latitude,
+            longitude: currentLocation.coords.longitude,
+        });
+    };
+
+    const searchLocation = async () =>
+    {
+        try
+        {
+            const results = await Location.geocodeAsync(searchQuery);
+            if (results.length > 0)
+            {
+                const { latitude, longitude } = results[0];
+                mapRef.current?.animateToRegion({
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                });
+                setLocation({ latitude, longitude });
+            }
+        } catch (error)
+        {
+            console.error('Error searching location:', error);
+        }
+    };
 
     useEffect(() =>
     {
@@ -414,6 +517,39 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
             });
         })();
     }, []);
+
+    const handleStartDateChange = (event: any, selectedDate?: Date) =>
+    {
+        if (selectedDate)
+        {
+            const newStartDate = selectedDate.toISOString();
+            // If end date is before new start date, set end date to start date + 1 hour
+            if (new Date(eventData.endDate) <= selectedDate)
+            {
+                const newEndDate = new Date(selectedDate);
+                newEndDate.setHours(newEndDate.getHours() + 1);
+                setEventData({
+                    ...eventData,
+                    startDate: newStartDate,
+                    endDate: newEndDate.toISOString()
+                });
+            } else
+            {
+                setEventData({ ...eventData, startDate: newStartDate });
+            }
+        }
+    };
+
+    const handleEndDateChange = (event: any, selectedDate?: Date) =>
+    {
+        if (selectedDate)
+        {
+            if (selectedDate > new Date(eventData.startDate))
+            {
+                setEventData({ ...eventData, endDate: selectedDate.toISOString() });
+            }
+        }
+    };
 
     const handleMapPress = (e: any) =>
     {
@@ -440,61 +576,193 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
         }
     };
     return (
-        <View style={styles.formContainer}>
-            <TextInput
-                style={[styles.input, { color: 'white' }]}
-                placeholder="Titel"
-                value={eventData.title}
-                onChangeText={(text) => setEventData({ ...eventData, title: text })}
-            />
-            <TextInput
-                style={[styles.input, { color: 'white' }]}
-                placeholder="Beschreibung"
-                value={eventData.description}
-                onChangeText={(text) => setEventData({ ...eventData, description: text })}
-                multiline
-            />
-            <TextInput
-                style={[styles.input, { color: 'white' }]}
-                placeholder="Bild URL"
-                value={eventData.imageUrl}
-                onChangeText={(text) => setEventData({ ...eventData, imageUrl: text })}
-            />
-            <TextInput
-                style={[styles.input, { color: 'white' }]}
-                placeholder="Maximale Tickets"
-                value={eventData.maxTickets.toString()}
-                keyboardType="number-pad"
-                onChangeText={(text) => setEventData({ ...eventData, maxTickets: Number(text) })}
-            />
-            <MapView
-                style={styles.map}
-                region={location ? {
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                    latitudeDelta: 0.0922,
-                    longitudeDelta: 0.0421,
-                } : { latitude: 0, longitude: 0, latitudeDelta: 0, longitudeDelta: 0 }}
-                onPress={handleMapPress}
-            >
-                <Marker coordinate={{ latitude: location.latitude, longitude: location.longitude }} />
-            </MapView>
-            <ThemedText>Start Datum:</ThemedText>
-            <DateTimePicker
-                value={new Date(eventData.startDate)}
-                mode="datetime"
-                display="default"
-                onChange={(event, selectedDate) => setEventData({ ...eventData, startDate: selectedDate ? selectedDate.toISOString() : eventData.startDate })}
-            />
-            <ThemedText>End Datum:</ThemedText>
-            <DateTimePicker
-                value={new Date(eventData.endDate)}
-                mode="datetime"
-                display="default"
-                onChange={(event, selectedDate) => setEventData({ ...eventData, endDate: selectedDate ? selectedDate.toISOString() : eventData.endDate })}
-            />
-            <SubmitButton onPress={handleSubmit} title={'Event erstellen'} style={{ marginTop: 20 }} />
-        </View>
+        <ScrollView>
+            <View style={styles.formContainer}>
+                <ThemedText>Title:</ThemedText>
+                <TextInput
+                    style={[styles.input, { color: 'white' }]}
+                    placeholder="Titel"
+                    value={eventData.title}
+                    onChangeText={(text) => setEventData({ ...eventData, title: text })}
+                />
+
+                <ThemedText>Description:</ThemedText>
+                <TextInput
+                    style={[styles.input, { color: 'white' }]}
+                    placeholder="Beschreibung"
+                    value={eventData.description}
+                    onChangeText={(text) => setEventData({ ...eventData, description: text })}
+                    multiline
+                />
+
+                <ThemedText>Image URL:</ThemedText>
+                <TextInput
+                    style={[styles.input, { color: 'white' }]}
+                    placeholder="Bild URL"
+                    value={eventData.imageUrl}
+                    onChangeText={(text) => setEventData({ ...eventData, imageUrl: text })}
+                />
+
+                <ThemedText>Maximum Tickets:</ThemedText>
+                <TextInput
+                    style={[styles.input, { color: 'white' }]}
+                    placeholder="Maximale Tickets"
+                    value={eventData.maxTickets.toString()}
+                    keyboardType="number-pad"
+                    onChangeText={(text) => setEventData({ ...eventData, maxTickets: Number(text) })}
+                />
+
+                <ThemedText>Event Type:</ThemedText>
+                <TextInput
+                    style={[styles.input, { color: 'white' }]}
+                    placeholder="Event Type"
+                    value={eventData.eventType}
+                    onChangeText={(text) => setEventData({ ...eventData, eventType: text })}
+                />
+
+                <ThemedText>Event Size:</ThemedText>
+                <Slider
+                    style={styles.slider}
+                    minimumValue={0}
+                    maximumValue={1}
+                    step={0.1}
+                    value={eventData.eventSize}
+                    onValueChange={(value: number) => setEventData({ ...eventData, eventSize: Math.round(value * 10) / 10 })}
+                    minimumTrackTintColor={colors.primary}
+                    maximumTrackTintColor={colors.backgroundAlt}
+                    thumbTintColor={colors.primary}
+                />
+                <ThemedText style={styles.sliderValue}>{eventData.eventSize * 100 + " %"}</ThemedText>
+
+                <ThemedText>Noisiness:</ThemedText>
+                <Slider
+                    style={styles.slider}
+                    minimumValue={0}
+                    maximumValue={1}
+                    step={0.1}
+                    value={eventData.noisiness}
+                    onValueChange={(value: number) => setEventData({ ...eventData, noisiness: Math.round(value * 10) / 10 })}
+                    minimumTrackTintColor={colors.primary}
+                    maximumTrackTintColor={colors.backgroundAlt}
+                    thumbTintColor={colors.primary}
+                />
+                <ThemedText style={styles.sliderValue}>{eventData.noisiness * 100 + " %"}</ThemedText>
+
+                <ThemedText>Interactivity:</ThemedText>
+                <Slider
+                    style={styles.slider}
+                    minimumValue={0}
+                    maximumValue={1}
+                    step={0.1}
+                    value={eventData.interactivity}
+                    onValueChange={(value: number) => setEventData({ ...eventData, interactivity: Math.round(value * 10) / 10 })}
+                    minimumTrackTintColor={colors.primary}
+                    maximumTrackTintColor={colors.backgroundAlt}
+                    thumbTintColor={colors.primary}
+                />
+                <ThemedText style={styles.sliderValue}>{eventData.interactivity * 100 + " %"}</ThemedText>
+
+                <ThemedText>Crowdedness:</ThemedText>
+                <Slider
+                    style={styles.slider}
+                    minimumValue={0}
+                    maximumValue={1}
+                    step={0.1}
+                    value={eventData.crowdedness}
+                    onValueChange={(value: number) => setEventData({ ...eventData, crowdedness: Math.round(value * 10) / 10 })}
+                    minimumTrackTintColor={colors.primary}
+                    maximumTrackTintColor={colors.backgroundAlt}
+                    thumbTintColor={colors.primary}
+                />
+                <ThemedText style={styles.sliderValue}>{eventData.crowdedness * 100 + " %"}</ThemedText>
+
+
+                <ThemedText>Music Styles:</ThemedText>
+                <View style={styles.tagInputContainer}>
+                    <TextInput
+                        style={[styles.tagInput, { color: 'white' }]}
+                        placeholder="Add music style"
+                        value={newMusicStyle}
+                        onChangeText={setNewMusicStyle}
+                        onSubmitEditing={() =>
+                        {
+                            if (newMusicStyle.trim())
+                            {
+                                setEventData({
+                                    ...eventData,
+                                    musicStyles: [...eventData.musicStyles, newMusicStyle.trim()]
+                                });
+                                setNewMusicStyle('');
+                            }
+                        }}
+                    />
+                </View>
+                <View style={styles.tagsContainer}>
+                    {eventData.musicStyles.map((style, index) => (
+                        <View key={index} style={[styles.tag, { backgroundColor: colors.primary }]}>
+                            <ThemedText style={styles.tagText}>{style}</ThemedText>
+                            <TouchableOpacity
+                                onPress={() =>
+                                {
+                                    setEventData({
+                                        ...eventData,
+                                        musicStyles: eventData.musicStyles.filter((_, i) => i !== index)
+                                    });
+                                }}
+                            >
+                                <Ionicons name="close-circle" size={20} color={colors.textInverse} />
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                </View>
+
+                <View style={styles.mapContainer}>
+                    <TextInput
+                        style={[styles.searchInput, { color: 'white' }]}
+                        placeholder="Search location"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onSubmitEditing={searchLocation}
+                    />
+                    <MapView
+                        ref={mapRef}
+                        style={styles.map}
+                        region={location ? {
+                            latitude: location.latitude,
+                            longitude: location.longitude,
+                            latitudeDelta: 0.0922,
+                            longitudeDelta: 0.0421,
+                        } : { latitude: 0, longitude: 0, latitudeDelta: 0, longitudeDelta: 0 }}
+                        onPress={handleMapPress}
+                    >
+                        <Marker coordinate={{ latitude: location.latitude, longitude: location.longitude }} />
+                    </MapView>
+                    <TouchableOpacity
+                        style={[styles.currentLocationButton, { backgroundColor: colors.primary }]}
+                        onPress={moveToCurrentLocation}
+                    >
+                        <Ionicons name="locate" size={24} color="white" />
+                    </TouchableOpacity>
+                </View>
+                <ThemedText>Start Datum:</ThemedText>
+                <DateTimePicker
+                    value={new Date(eventData.startDate)}
+                    mode="datetime"
+                    display="default"
+                    onChange={handleStartDateChange}
+                />
+
+                <ThemedText>End Datum:</ThemedText>
+                <DateTimePicker
+                    value={new Date(eventData.endDate)}
+                    mode="datetime"
+                    display="default"
+                    onChange={handleEndDateChange}
+                    minimumDate={new Date(eventData.startDate)}
+                />
+                <SubmitButton onPress={handleSubmit} title={'Event erstellen'} style={{ marginTop: 20 }} />
+            </View>
+        </ScrollView>
     );
 };
 const SettingsContent = () => <ThemedText>Einstellungen-Inhalt hier</ThemedText>;

@@ -69,6 +69,7 @@ export interface Ticket
 {
     id: number;
     eventId: number;
+    event?: EventCardPreview;
     createdAt: string;
     qrCode: string;
 }

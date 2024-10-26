@@ -19,7 +19,25 @@ public class TicketsController(EventbuddyDbContext context) : ControllerBase
     [HttpGet("tickets/{user_id}")]
     public async Task<IResult> GetUserTickets(int user_id)
     {
-        var tickets = await _context.Ticket.Include(t => t.Event).Where(t => t.OwnerId == user_id).ToListAsync();
+        var tickets = await _context.Ticket
+            .Include(t => t.Event)
+            .Where(t => t.OwnerId == user_id)
+            .Select(t => new
+            {
+                TicketId = t.Id,
+                CreatedAt = t.CreatedAt,
+                IsValid = t.IsValid,
+                QRCode = t.QRCode,
+                Event = new
+                {
+                    Id = t.Event!.Id,
+                    Title = t.Event.Title,
+                    Description = t.Event.Description,
+                    StartDate = t.Event.StartDate,
+                    EndDate = t.Event.EndDate
+                }
+            })
+            .ToListAsync();
         return Results.Ok(tickets);
     }
 

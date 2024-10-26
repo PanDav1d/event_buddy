@@ -10,11 +10,27 @@ import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import BottomSheet from 'reanimated-bottom-sheet';
 import SubmitButton from './SubmitButton';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
+export enum EventItemType
+{
+  small,
+  big
+}
+
+interface EventItemProps
+{
+  data: EventCardPreview;
+  style?: ViewStyle;
+  onSave?: () => void;
+  onPress?: () => void;
+  type?: EventItemType;
+  likeable?: boolean;
+}
 
 const screenWidth = Dimensions.get('window').width;
 
-export function EventItem(props: EventCardPreview & { style?: ViewStyle, onSave?: () => void })
+export function EventItem({ data, style, onSave, onPress, type = EventItemType.big, likeable = true }: EventItemProps)
 {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -23,8 +39,8 @@ export function EventItem(props: EventCardPreview & { style?: ViewStyle, onSave?
   const opacityValue = useRef(new Animated.Value(1)).current;
   const translateYValue = useRef(new Animated.Value(0)).current;
 
-  const [isSaved, setIsSaved] = useState(props.eventSaved);
-  const [isSavedAmount, setIsSavedAmount] = useState(props.savedAmount);
+  const [isSaved, setIsSaved] = useState(data?.eventSaved || false);
+  const [isSavedAmount, setIsSavedAmount] = useState(data?.savedAmount || 0);
   const [showInterestedFriends, setShowInterestedFriends] = useState(false);
 
   const mapRef = useRef<MapView>(null);
@@ -35,9 +51,9 @@ export function EventItem(props: EventCardPreview & { style?: ViewStyle, onSave?
   {
     try
     {
-      const eventLink = 'eventbuddy://event/' + props.id;
+      const eventLink = 'eventbuddy://event/' + data.id;
       await Share.share({
-        message: `Check out this event: ${props.title} \n ${eventLink}`,
+        message: `Check out this event: ${data.title} \n ${eventLink}`,
       });
     } catch (error)
     {
@@ -63,9 +79,9 @@ export function EventItem(props: EventCardPreview & { style?: ViewStyle, onSave?
     console.log('Buy tickets');
   };
 
-  const handleEventPress = () =>
+  const openEventDetails = () =>
   {
-    router.push({ pathname: '/event', params: { eventID: props.id } });
+    router.push({ pathname: '/event', params: { eventID: data.id } });
   }
 
   const renderInterestedFriend = ({ item }: { item: string }) => (
@@ -78,91 +94,132 @@ export function EventItem(props: EventCardPreview & { style?: ViewStyle, onSave?
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.backgroundAlt, borderRadius: 25 }, props.style]}>
-      <Animated.View style={[
-        styles.card,
-        {
-          transform: [
-            { scale: scaleValue },
-            { translateY: translateYValue }
-          ],
-          opacity: opacityValue,
-        },
-      ]}>
-        <TouchableHighlight onPress={handleEventPress}>
-          <>
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: props.imageUrl }} style={styles.image} />
-              <View style={styles.overlayContainer}>
-                <View style={styles.overlayItem}>
-                  <Text style={styles.price}>Kostenlos</Text>
+    <>
+      <View style={[styles.container, { backgroundColor: colors.backgroundAlt, borderRadius: 25 }, style]}>
+        <Animated.View style={[
+          styles.card,
+          {
+            transform: [
+              { scale: scaleValue },
+              { translateY: translateYValue }
+            ],
+            opacity: opacityValue,
+          },
+        ]}>
+          <TouchableNativeFeedback onPress={onPress || openEventDetails}>
+            {type == EventItemType.big ? (
+              <>
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={{
+                      uri: data?.imageUrl || 'https://picsum.photos/600/400',
+                      cache: 'force-cache'
+                    }}
+                    style={styles.image}
+                  />
+
+                  <View style={styles.overlayContainer}>
+                    <View style={styles.overlayItem}>
+                      <Text style={styles.price}>Kostenlos</Text>
+                    </View>
+                    <View style={styles.overlayItem}>
+                      <Text style={styles.price}>
+                        {new Date(data?.startDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableHighlight style={styles.heartButton} onPress={() =>
+                  {
+                    setIsSavedAmount(isSaved ? isSavedAmount - 1 : isSavedAmount + 1);
+                    setIsSaved(!isSaved);
+                    if (onSave)
+                    {
+                      onSave();
+                    }
+                  }}>
+                    <>
+                      <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={24} color={isSaved ? 'red' : 'white'} />
+                      {isSavedAmount > 0 && <Text style={styles.savedAmount}>{isSavedAmount}</Text>}
+                    </>
+                  </TouchableHighlight>
+                  <TouchableHighlight style={styles.shareButton} onPress={onShare}>
+                    <Ionicons name="share-outline" size={24} color="white" />
+                  </TouchableHighlight>
                 </View>
-                <View style={styles.overlayItem}>
-                  <Text style={styles.price}>
-                    {new Date(props.startDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+                <View style={styles.contentContainer}>
+                  <View style={styles.titleRow}>
+                    <ThemedText style={styles.title} numberOfLines={2}>{data?.title}</ThemedText>
+                    <View style={styles.ratingContainer}>
+                      <Ionicons name="flame" size={16} color={colors.textPrimary} />
+                      <ThemedText style={styles.rating}>{data?.matchScore}</ThemedText>
+                    </View>
+                  </View>
+                  <View style={styles.interestedFriendsContainer}>
+                    {isSaved && isSaved == true && (
+                      <View style={styles.placeholderContainer}>
+                        <ThemedText style={styles.placeholderText}>Teil das Event deinen Freunden</ThemedText>
+                      </View>
+                    ) || (
+                        <View style={styles.placeholderContainer}>
+                          <ThemedText style={styles.placeholderText}>Sei der erste der daran Interessiert ist.</ThemedText>
+                        </View>
+                      )}
+                  </View>
+                </View>
+              </>
+            ) : (
+              <View style={styles.smallContainer}>
+                <Image
+                  source={{
+                    uri: data?.imageUrl || 'https://picsum.photos/600/400',
+                    cache: 'force-cache'
+                  }}
+                  style={styles.smallImage}
+                />
+                <View style={styles.smallContentContainer}>
+                  <ThemedText style={styles.smallTitle} numberOfLines={1}>{data?.title}</ThemedText>
+                  <Text style={styles.smallDate}>
+                    {new Date(data?.startDate).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}
                   </Text>
                 </View>
+                {likeable ? (
+                  <TouchableHighlight style={styles.smallHeartButton} onPress={() =>
+                  {
+                    setIsSavedAmount(isSaved ? isSavedAmount - 1 : isSavedAmount + 1);
+                    setIsSaved(!isSaved);
+                    if (onSave)
+                    {
+                      onSave();
+                    }
+                  }}>
+                    <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color={isSaved ? 'red' : colors.textPrimary} />
+                  </TouchableHighlight>
+
+                ) : (<></>)}
               </View>
-              <TouchableHighlight style={styles.heartButton} onPress={() =>
-              {
-                setIsSavedAmount(isSaved ? isSavedAmount - 1 : isSavedAmount + 1);
-                setIsSaved(!isSaved);
-                if (props.onSave)
-                {
-                  props.onSave();
-                }
-              }}>
-                <>
-                  <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={24} color={isSaved ? 'red' : 'white'} />
-                  {isSavedAmount > 0 && <Text style={styles.savedAmount}>{isSavedAmount}</Text>}
-                </>
-              </TouchableHighlight>
-              <TouchableHighlight style={styles.shareButton} onPress={onShare}>
-                <Ionicons name="share-outline" size={24} color="white" />
-              </TouchableHighlight>
-            </View>
-            <View style={styles.contentContainer}>
-              <View style={styles.titleRow}>
-                <ThemedText style={styles.title} numberOfLines={2}>{props.title}</ThemedText>
-                <View style={styles.ratingContainer}>
-                  <Ionicons name="flame" size={16} color={colors.textPrimary} />
-                  <ThemedText style={styles.rating}>{props.matchScore}</ThemedText>
-                </View>
+            )}
+          </TouchableNativeFeedback>
+        </Animated.View>
+        <Modal
+          visible={showInterestedFriends}
+          transparent={true}
+          animationType="slide"
+          onDismiss={() => setShowInterestedFriends(false)}
+          onRequestClose={() => setShowInterestedFriends(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={[styles.modalContent, { backgroundColor: colors.backgroundAlt }]}>
+              <View style={styles.modalHeader}>
+                <ThemedText style={styles.modalTitle}>Interessierte Freunde</ThemedText>
+                <TouchableOpacity onPress={() => setShowInterestedFriends(false)}>
+                  <Ionicons name="close" size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
               </View>
-              <View style={styles.interestedFriendsContainer}>
-                {isSaved && isSaved == true && (
-                  <View style={styles.placeholderContainer}>
-                    <ThemedText style={styles.placeholderText}>Teil das Event deinen Freunden</ThemedText>
-                  </View>
-                ) || (
-                    <View style={styles.placeholderContainer}>
-                      <ThemedText style={styles.placeholderText}>Sei der erste der daran Interessiert ist.</ThemedText>
-                    </View>
-                  )}
-              </View>
-            </View>
-          </>
-        </TouchableHighlight>
-      </Animated.View>
-      <Modal
-        visible={showInterestedFriends}
-        transparent={true}
-        animationType="slide"
-        onDismiss={() => setShowInterestedFriends(false)}
-        onRequestClose={() => setShowInterestedFriends(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: colors.backgroundAlt }]}>
-            <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>Interessierte Freunde</ThemedText>
-              <TouchableOpacity onPress={() => setShowInterestedFriends(false)}>
-                <Ionicons name="close" size={24} color={colors.textPrimary} />
-              </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </>
   );
 }
 
@@ -335,4 +392,37 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
   },
+  smallContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 70,
+    padding: 8,
+  },
+  smallImage: {
+    width: 54,
+    height: 54,
+    borderRadius: 17,
+    resizeMode: 'cover',
+  },
+  smallContentContainer: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  smallTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  smallDate: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  smallHeartButton: {
+    padding: 8,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });

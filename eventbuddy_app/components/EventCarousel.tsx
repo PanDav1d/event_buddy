@@ -1,11 +1,11 @@
 import { StyleSheet, Dimensions, View, Text, Image, TouchableOpacity, ViewStyle, Share, Animated, Pressable } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { EventCard, EventCardPreview } from '@/constants/Types';
+import { Event, EventCardPreview } from '@/constants/Types';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { FlatList } from 'react-native-gesture-handler';
-import { EventItem } from './EventItem';
+import { EventItem, EventItemType } from './EventItem';
 import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator';
 import NetworkClient from '@/api/NetworkClient';
 import { useSession } from '@/components/ctx';
@@ -14,9 +14,10 @@ interface EventCarouselProps
 {
     title?: string;
     data: EventCardPreview[];
+    eventCardType?: EventItemType;
 }
 
-export function EventCarousel({ title, data }: EventCarouselProps)
+export function EventCarousel({ title, data, eventCardType }: EventCarouselProps)
 {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
@@ -34,8 +35,7 @@ export function EventCarousel({ title, data }: EventCarouselProps)
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 data={data}
-                renderItem={({ item }) => <EventItem {...item} style={styles.eventCardList} onSave={() => saveEvent(item.id)} />}
-            />
+                renderItem={({ item }) => <EventItem type={eventCardType} data={item} style={styles.eventCardList} onSave={() => saveEvent(item.id)} />} />
         </View>
     );
 }

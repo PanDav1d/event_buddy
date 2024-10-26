@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { CreateEventParams, Event, EventCardPreview, SearchParams, Ticket } from '@/constants/Types';
 import { FriendRequestStatus } from '@/constants/FriendRequestRespondEnum';
+import { router } from 'expo-router';
 
 const BASE_URL = 'https://eventbuddy.bsite.net/api/v1';
 
@@ -16,6 +17,16 @@ class NetworkClient {
                 'Content-Type': 'application/json',
             }
         });
+        this.client.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if(axios.isAxiosError(error) && error.response?.status === 401){
+                    this.clearToken();
+                    router.replace("/sign-in");
+                }
+                return Promise.reject(error);
+            }
+        );
     }
 
     setToken(token: string) {

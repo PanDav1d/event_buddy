@@ -1,19 +1,19 @@
-import { StyleSheet, View, FlatList, RefreshControl, Text, ActivityIndicator, Touchable, TouchableOpacity, TouchableHighlight } from 'react-native';
+import { StyleSheet, View, RefreshControl, Text, TouchableHighlight } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import React, { useEffect, useState, useCallback } from 'react';
-import { Event, EventCardPreview } from '@/constants/Types';
+import { EventCardPreview } from '@/constants/Types';
 import { Ionicons } from '@expo/vector-icons';
 import NetworkClient from '@/api/NetworkClient';
 import { useSession } from '@/components/ctx';
 import { Redirect, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
-import { TitleSeperator } from '@/components/TitleSeperator';
 import { EventCarousel } from '@/components/EventCarousel';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import { Title } from '@/components/Title';
-import { all } from 'axios';
+import { EventSpotlight } from '@/components/EventSpotlight';
+import { EventItemType } from '@/components/EventItem';
 
 const CARD_MARGIN = 8;
 
@@ -125,6 +125,7 @@ export default function IndexScreen()
 
     return (
       <>
+        <EventSpotlight title={"Im Spotlight"} data={events[0]} />
         <EventCarousel title={"Für dich"} data={events} />
         <EventCarousel title={"In deiner Nähe"} data={events} />
       </>

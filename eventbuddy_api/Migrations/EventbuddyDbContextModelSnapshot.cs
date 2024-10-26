@@ -322,7 +322,7 @@ namespace eventbuddy_api.Migrations
                     b.HasOne("eventbuddy_api.Models.Event", "Event")
                         .WithMany()
                         .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Event");

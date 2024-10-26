@@ -61,6 +61,7 @@
     "react-native-screens": "3.31.1",
     "react-native-skeleton-placeholder": "^5.2.4",
     "react-native-svg": "15.2.0",
+    "react-native-svg-transformer": "^1.5.0",
     "react-native-tag-select": "^2.0.0",
     "react-native-toast-message": "^2.2.1",
     "react-native-web": "~0.19.10",

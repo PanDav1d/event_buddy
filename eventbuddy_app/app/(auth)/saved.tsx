@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ThemedText } from '@/components/ThemedText';
-import { EventCard, EventCardPreview } from '@/constants/Types';
-import { View, StyleSheet, useColorScheme, SafeAreaView, Dimensions, RefreshControl } from 'react-native';
+import { Event, EventCardPreview } from '@/constants/Types';
+import { View, StyleSheet, useColorScheme, SafeAreaView, Dimensions, RefreshControl, Platform } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import NetworkClient from '@/api/NetworkClient';
 import { useSession } from '@/components/ctx';
-import { EventItem } from '@/components/EventItem';
+import { EventItem, EventItemType } from '@/components/EventItem';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -58,24 +60,36 @@ export default function SavedScreen()
         <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
             <SafeAreaView style={styles.safeArea}>
                 <ScrollView
-                    style={styles.scrollView}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContent}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            tintColor={colors.primary}
+                            colors={[colors.primary]} />
                     }>
                     <View style={styles.listContainer}>
                         {savedCards.length > 0 ? (
-                            savedCards.map((event) => (
-                                <EventItem
+                            savedCards.map((event, index) => (
+                                <Animated.View
                                     key={event.id}
-                                    {...event}
-                                    style={styles.eventItem}
-                                    onSave={() => toggleSaveEvent(event.id)}
-                                />
+                                    entering={FadeInUp.delay(index * 100)}
+                                    exiting={FadeOutDown}>
+                                    <EventItem
+                                        data={event}
+                                        style={styles.eventItem}
+                                        type={EventItemType.small}
+                                        onSave={() => toggleSaveEvent(event.id)} />
+                                </Animated.View>
                             ))
                         ) : (
-                            <ThemedText style={styles.noEventsText}>
-                                Sie haben noch keine Events geliked. Speichern Sie Events, um sie hier zu sehen.
-                            </ThemedText>
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="bookmark-outline" size={48} color={colors.textSecondary} />
+                                <ThemedText style={styles.emptyText}>
+                                    Sie haben noch keine Events geliked. Speichern Sie Events, um sie hier zu sehen.
+                                </ThemedText>
+                            </View>
                         )}
                     </View>
                 </ScrollView>
@@ -91,19 +105,37 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
     },
-    scrollView: {
-        flex: 1,
+    scrollContent: {
+        paddingVertical: 16,
     },
     listContainer: {
-        padding: 10,
+        paddingHorizontal: 16,
     },
     eventItem: {
         width: '100%',
-        marginBottom: 20,
+        marginBottom: 16,
+        borderRadius: 16,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 4,
+            },
+        }),
     },
-    noEventsText: {
+    emptyContainer: {
+        alignItems: 'center',
+        padding: 32,
+    },
+    emptyText: {
         textAlign: 'center',
-        marginTop: 20,
+        marginTop: 16,
         fontSize: 16,
+        opacity: 0.6,
+        lineHeight: 24,
     },
 });

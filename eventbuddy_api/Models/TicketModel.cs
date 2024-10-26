@@ -12,8 +12,7 @@ public class Ticket
     public int Id { get; set; }
     public int OwnerId { get; set; }
     public int EventId { get; set; }
-    [JsonIgnore]
-    public Event? Event { get; set; } = null;
+    public Event? Event { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime? UsedAt { get; set; }
     public string? QRCode { get; set; }

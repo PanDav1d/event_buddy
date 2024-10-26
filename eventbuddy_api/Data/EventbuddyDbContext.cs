@@ -50,7 +50,8 @@ namespace eventbuddy_api.Data
             modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.Event)
                 .WithMany()
-                .HasForeignKey(t => t.EventId);
+                .HasForeignKey(t => t.EventId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }
