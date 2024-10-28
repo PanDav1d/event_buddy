@@ -120,11 +120,13 @@ export function EventItem({ data, style, onSave, onPress, type = EventItemType.b
 
                   <View style={styles.overlayContainer}>
                     <View style={styles.overlayItem}>
+                      <Ionicons name="pricetag" size={16} color="white" style={{ marginRight: 6 }} />
                       <Text style={styles.price}>Kostenlos</Text>
                     </View>
                     <View style={styles.overlayItem}>
+                      <Ionicons name="calendar" size={16} color="white" style={{ marginRight: 6 }} />
                       <Text style={styles.price}>
-                        {new Date(data?.startDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        {new Date(data?.startDate).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}
                       </Text>
                     </View>
                   </View>
@@ -253,30 +255,33 @@ const styles = StyleSheet.create({
   },
   overlayContainer: {
     position: "absolute",
-    bottom: 8,
-    left: 8,
-    right: 8,
+    bottom: 12,
+    left: 12,
+    right: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 8,
   },
   overlayItem: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   price: {
     color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+    fontWeight: '600',
+    fontSize: 15,
   },
   heartButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    padding: 8,
-    borderRadius: 24,
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 10,
+    borderRadius: 16,
     alignItems: 'center',
   },
   savedAmount: {
@@ -287,20 +292,20 @@ const styles = StyleSheet.create({
   },
   shareButton: {
     position: 'absolute',
-    top: 16,
-    right: 64,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    padding: 8,
-    borderRadius: 24,
+    top: 12,
+    right: 60,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 10,
+    borderRadius: 16,
   },
   contentContainer: {
-    padding: 20,
+    padding: 16,
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   title: {
     fontSize: 20,

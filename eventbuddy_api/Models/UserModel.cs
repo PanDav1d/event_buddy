@@ -12,6 +12,12 @@ public class User
     public string? Phone { get; set; }
     public string? Password { get; set; }
     public string? BuddyName { get; set; }
+    public DateOnly Birthday { get; set; }
+
+    //Search Filters
+    public float? Latitude { get; set; } = 0;
+    public float? Longitude { get; set; } = 0;
+    public int? Radius { get; set; } = 10;
 
     // User preferences
     public float PreferredEventSize { get; set; }

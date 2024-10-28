@@ -14,6 +14,7 @@ import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler
 import { Title } from '@/components/Title';
 import { EventSpotlight } from '@/components/EventSpotlight';
 import { EventItemType } from '@/components/EventItem';
+import { BlurView } from 'expo-blur';
 
 const CARD_MARGIN = 8;
 
@@ -26,7 +27,7 @@ export default function IndexScreen()
 
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [events, setEvents] = useState<EventCardPreview[]>([]);
+  const [sections, setSections] = useState<Record<string, EventCardPreview[]>>({});
   const [error, setError] = useState<string | null>(null);
 
   if (!session)
@@ -36,9 +37,10 @@ export default function IndexScreen()
 
   const fetchData = useCallback(async () =>
   {
-    const allEvents = await NetworkClient.getEvents(session.userID);
-    setEvents(allEvents.items);
-    setError(allEvents.status.toString());
+    console.log("Fetching data for user:", session.userID);
+    const feedData = await NetworkClient.getFeed(session.userID);
+    console.log("Feed data received:", feedData);
+    setSections(feedData);
     setIsLoading(false);
   }, [session.userID]);
 
@@ -103,6 +105,7 @@ export default function IndexScreen()
       return renderSkeletonLoading();
     }
 
+    /*
     if (events.length == 0)
     {
       return (
@@ -112,6 +115,7 @@ export default function IndexScreen()
         </View>
       );
     }
+      */
 
     if (error == "error")
     {
@@ -125,36 +129,50 @@ export default function IndexScreen()
 
     return (
       <>
-        <EventSpotlight title={"Im Spotlight"} data={events[0]} />
-        <EventCarousel title={"Für dich"} data={events} />
-        <EventCarousel title={"In deiner Nähe"} data={events} />
+        {sections["Im Spotlight"] && (
+          <EventSpotlight
+            title='Im Spotlight'
+            data={sections["Im Spotlight"][0]}
+          />
+        )}
+        {Object.entries(sections).map(([title, events]) => (
+          title !== "Im Spotlight" && (
+            <EventCarousel
+              key={title}
+              title={title}
+              data={events}
+            />
+          )
+        ))}
       </>
     );
   };
 
   return (
     <GestureHandlerRootView>
-      <SafeAreaView>
-        <Title title='Eventbuddy' />
-        <ScrollView
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[colors.primary]}
-              tintColor={colors.primary}
-            />
-          }
-        >
-          {renderContent()}
-          <TouchableHighlight style={[styles.discoverButton, { backgroundColor: colors.primary, marginBottom: 150 }]} onPress={() => router.navigate("/explore")}>
-            <View style={styles.discoverButtonContent}>
-              <Ionicons name="search-outline" size={24} color={colors.textInverse} style={styles.discoverIcon} />
-              <ThemedText style={[styles.discoverText, { color: colors.textInverse }]}>Entdecke mehr</ThemedText>
-            </View>
-          </TouchableHighlight>
-        </ScrollView>
-      </SafeAreaView >
+      <BlurView style={StyleSheet.absoluteFill} tint={colorScheme === 'dark' ? 'dark' : 'light'} intensity={100}>
+        <SafeAreaView>
+          <Title title='Eventbuddy' />
+          <ScrollView
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[colors.primary]}
+                tintColor={colors.primary}
+              />
+            }
+          >
+            {renderContent()}
+            <TouchableHighlight style={[styles.discoverButton, { backgroundColor: colors.primary, marginBottom: 150 }]} onPress={() => router.navigate("/explore")}>
+              <View style={styles.discoverButtonContent}>
+                <Ionicons name="search-outline" size={24} color={colors.textInverse} style={styles.discoverIcon} />
+                <ThemedText style={[styles.discoverText, { color: colors.textInverse }]}>Entdecke mehr</ThemedText>
+              </View>
+            </TouchableHighlight>
+          </ScrollView>
+        </SafeAreaView>
+      </BlurView>
     </GestureHandlerRootView>
   );
 }

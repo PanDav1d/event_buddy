@@ -12,6 +12,7 @@ import { EventItem, EventItemType } from '@/components/EventItem';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
+import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -63,6 +64,47 @@ export default function TicketsScreen()
         setModalVisible(false);
     };
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayTickets = tickets.filter(ticket =>
+    {
+        const eventDate = new Date(ticket.event!.startDate);
+        return eventDate.toDateString() === today.toDateString();
+    });
+
+    const futureTickets = tickets.filter(ticket =>
+    {
+        const eventDate = new Date(ticket.event!.startDate);
+        return eventDate > today && eventDate.toDateString() !== today.toDateString();
+    }).sort((a, b) => new Date(a.event!.startDate).getTime() - new Date(b.event!.startDate).getTime());
+
+    const pastTickets = tickets.filter(ticket =>
+    {
+        const eventDate = new Date(ticket.event!.startDate);
+        return eventDate < today;
+    });
+
+    const renderTicketSection = (sectionTickets: Ticket[], index: number) =>
+    {
+        return sectionTickets.map((ticket, idx) => (
+            <Animated.View
+                key={ticket.id}
+                entering={FadeInUp.delay((index * sectionTickets.length + idx) * 100)}
+                exiting={FadeOutDown}>
+                <EventItem
+                    type={EventItemType.small}
+                    data={ticket.event!}
+                    style={{
+                        ...(styles.eventItem as object),
+                        ...(new Date(ticket.event!.startDate) < today ? styles.pastEvent as object : {})
+                    }}
+                    onPress={() => openQRModal(ticket)}
+                    likeable={false} />
+            </Animated.View>
+        ));
+    };
+
     return (
         <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
             <SafeAreaView style={styles.safeArea}>
@@ -78,19 +120,26 @@ export default function TicketsScreen()
                     }>
                     <View style={styles.listContainer}>
                         {tickets.length > 0 ? (
-                            tickets.map((ticket, index) => (
-                                <Animated.View
-                                    key={ticket.id}
-                                    entering={FadeInUp.delay(index * 100)}
-                                    exiting={FadeOutDown}>
-                                    <EventItem
-                                        type={EventItemType.small}
-                                        data={ticket.event!}
-                                        style={styles.eventItem}
-                                        onPress={() => openQRModal(ticket)}
-                                        likeable={false} />
-                                </Animated.View>
-                            ))
+                            <>
+                                {todayTickets.length > 0 && (
+                                    <>
+                                        <TitleSeperator title="Jetzt Scannen" type={TitleSeperatorType.left} />
+                                        {renderTicketSection(todayTickets, 0)}
+                                    </>
+                                )}
+                                {futureTickets.length > 0 && (
+                                    <>
+                                        <TitleSeperator title="Zukünftige Events" type={TitleSeperatorType.left} />
+                                        {renderTicketSection(futureTickets, 1)}
+                                    </>
+                                )}
+                                {pastTickets.length > 0 && (
+                                    <>
+                                        <TitleSeperator title="Abgelaufene Events" type={TitleSeperatorType.left} />
+                                        {renderTicketSection(pastTickets, 2)}
+                                    </>
+                                )}
+                            </>
                         ) : (
                             <View style={styles.emptyContainer}>
                                 <Ionicons name="ticket-outline" size={48} color={colors.textSecondary} />
@@ -164,6 +213,9 @@ const styles = StyleSheet.create({
                 elevation: 4,
             },
         }),
+    },
+    pastEvent: {
+        opacity: 0.5,
     },
     emptyContainer: {
         alignItems: 'center',

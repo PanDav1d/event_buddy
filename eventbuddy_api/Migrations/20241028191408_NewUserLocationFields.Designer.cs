@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using eventbuddy_api.Data;
 
@@ -11,9 +12,11 @@ using eventbuddy_api.Data;
 namespace eventbuddy_api.Migrations
 {
     [DbContext(typeof(EventbuddyDbContext))]
-    partial class EventbuddyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241028191408_NewUserLocationFields")]
+    partial class NewUserLocationFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

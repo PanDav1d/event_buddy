@@ -9,6 +9,7 @@ import { useSession } from '@/components/ctx';
 import { EventItem, EventItemType } from '@/components/EventItem';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
+import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -56,6 +57,46 @@ export default function SavedScreen()
         fetchSavedEvents().then(() => setRefreshing(false));
     }, []);
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayEvents = savedCards.filter(event =>
+    {
+        const eventDate = new Date(event.startDate);
+        return eventDate.toDateString() === today.toDateString();
+    });
+
+    const futureEvents = savedCards.filter(event =>
+    {
+        const eventDate = new Date(event.startDate);
+        return eventDate > today && eventDate.toDateString() !== today.toDateString();
+    }).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+    const pastEvents = savedCards.filter(event =>
+    {
+        const eventDate = new Date(event.startDate);
+        return eventDate < today;
+    }).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+    const renderEventSection = (sectionEvents: EventCardPreview[], index: number) =>
+    {
+        return sectionEvents.map((event, idx) => (
+            <Animated.View
+                key={event.id}
+                entering={FadeInUp.delay((index * sectionEvents.length + idx) * 100)}
+                exiting={FadeOutDown}>
+                <EventItem
+                    data={event}
+                    style={{
+                        ...styles.eventItem,
+                        ...(new Date(event.startDate) < today ? styles.pastEvent : {})
+                    }}
+                    type={EventItemType.small}
+                    onSave={() => toggleSaveEvent(event.id)} />
+            </Animated.View>
+        ));
+    };
+
     return (
         <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
             <SafeAreaView style={styles.safeArea}>
@@ -71,18 +112,26 @@ export default function SavedScreen()
                     }>
                     <View style={styles.listContainer}>
                         {savedCards.length > 0 ? (
-                            savedCards.map((event, index) => (
-                                <Animated.View
-                                    key={event.id}
-                                    entering={FadeInUp.delay(index * 100)}
-                                    exiting={FadeOutDown}>
-                                    <EventItem
-                                        data={event}
-                                        style={styles.eventItem}
-                                        type={EventItemType.small}
-                                        onSave={() => toggleSaveEvent(event.id)} />
-                                </Animated.View>
-                            ))
+                            <>
+                                {todayEvents.length > 0 && (
+                                    <>
+                                        <TitleSeperator title="Heute" type={TitleSeperatorType.left} />
+                                        {renderEventSection(todayEvents, 0)}
+                                    </>
+                                )}
+                                {futureEvents.length > 0 && (
+                                    <>
+                                        <TitleSeperator title="Zukünftige Events" type={TitleSeperatorType.left} />
+                                        {renderEventSection(futureEvents, 1)}
+                                    </>
+                                )}
+                                {pastEvents.length > 0 && (
+                                    <>
+                                        <TitleSeperator title="Vergangene Events" type={TitleSeperatorType.left} />
+                                        {renderEventSection(pastEvents, 2)}
+                                    </>
+                                )}
+                            </>
                         ) : (
                             <View style={styles.emptyContainer}>
                                 <Ionicons name="bookmark-outline" size={48} color={colors.textSecondary} />
@@ -126,6 +175,9 @@ const styles = StyleSheet.create({
                 elevation: 4,
             },
         }),
+    },
+    pastEvent: {
+        opacity: 0.5,
     },
     emptyContainer: {
         alignItems: 'center',

@@ -25,10 +25,22 @@ export default function EventScreen()
 
     const [event, setEvent] = useState<Event>();
     const [similarEvents, setSimiliarEvents] = useState<EventCardPreview[]>();
+    const [isLoading, setIsLoading] = useState(true);
     const [organizerEvents, setOrganizerEvents] = useState<EventCardPreview[]>();
     const [modalVisible, setModalVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [ticketQuantity, setTicketQuantity] = useState(1);
+
+
+
+
+    const defaultCoords = {
+        latitude: 48.137154,  // Example: Vienna coordinates
+        longitude: 16.363449,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02
+    };
+
     const isSoldOut = () =>
     {
         return event?.maxTickets && event?.soldTickets && event?.maxTickets <= event?.soldTickets;
@@ -40,14 +52,18 @@ export default function EventScreen()
     {
         const fetchEvent = async () =>
         {
+            setIsLoading(true);
             const event = await NetworkClient.getEvent(Number(eventID));
             if (event != null)
             {
-                setEvent(event);
+                setEvent(event.events);
+                setSimiliarEvents(event.similarEvents);
+                setOrganizerEvents(event.organizerEvents);
             } else
             {
                 router.back();
             }
+            setIsLoading(false);
         };
         fetchEvent();
     }, [eventID]);
@@ -268,7 +284,7 @@ export default function EventScreen()
                             source={{ uri: event?.imageUrl || 'default-placeholder-url' }}
                         />
                         <LinearGradient
-                            colors={['transparent', 'rgba(0,0,0,1)']}
+                            colors={colorScheme === 'dark' ? ['transparent', 'rgba(0,0,0,1)'] : ['transparent', 'rgba(255,255,255,1)']}
                             style={styles.gradient}
                             pointerEvents="none"
                         />
@@ -334,12 +350,12 @@ export default function EventScreen()
                             <View style={styles.mapContainer}>
                                 <MapView
                                     style={styles.map}
-                                    initialRegion={{
-                                        latitude: event?.latitude || 0,
-                                        longitude: event?.longitude || 0,
+                                    initialRegion={event ? {
+                                        latitude: event.latitude,
+                                        longitude: event.longitude,
                                         latitudeDelta: 0.02,
                                         longitudeDelta: 0.02,
-                                    }}
+                                    } : defaultCoords}
                                     scrollEnabled={false}
                                     zoomEnabled={false}
                                 >
@@ -421,6 +437,7 @@ export default function EventScreen()
         </GestureHandlerRootView>
     );
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -446,6 +463,12 @@ const styles = StyleSheet.create({
         paddingTop: 20,
         marginBottom: 16,
         letterSpacing: 0.3,
+        lineHeight: 30,
+    },
+    map: {
+        // Add appropriate styles for the map
+        width: '100%',
+        height: 200, // Adjust as needed
     },
     organizerRow: {
         flexDirection: 'row',
@@ -819,7 +842,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'rgba(0,0,0,0.8)',
         justifyContent: 'center',
         alignItems: 'center',
     },

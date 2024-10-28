@@ -23,9 +23,12 @@ export function EventCarousel({ title, data, eventCardType }: EventCarouselProps
     const colors = Colors[colorScheme ?? 'light'];
     const { session } = useSession();
 
-    const saveEvent = async (eventId: number) =>
+    const toggleSaveEvent = async (eventId: number) =>
     {
-        NetworkClient.saveEvent(session!.userID, eventId);
+        if (session?.userID)
+        {
+            await NetworkClient.saveEvent(session.userID, eventId);
+        }
     };
 
     return (
@@ -35,7 +38,7 @@ export function EventCarousel({ title, data, eventCardType }: EventCarouselProps
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 data={data}
-                renderItem={({ item }) => <EventItem type={eventCardType} data={item} style={styles.eventCardList} onSave={() => saveEvent(item.id)} />} />
+                renderItem={({ item }) => <EventItem type={eventCardType} data={item} style={styles.eventCardList} onSave={() => toggleSaveEvent(item.id)} />} />
         </View>
     );
 }

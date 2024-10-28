@@ -3,7 +3,10 @@ import { CreateEventParams, Event, EventCardPreview, SearchParams, Ticket } from
 import { FriendRequestStatus } from '@/constants/FriendRequestRespondEnum';
 import { router } from 'expo-router';
 
-const BASE_URL = 'https://eventbuddy.bsite.net/api/v1';
+const PROD_URL = 'https://eventbuddy.bsite.net/api/v1';
+const DEV_URL = 'http://localhost:5196/api/v1';
+
+const BASE_URL = DEV_URL;
 
 class NetworkClient {
     private client: AxiosInstance;
@@ -39,11 +42,11 @@ class NetworkClient {
         delete this.client.defaults.headers.common['Authorization'];
     }
 
-    async getEvent(eventID: number): Promise<Event | null>
+    async getEvent(eventID: number): Promise<{events: Event, similarEvents: EventCardPreview[], organizerEvents: EventCardPreview[]} | null>
     {
         try
         {
-            const response = await this.client.get<Event>(`/events/${eventID}`);
+            const response = await this.client.get(`/events/${eventID}`);
             return response.data;
         }
         catch (error)
@@ -53,38 +56,44 @@ class NetworkClient {
         }
     }
 
-    async getEvents(user_id:number) : Promise<{status:String, items:EventCardPreview[]}>{
+    async getFeed(user_id:number) : Promise<Record<string,EventCardPreview[]>>{
         try {
             const response = await this.client.get(`/events?user_id=${user_id}`);
-            let result : EventCardPreview[] = []
-            for(let i = 0; i < response.data.length; i++){
-                const item = {
-                    id: response.data[i].id,
-                    title: response.data[i].title,
-                    imageUrl: response.data[i].imageUrl,
-                    description: response.data[i].description,
-                    startDate: response.data[i].startDate,
-                    endDate: response.data[i].endDate,
-                    savedAmount: response.data[i].savedAmount,
-                    eventSaved: response.data[i].eventSaved,
-                    matchScore: response.data[i].matchScore
-                };
-                result.push(item);
+            const sections: Record<string, EventCardPreview[]> = {};
+            
+            // Transform each event into the correct format
+            for (const [key, events] of Object.entries(response.data)) {
+                sections[key] = (events as any[]).map(event => ({
+                    id: event.id,
+                    title: event.title,
+                    imageUrl: event.imageUrl,
+                    description: event.description,
+                    startDate: event.startDate,
+                    endDate: event.endDate,
+                    savedAmount: event.savedAmount,
+                    eventSaved: event.eventSaved,
+                    matchScore: event.matchScore
+                }));
             }
-            return { status:"success", items:result };
+            
+            console.log("Processed Sections:", sections);
+            return sections;
+            
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 404) {
-                return {status:"error", items:[]};
+                return {
+                    "Für dich": [],
+                    "In deiner Nähe": []
+                };
             }
             throw error;
         }
     }
-
     async saveEvent(user_id:number, event_id:number): Promise<void>
     {
         try
         {
-            await this.client.post(`/saved_events/${event_id}/${user_id}`);
+            const response = await this.client.post(`/saved_events/${event_id}/${user_id}`);
         }
         catch (error)
         {
