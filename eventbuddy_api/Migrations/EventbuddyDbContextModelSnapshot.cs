@@ -147,6 +147,32 @@ namespace eventbuddy_api.Migrations
                     b.ToTable("Friendship");
                 });
 
+            modelBuilder.Entity("eventbuddy_api.Models.PricingTier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.ToTable("PricingTier");
+                });
+
             modelBuilder.Entity("eventbuddy_api.Models.SavedEvent", b =>
                 {
                     b.Property<int>("Id")
@@ -329,6 +355,17 @@ namespace eventbuddy_api.Migrations
                     b.Navigation("User2");
                 });
 
+            modelBuilder.Entity("eventbuddy_api.Models.PricingTier", b =>
+                {
+                    b.HasOne("eventbuddy_api.Models.Event", "Event")
+                        .WithMany("PricingStructure")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
             modelBuilder.Entity("eventbuddy_api.Models.Ticket", b =>
                 {
                     b.HasOne("eventbuddy_api.Models.Event", "Event")
@@ -350,6 +387,8 @@ namespace eventbuddy_api.Migrations
             modelBuilder.Entity("eventbuddy_api.Models.Event", b =>
                 {
                     b.Navigation("Attendees");
+
+                    b.Navigation("PricingStructure");
                 });
 
             modelBuilder.Entity("eventbuddy_api.Models.User", b =>

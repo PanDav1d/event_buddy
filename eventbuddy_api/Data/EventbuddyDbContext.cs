@@ -15,6 +15,7 @@ namespace eventbuddy_api.Data
         }
 
         public DbSet<Event> Event { get; set; }
+        public DbSet<PricingTier> PricingTier { get; set; }
         public DbSet<User> User { get; set; }
         public DbSet<Ticket> Ticket { get; set; }
         public DbSet<SavedEvent> SavedEvent { get; set; }
@@ -52,6 +53,15 @@ namespace eventbuddy_api.Data
                 .WithMany()
                 .HasForeignKey(t => t.EventId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PricingTier>()
+                .Property(p => p.Price)
+                .HasPrecision(10, 2);
+
+            modelBuilder.Entity<Event>()
+                .HasMany(e => e.PricingStructure)
+                .WithOne(p => p.Event)
+                .HasForeignKey(p => p.EventId);
         }
     }
 }

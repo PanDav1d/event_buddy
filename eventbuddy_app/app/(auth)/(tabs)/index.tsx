@@ -37,9 +37,7 @@ export default function IndexScreen()
 
   const fetchData = useCallback(async () =>
   {
-    console.log("Fetching data for user:", session.userID);
     const feedData = await NetworkClient.getFeed(session.userID);
-    console.log("Feed data received:", feedData);
     setSections(feedData);
     setIsLoading(false);
   }, [session.userID]);

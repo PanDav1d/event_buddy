@@ -31,4 +31,5 @@ public class Event
     public float AverageRating { get; set; }
 
     public List<User> Attendees { get; set; }
+    public List<PricingTier> PricingStructure { get; set; } = [];
 }

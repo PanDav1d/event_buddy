@@ -30,8 +30,7 @@ export default function EventScreen()
     const [modalVisible, setModalVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [ticketQuantity, setTicketQuantity] = useState(1);
-
-
+    const [selectedTier, setSelectedTier] = useState<number | null>(null);
 
 
     const defaultCoords = {
@@ -54,6 +53,7 @@ export default function EventScreen()
         {
             setIsLoading(true);
             const event = await NetworkClient.getEvent(Number(eventID));
+            console.log(event);
             if (event != null)
             {
                 setEvent(event.events);
@@ -106,52 +106,43 @@ export default function EventScreen()
                         </View>
 
                         <View style={styles.modalHero}>
-                            <ThemedText style={styles.modalTitle}>Zusammenfassung</ThemedText>
-                            <ThemedText style={styles.modalSubtitle}>Prüfe die Event Details</ThemedText>
+                            <ThemedText style={styles.modalTitle}>Ticket wählen</ThemedText>
+                            <ThemedText style={styles.modalSubtitle}>Wähle deine Ticket-Kategorie</ThemedText>
                         </View>
 
-                        <View style={styles.ticketCard}>
-                            <View style={styles.ticketHeader}>
-                                <ThemedText style={styles.ticketTitle}>{event?.title}</ThemedText>
-                                <ThemedText style={styles.ticketPrice}>€{event?.price || 0}</ThemedText>
-                            </View>
-
-                            <View style={styles.ticketDetails}>
-                                <View style={styles.detailRow}>
-                                    <ThemedText style={styles.detailLabel}>Datum</ThemedText>
-                                    <ThemedText style={styles.detailValue}>{new Date(event?.startDate!).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}</ThemedText>
-                                </View>
-                                <View style={styles.detailRow}>
-                                    <ThemedText style={styles.detailLabel}>Verfügbar</ThemedText>
-                                    <ThemedText style={styles.detailValue}>
-                                        {event?.maxTickets ? event.maxTickets - (event?.soldTickets || 0) : 0} Tickets
-                                    </ThemedText>
-                                </View>
-                            </View>
-                        </View>
-                        <View style={styles.quantitySelector}>
-                            <ThemedText style={styles.detailLabel}>Anzahl Tickets</ThemedText>
-                            <View style={styles.quantityControls}>
+                        <View style={styles.ticketTierContainer}>
+                            {event?.pricingStructure?.map((tier) => (
                                 <TouchableOpacity
-                                    style={[styles.quantityButton, { backgroundColor: colors.primary }]}
-                                    onPress={() => ticketQuantity > 1 && setTicketQuantity(prev => prev - 1)}
+                                    key={tier.id}
+                                    style={[
+                                        { borderColor: colors.textPrimary },
+                                        styles.ticketTierCard,
+                                        selectedTier === tier.id && {
+                                            borderColor: colors.primary,
+                                        }
+                                    ]}
+                                    onPress={() => setSelectedTier(tier.id)}
                                 >
-                                    <Ionicons name="remove" size={20} color="white" />
+                                    <View style={styles.ticketTierContent}>
+                                        <ThemedText style={styles.ticketTierTitle}>{tier.title}</ThemedText>
+                                        <ThemedText style={styles.ticketTierPrice}>€{tier.price}</ThemedText>
+                                    </View>
+                                    {selectedTier === tier.id && (
+                                        <View style={[styles.selectedCheck, { backgroundColor: colors.primary }]}>
+                                            <Ionicons name="checkmark" size={20} color="white" />
+                                        </View>
+                                    )}
                                 </TouchableOpacity>
-                                <ThemedText style={styles.quantityText}>{ticketQuantity}</ThemedText>
-                                <TouchableOpacity
-                                    style={[styles.quantityButton, { backgroundColor: colors.primary }]}
-                                    onPress={() => ticketQuantity < (event?.maxTickets || 0) - (event?.soldTickets || 0) && setTicketQuantity(prev => prev + 1)}
-                                >
-                                    <Ionicons name="add" size={20} color="white" />
-                                </TouchableOpacity>
-                            </View>
+                            ))}
                         </View>
-
 
                         <TouchableOpacity
-                            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-                            onPress={() => setCurrentStep(2)}
+                            style={[
+                                styles.primaryButton,
+                                { backgroundColor: selectedTier ? colors.primary : '#ccc' }
+                            ]}
+                            onPress={() => selectedTier && setCurrentStep(2)}
+                            disabled={!selectedTier}
                         >
                             <ThemedText style={styles.primaryButtonText}>Weiter zur Bezahlung</ThemedText>
                         </TouchableOpacity>
@@ -346,6 +337,18 @@ export default function EventScreen()
                         </View>
 
                         <View style={styles.section}>
+                            <ThemedText style={styles.sectionTitle}>Tickets & Preise</ThemedText>
+                            {event?.pricingStructure?.toReversed().map((tier) => (
+                                <View key={tier.id} style={styles.pricingTier}>
+                                    <View style={styles.pricingHeader}>
+                                        <ThemedText style={styles.tierTitle}>{tier.title}</ThemedText>
+                                        <ThemedText style={styles.tierPrice}>€{tier.price}</ThemedText>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+
+                        <View style={styles.section}>
                             <ThemedText style={styles.sectionTitle}>Standort</ThemedText>
                             <View style={styles.mapContainer}>
                                 <MapView
@@ -387,7 +390,7 @@ export default function EventScreen()
                 <View style={styles.bottomSheet}>
                     <View style={styles.priceContainer}>
                         <ThemedText style={styles.priceLabel}>Preis</ThemedText>
-                        <ThemedText style={styles.price}>€{event?.price || 0}</ThemedText>
+                        <ThemedText style={styles.price}>{event?.pricingStructure != null && event.pricingStructure?.length > 0 ? `Ab ${Math.min(...event.pricingStructure.map(tier => tier.price))}€` : 'Kostenlos'}</ThemedText>
                     </View>
                     <TouchableOpacity
                         style={[
@@ -883,6 +886,57 @@ const styles = StyleSheet.create({
     quantityText: {
         fontSize: 18,
         fontWeight: '600',
+    },
+    pricingTier: {
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(200, 200, 200, 0.3)',
+    },
+    pricingHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    tierTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+    },
+    tierPrice: {
+        fontSize: 20,
+        fontWeight: '700',
+    },
+    ticketTierContainer: {
+        gap: 12,
+        marginBottom: 24,
+    },
+    ticketTierCard: {
+        borderRadius: 16,
+        padding: 20,
+        borderWidth: 2,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    ticketTierContent: {
+        flex: 1,
+    },
+    ticketTierTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    ticketTierPrice: {
+        fontSize: 20,
+        fontWeight: '700',
+    },
+    selectedCheck: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 
 });

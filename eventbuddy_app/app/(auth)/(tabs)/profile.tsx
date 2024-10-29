@@ -8,7 +8,7 @@ import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler
 import NetworkClient from '@/api/NetworkClient';
 import { useSession } from '@/components/ctx';
 import { useRouter } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Circle, Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import SubmitButton from '@/components/SubmitButton';
@@ -131,6 +131,13 @@ export default function ProfileScreen()
             title: 'Freunde',
             icon: 'people-outline',
             onPress: () => router.push("/friends"),
+            gradient: ['#FA709A', '#FEE140'],
+        },
+        {
+            id: 5,
+            title: 'Präferenzen',
+            icon: 'color-wand-outline',
+            onPress: () => openModal('Persönliche Präferenzen', <PreferencesContent closeModal={closeModal} />),
             gradient: ['#FA709A', '#FEE140'],
         },
     ];
@@ -451,6 +458,7 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
         attendees: [],
         maxTickets: 100,
         soldTickets: 0,
+        pricingStructure: [],
     });
     const [location, setLocation] = useState<{ latitude: number; longitude: number }>({ latitude: 0, longitude: 0 });
     const { session } = useSession();
@@ -769,7 +777,198 @@ const SettingsContent = () => <ThemedText>Einstellungen-Inhalt hier</ThemedText>
 const HelpSupportContent = () => <ThemedText>Hilfe & Support-Inhalt hier</ThemedText>;
 const PrivacyContent = () => <ThemedText>Datenschutz-Inhalt hier</ThemedText>;
 const AboutUsContent = () => <ThemedText>Über uns-Inhalt hier</ThemedText>;
+const PreferencesContent = ({ closeModal }: { closeModal: () => void }) =>
+{
+    const colorScheme = useColorScheme();
+    const colors = Colors[colorScheme ?? 'light'];
+    const { session } = useSession();
 
+    const [location, setLocation] = useState<{ latitude: number; longitude: number }>({
+        latitude: 48.137154,
+        longitude: 11.576124
+    });
+    const [radius, setRadius] = useState(5);
+    const [preferences, setPreferences] = useState({
+        preferredEventSize: 0.5,
+        preferredInteractivity: 0.5,
+        preferredNoisiness: 0.5,
+        preferredCrowdedness: 0.5,
+    });
+    const mapRef = useRef<MapView>(null);
+
+    useEffect(() =>
+    {
+        (async () =>
+        {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === 'granted')
+            {
+                const currentLocation = await Location.getCurrentPositionAsync({});
+                setLocation({
+                    latitude: currentLocation.coords.latitude,
+                    longitude: currentLocation.coords.longitude
+                });
+            }
+        })();
+    }, []);
+
+    const handleMapPress = (e: any) =>
+    {
+        setLocation(e.nativeEvent.coordinate);
+    };
+
+    const moveToCurrentLocation = async () =>
+    {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted')
+        {
+            const currentLocation = await Location.getCurrentPositionAsync({});
+            const newLocation = {
+                latitude: currentLocation.coords.latitude,
+                longitude: currentLocation.coords.longitude
+            };
+            setLocation(newLocation);
+            mapRef.current?.animateToRegion({
+                ...newLocation,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+            });
+        }
+    };
+
+    useEffect(() =>
+    {
+        if (mapRef.current)
+        {
+            mapRef.current.fitToElements({
+                animated: true,
+                edgePadding: { top: 50, right: 50, bottom: 50, left: 50 }
+            });
+        }
+    }, [location, radius]);
+
+    return (
+        <ScrollView style={{ flex: 1, padding: 20 }}>
+            <ThemedText style={{ marginBottom: 10 }}>Set Your Location Preferences</ThemedText>
+            <View style={{ height: 300, marginBottom: 20 }}>
+                <MapView
+                    ref={mapRef}
+                    style={{ flex: 1, borderRadius: 25 }}
+                    region={{
+                        ...location,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421,
+                    }}
+                    onPress={handleMapPress}
+                >
+                    <Marker coordinate={location} />
+                    <Circle
+                        center={location}
+                        radius={radius * 1000}
+                        fillColor="rgba(0, 150, 255, 0.2)"
+                        strokeColor="rgba(0, 150, 255, 0.5)"
+                    />
+                </MapView>
+                <TouchableOpacity
+                    style={{
+                        position: 'absolute',
+                        bottom: 16,
+                        right: 16,
+                        backgroundColor: colors.primary,
+                        borderRadius: 30,
+                        padding: 10,
+                    }}
+                    onPress={moveToCurrentLocation}
+                >
+                    <Ionicons name="locate" size={24} color="white" />
+                </TouchableOpacity>
+            </View>
+            <View style={{ marginBottom: 20 }}>
+                <ThemedText>Radius (km): {radius}</ThemedText>
+                <Slider
+                    value={radius}
+                    onValueChange={setRadius}
+                    minimumValue={1}
+                    maximumValue={50}
+                    step={1}
+                />
+            </View>
+
+            <ThemedText>Preferred Event Size:</ThemedText>
+            <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={1}
+                step={0.1}
+                value={preferences.preferredEventSize}
+                onValueChange={(value: number) => setPreferences({ ...preferences, preferredEventSize: Math.round(value * 10) / 10 })}
+                minimumTrackTintColor={colors.primary}
+                maximumTrackTintColor={colors.backgroundAlt}
+                thumbTintColor={colors.primary}
+            />
+            <ThemedText style={styles.sliderValue}>{preferences.preferredEventSize * 100 + " %"}</ThemedText>
+
+            <ThemedText>Preferred Noisiness:</ThemedText>
+            <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={1}
+                step={0.1}
+                value={preferences.preferredNoisiness}
+                onValueChange={(value: number) => setPreferences({ ...preferences, preferredNoisiness: Math.round(value * 10) / 10 })}
+                minimumTrackTintColor={colors.primary}
+                maximumTrackTintColor={colors.backgroundAlt}
+                thumbTintColor={colors.primary}
+            />
+            <ThemedText style={styles.sliderValue}>{preferences.preferredNoisiness * 100 + " %"}</ThemedText>
+
+            <ThemedText>Preferred Interactivity:</ThemedText>
+            <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={1}
+                step={0.1}
+                value={preferences.preferredInteractivity}
+                onValueChange={(value: number) => setPreferences({ ...preferences, preferredInteractivity: Math.round(value * 10) / 10 })}
+                minimumTrackTintColor={colors.primary}
+                maximumTrackTintColor={colors.backgroundAlt}
+                thumbTintColor={colors.primary}
+            />
+            <ThemedText style={styles.sliderValue}>{preferences.preferredInteractivity * 100 + " %"}</ThemedText>
+
+            <ThemedText>Preferred Crowdedness:</ThemedText>
+            <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={1}
+                step={0.1}
+                value={preferences.preferredCrowdedness}
+                onValueChange={(value: number) => setPreferences({ ...preferences, preferredCrowdedness: Math.round(value * 10) / 10 })}
+                minimumTrackTintColor={colors.primary}
+                maximumTrackTintColor={colors.backgroundAlt}
+                thumbTintColor={colors.primary}
+            />
+            <ThemedText style={styles.sliderValue}>{preferences.preferredCrowdedness * 100 + " %"}</ThemedText>
+
+            <SubmitButton
+                onPress={() =>
+                {
+                    if (session?.userID !== undefined)
+                    {
+                        NetworkClient.updateUserPreferences(session.userID, {
+                            latitude: location.latitude,
+                            longitude: location.longitude,
+                            radius: radius,
+                            ...preferences
+                        });
+                        closeModal();
+                    }
+                }}
+                title="Einstellungen speichern"
+            />
+        </ScrollView>
+    );
+};
 const ScanTicketsContent = () =>
 {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);

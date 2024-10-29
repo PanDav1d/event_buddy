@@ -67,7 +67,7 @@ class NetworkClient {
                     id: event.id,
                     title: event.title,
                     imageUrl: event.imageUrl,
-                    description: event.description,
+                    pricingStructure: event.pricingStructure,
                     startDate: event.startDate,
                     endDate: event.endDate,
                     savedAmount: event.savedAmount,
@@ -114,7 +114,7 @@ class NetworkClient {
                     id: response.data[i].id,
                     title: response.data[i].title,
                     imageUrl: response.data[i].imageUrl,
-                    description: response.data[i].description,
+                    pricingStructure: response.data[i].pricingStructure,
                     startDate: response.data[i].startDate,
                     endDate: response.data[i].endDate,
                     savedAmount: response.data[i].savedAmount,
@@ -190,6 +190,16 @@ class NetworkClient {
         }
     }
 
+
+    async updateUserPreferences(user_id: number, props: { preferredEventSize: number; preferredInteractivity: number; preferredNoisiness: number; preferredCrowdedness: number; latitude: number; longitude: number; radius: number; }): Promise<boolean> {
+        try {
+            const response = await this.client.put(`/users/preferences?user_id=${user_id}`, props);
+            return response.status === 200;
+        } catch (error) {
+            console.error('Error updating user preferences:', error);
+            return false;
+        }
+    }
     async search(user_id : number, q: string): Promise<{users: object[]; events :object[]} | null>
     {
         try{

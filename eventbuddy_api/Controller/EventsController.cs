@@ -31,7 +31,7 @@ public class EventsController(EventbuddyDbContext context, FeedSectionService fe
     [HttpGet("events/{event_id}")]
     public async Task<IResult> GetEventByID(int event_id)
     {
-        var events = await _context.Event.Where(e => e.Id == event_id).FirstOrDefaultAsync();
+        var events = await _context.Event.Include(e => e.PricingStructure).Where(e => e.Id == event_id).FirstOrDefaultAsync();
         if (events == null)
         {
             return Results.NotFound();
@@ -48,5 +48,28 @@ public class EventsController(EventbuddyDbContext context, FeedSectionService fe
         await _context.Event.AddAsync(e);
         await _context.SaveChangesAsync();
         return Results.Ok("Event created");
+    }
+
+    [HttpDelete("events/{event_id}")]
+    public async Task<IResult> DeleteEvent(int event_id)
+    {
+        var @event = await _context.Event
+            .Include(e => e.PricingStructure)
+            .Include(e => e.Attendees)
+            .FirstOrDefaultAsync(e => e.Id == event_id);
+
+        if (@event == null)
+            return Results.NotFound();
+
+        var tickets = await _context.Ticket.Where(t => t.EventId == event_id).ToListAsync();
+        var savedEvents = await _context.SavedEvent.Where(s => s.EventId == event_id).ToListAsync();
+
+        _context.Ticket.RemoveRange(tickets);
+        _context.SavedEvent.RemoveRange(savedEvents);
+        _context.PricingTier.RemoveRange(@event.PricingStructure);
+        _context.Event.Remove(@event);
+
+        await _context.SaveChangesAsync();
+        return Results.Ok("deleted");
     }
 }

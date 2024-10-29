@@ -22,6 +22,25 @@ public class UsersController(EventbuddyDbContext context, Token _tokenGenerator)
         return Results.Ok(user);
     }
 
+    [HttpPut("users/preferences")]
+    public async Task<IResult> UpdateUserPreferences(int user_id, [FromBody] UserPreferences preferences)
+    {
+        var user = await _context.User.FindAsync(user_id);
+        if (user == null)
+            return Results.NotFound("User not found");
+
+        user.PreferredEventSize = (float)preferences.PreferredEventSize;
+        user.PreferredInteractivity = (float)preferences.PreferredInteractivity;
+        user.PreferredNoisiness = (float)preferences.PreferredNoisiness;
+        user.PreferredCrowdedness = (float)preferences.PreferredCrowdedness;
+        user.Latitude = (float?)preferences.Latitude;
+        user.Longitude = (float?)preferences.Longitude;
+        user.Radius = preferences.Radius;
+
+        await _context.SaveChangesAsync();
+        return Results.Ok("Preferences updated successfully");
+    }
+
     [HttpGet("users/sent_friend_requests")]
     public async Task<IResult> GetUserSentFriendRequests(int user_id)
     {
@@ -180,4 +199,15 @@ public class UsersController(EventbuddyDbContext context, Token _tokenGenerator)
         await _context.SaveChangesAsync();
         return Results.Ok(new { user_id = user.Id, access_token = _tokenGenerator.Generate(user) });
     }
+}
+
+public class UserPreferences
+{
+    public double PreferredEventSize { get; set; }
+    public double PreferredInteractivity { get; set; }
+    public double PreferredNoisiness { get; set; }
+    public double PreferredCrowdedness { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public int Radius { get; set; }
 }

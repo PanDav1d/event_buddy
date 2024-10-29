@@ -121,7 +121,7 @@ export function EventItem({ data, style, onSave, onPress, type = EventItemType.b
                   <View style={styles.overlayContainer}>
                     <View style={styles.overlayItem}>
                       <Ionicons name="pricetag" size={16} color="white" style={{ marginRight: 6 }} />
-                      <Text style={styles.price}>Kostenlos</Text>
+                      <Text style={styles.price}>{data.pricingStructure?.length > 0 ? `Ab ${Math.min(...data.pricingStructure.map(tier => tier.price))}€` : 'Kostenlos'}</Text>
                     </View>
                     <View style={styles.overlayItem}>
                       <Ionicons name="calendar" size={16} color="white" style={{ marginRight: 6 }} />

@@ -21,18 +21,25 @@ export interface Event {
   eventSaved: boolean;
   savedAmount: number;
   matchScore: number;
+  pricingStructure: PricingTier[];
+}
+
+export interface PricingTier {
+  id: number;
+  title: string;
+  price: number;
 }
 
 export interface EventCardPreview {
   id: number;
   title: string;
-  description: string;
   imageUrl: string;
   startDate: string;
   endDate: string;
   eventSaved: boolean;
   savedAmount: number;
   matchScore: number;
+  pricingStructure: PricingTier[];
 }
 
 export interface CreateEventParams {
@@ -56,6 +63,7 @@ export interface CreateEventParams {
   attendeeCount: number;
   averageRating: number;
   attendees: [];
+  pricingStructure: PricingTier[];
 }
 
 export interface SearchParams {

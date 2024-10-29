@@ -11,7 +11,7 @@ public class RecommendationService(EventbuddyDbContext context)
     public async Task<List<Event>> GetPersonalizedFeed(int userId)
     {
         var user = await _context.User.FindAsync(userId);
-        var events = await _context.Event.Where(e => e.StartDate >= DateTime.Now).Take(10).ToListAsync();
+        var events = await _context.Event.Include(e => e.PricingStructure).Where(e => e.StartDate >= DateTime.Now).Take(10).ToListAsync();
         return events;
     }
 }
