@@ -7,14 +7,47 @@ public class FeedSectionService(RecommendationService recommendationService, Eve
 {
     private readonly RecommendationService _recommendationService = recommendationService;
     private readonly EventbuddyDbContext _context = context;
-    public async Task<Dictionary<string, List<Event>>> GetFeed(int userId)
+    public async Task<Dictionary<string, List<dynamic>>> GetFeed(int userId)
     {
-        var feed = new Dictionary<string, List<Event>>();
-        feed["Im Spotlight"] = [await this.GetSpotlightEvent(userId)];
-        feed["Für dich"] = await _recommendationService.GetPersonalizedFeed(userId);
-        feed["In deiner Nähe"] = await this.GetNearbyEvents(userId);
+        var feed = new Dictionary<string, List<dynamic>>();
+
+        var spotlightEvent = await GetSpotlightEvent(userId);
+        var personalizedFeed = await _recommendationService.GetPersonalizedFeed(userId);
+        var nearbyEvents = await GetNearbyEvents(userId);
+
+        feed["Im Spotlight"] = [await TransformEventWithSavedStatus(spotlightEvent, userId)];
+        feed["Für dich"] = await TransformEventsWithSavedStatus(personalizedFeed, userId);
+        feed["In deiner Nähe"] = await TransformEventsWithSavedStatus(nearbyEvents, userId);
 
         return feed;
+    }
+
+    private async Task<dynamic> TransformEventWithSavedStatus(Event evt, int userId)
+    {
+        return new
+        {
+            evt.Id,
+            evt.Title,
+            evt.ImageUrl,
+            evt.Description,
+            evt.StartDate,
+            evt.EndDate,
+            evt.Longitude,
+            evt.Latitude,
+            evt.OrganizerId,
+            EventSaved = await _context.SavedEvent.AnyAsync(s => s.EventId == evt.Id && s.UserId == userId),
+            SavedAmount = await _context.SavedEvent.CountAsync(se => se.EventId == evt.Id)
+        };
+    }
+
+    private async Task<List<dynamic>> TransformEventsWithSavedStatus(List<Event> events, int userId)
+    {
+        var result = new List<dynamic>();
+        foreach (var evt in events)
+        {
+            result.Add(await TransformEventWithSavedStatus(evt, userId));
+        }
+        return result;
     }
 
     private async Task<List<Event>> GetNearbyEvents(int userId)

@@ -27,7 +27,13 @@ export function EventCarousel({ title, data, eventCardType }: EventCarouselProps
     {
         if (session?.userID)
         {
-            await NetworkClient.saveEvent(session.userID, eventId);
+            const response = await NetworkClient.saveEvent(session.userID, eventId);
+            console.log(response);
+            const updatedData = data.map(event =>
+                event.id === eventId
+                    ? { ...event, eventSaved: !event.eventSaved }
+                    : event
+            );
         }
     };
 

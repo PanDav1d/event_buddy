@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 const PROD_URL = 'https://eventbuddy.bsite.net/api/v1';
 const DEV_URL = 'http://localhost:5196/api/v1';
 
-const BASE_URL = DEV_URL;
+const BASE_URL = PROD_URL;
 
 class NetworkClient {
     private client: AxiosInstance;
@@ -89,15 +89,17 @@ class NetworkClient {
             throw error;
         }
     }
-    async saveEvent(user_id:number, event_id:number): Promise<void>
+    async saveEvent(user_id:number, event_id:number): Promise<string>
     {
         try
         {
             const response = await this.client.post(`/saved_events/${event_id}/${user_id}`);
+            return response.data;
         }
         catch (error)
         {
             console.error('Error while saving event: ', error);
+            throw error;
         }
     }
 

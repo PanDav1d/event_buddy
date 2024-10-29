@@ -13,29 +13,27 @@ public class SavedEventsController(EventbuddyDbContext context) : ControllerBase
 {
     private readonly EventbuddyDbContext _context = context;
 
-    [AllowAnonymous]
     [HttpGet("saved_events/{user_id}")]
     public async Task<IResult> GetSavedEventsByUser(int user_id)
     {
-        var events = (from e in _context.Event
-                      join se in _context.SavedEvent on e.Id equals se.EventId
-                      where se.UserId == user_id
-                      select new
-                      {
-                          e.Id,
-                          e.Title,
-                          e.ImageUrl,
-                          e.Description,
-                          e.StartDate,
-                          e.EndDate,
-                          e.Longitude,
-                          e.Latitude,
-                          e.OrganizerId,
-                          EventSaved = _context.SavedEvent.Any(s => s.EventId == e.Id && s.UserId == user_id),
-                          SavedAmount = _context.SavedEvent.Count(se => se.EventId == e.Id)
-                      }).AsQueryable();
-        var resultEvents = await events.Where(e => DateTime.Compare(e.StartDate, DateTime.Now) < 0).ToListAsync();
-        return resultEvents == null ? Results.NotFound() : Results.Ok(resultEvents);
+        var events = await (from e in _context.Event
+                            join se in _context.SavedEvent on e.Id equals se.EventId
+                            where se.UserId == user_id
+                            select new
+                            {
+                                e.Id,
+                                e.Title,
+                                e.ImageUrl,
+                                e.Description,
+                                e.StartDate,
+                                e.EndDate,
+                                e.Longitude,
+                                e.Latitude,
+                                e.OrganizerId,
+                                EventSaved = _context.SavedEvent.Any(s => s.EventId == e.Id && s.UserId == user_id),
+                                SavedAmount = _context.SavedEvent.Count(se => se.EventId == e.Id)
+                            }).ToListAsync();
+        return events == null ? Results.NotFound() : Results.Ok(events);
     }
 
     [HttpPost("saved_events/{event_id}/{user_id}")]
