@@ -3,3 +3,10 @@ config.yaml
 appsettings.json
 
 appsettings.Development.json
+
+eventbuddy_api/bin/*
+
+eventbuddy_api/obj/*
+
+.DS_Store
+
