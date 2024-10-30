@@ -22,10 +22,10 @@ public class EventsController(EventbuddyDbContext context, FeedSectionService fe
         var user = await _context.User.FindAsync(user_id);
         if (user == null)
         {
-            return Results.NotFound("User not found");
+            return Results.NotFound(new { info = "User not found", payload = String.Empty });
         }
         var feed = await _feedSectionService.GetFeed(user.Id);
-        return Results.Ok(feed);
+        return Results.Ok(new { info = "Successfully reached personal Feed", payload = feed });
     }
 
     [HttpGet("events/{event_id}")]
@@ -39,7 +39,11 @@ public class EventsController(EventbuddyDbContext context, FeedSectionService fe
 
         var similarEvents = await _context.Event.Where(e => e.Id != event_id).Take(10).ToListAsync();
         var organizerEvents = await _context.Event.Where(e => e.OrganizerId == events.OrganizerId && e.Id != events.Id).ToListAsync();
-        return Results.Ok(new { events, similarEvents, organizerEvents });
+        return Results.Ok(new
+        {
+            info = "Found event with that id",
+            payload = new { events, similarEvents, organizerEvents }
+        });
     }
 
     [HttpPost("events")]
@@ -47,7 +51,7 @@ public class EventsController(EventbuddyDbContext context, FeedSectionService fe
     {
         await _context.Event.AddAsync(e);
         await _context.SaveChangesAsync();
-        return Results.Ok("Event created");
+        return Results.Ok(new { info = "Event created", payload = String.Empty });
     }
 
     [HttpDelete("events/{event_id}")]
@@ -70,6 +74,6 @@ public class EventsController(EventbuddyDbContext context, FeedSectionService fe
         _context.Event.Remove(@event);
 
         await _context.SaveChangesAsync();
-        return Results.Ok("deleted");
+        return Results.Ok(new { info = "deleted", payload = String.Empty });
     }
 }

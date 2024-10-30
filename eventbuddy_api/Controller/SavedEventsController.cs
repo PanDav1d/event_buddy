@@ -33,7 +33,7 @@ public class SavedEventsController(EventbuddyDbContext context) : ControllerBase
                                 EventSaved = _context.SavedEvent.Any(s => s.EventId == e.Id && s.UserId == user_id),
                                 SavedAmount = _context.SavedEvent.Count(se => se.EventId == e.Id)
                             }).ToListAsync();
-        return events == null ? Results.NotFound() : Results.Ok(events);
+        return events == null ? Results.NotFound() : Results.Ok(new { info = "Found saved events for user", payload = events });
     }
 
     [HttpPost("saved_events/{event_id}/{user_id}")]
@@ -57,6 +57,6 @@ public class SavedEventsController(EventbuddyDbContext context) : ControllerBase
             message = "Saved";
         }
         await _context.SaveChangesAsync();
-        return Results.Ok(message);
+        return Results.Ok(new { info = message, payload = String.Empty });
     }
 }

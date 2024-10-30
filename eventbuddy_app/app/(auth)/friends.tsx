@@ -17,9 +17,8 @@ export default function FriendsScreen()
     const colors = Colors[colorScheme ?? 'light'];
     const { session } = useSession();
     const [friends, setFriends] = useState([]);
-    const [requests, setRequests] = useState([]);
+    const [friendRequests, setFriendRequests] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
-    const [activeTab, setActiveTab] = useState('friends');
 
     useEffect(() =>
     {
@@ -48,13 +47,11 @@ export default function FriendsScreen()
         try
         {
             if (session?.userID)
-            {
-                const fetchedRequests = await NetworkClient.getFriendRequests(session.userID);
-                setRequests(fetchedRequests as never[]);
-            }
+                setFriendRequests(await NetworkClient.getFriendRequests(session.userID) ?? []);
         } catch (error)
         {
             console.error('Error fetching friend requests:', error);
+            setFriendRequests([]);
         }
     };
 
@@ -103,7 +100,7 @@ export default function FriendsScreen()
         {
             if (session?.userID)
             {
-                setRequests(requests.filter((request: any) => request.id !== requestId));
+                setFriendRequests(friendRequests.filter((request: any) => request.id !== requestId));
                 const success = await NetworkClient.respondFriendRequest(session.userID, requestId, status);
                 if (success && status === FriendRequestStatus.accepted)
                 {
@@ -139,33 +136,36 @@ export default function FriendsScreen()
         </Animated.View>
     );
 
-    const renderRequestItem = ({ item, index }: { item: { id: number; fromUsername: string; buddyname: string; profileImage: string; status: string }, index: number }) => (
-        <Animated.View entering={FadeInUp.delay(index * 100)} exiting={FadeOutDown}>
-            <View style={[styles.listItem, { backgroundColor: colors.backgroundAlt }]}>
-                <LinearGradient
-                    colors={[colors.secondary, colors.primary]}
-                    style={styles.profileImage}>
-                    <ThemedText style={styles.initialText}>{item.fromUsername ? item.fromUsername.charAt(0).toUpperCase() : ''}</ThemedText>
-                </LinearGradient>
-                <View style={styles.friendInfo}>
-                    <ThemedText style={styles.friendName}>{item.fromUsername}</ThemedText>
-                    <ThemedText style={styles.friendBuddyname}>{item.buddyname}</ThemedText>
+    const renderRequestItem = ({ item, index }: { item: { id: number; fromUsername: string; buddyname: string; profileImage: string; status: string }, index: number }) => 
+    {
+        return (
+            <Animated.View entering={FadeInUp.delay(index * 100)} exiting={FadeOutDown}>
+                <View style={[styles.listItem, { backgroundColor: colors.backgroundAlt }]}>
+                    <LinearGradient
+                        colors={[colors.secondary, colors.primary]}
+                        style={styles.profileImage}>
+                        <ThemedText style={styles.initialText}>{item.fromUsername ? item.fromUsername.charAt(0).toUpperCase() : ''}</ThemedText>
+                    </LinearGradient>
+                    <View style={styles.friendInfo}>
+                        <ThemedText style={styles.friendName}>{item.fromUsername}</ThemedText>
+                        <ThemedText style={styles.friendBuddyname}>{item.buddyname}</ThemedText>
+                    </View>
+                    <View style={styles.requestActions}>
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.acceptButton]}
+                            onPress={() => handleRespondToRequest(item.id, FriendRequestStatus.accepted)}>
+                            <Ionicons name="checkmark-outline" size={24} color={colors.success} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.deleteButton]}
+                            onPress={() => handleRespondToRequest(item.id, FriendRequestStatus.declined)}>
+                            <Ionicons name="close-outline" size={24} color={colors.error} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
-                <View style={styles.requestActions}>
-                    <TouchableOpacity
-                        style={[styles.actionButton, styles.acceptButton]}
-                        onPress={() => handleRespondToRequest(item.id, FriendRequestStatus.accepted)}>
-                        <Ionicons name="checkmark-outline" size={24} color={colors.success} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.actionButton, styles.deleteButton]}
-                        onPress={() => handleRespondToRequest(item.id, FriendRequestStatus.declined)}>
-                        <Ionicons name="close-outline" size={24} color={colors.error} />
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </Animated.View>
-    );
+            </Animated.View>
+        );
+    }
 
     return (
         <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -195,10 +195,11 @@ export default function FriendsScreen()
                         scrollEnabled={false}
                     />
                     <TitleSeperator title={'Deine Freundesanfragen'} />
+                    <ThemedText>{friendRequests}</ThemedText>
                     <FlatList
-                        data={requests}
+                        data={friendRequests}
                         renderItem={renderRequestItem}
-                        keyExtractor={(item) => item?.id?.toString() || Math.random().toString()}
+                        keyExtractor={(item) => `request-${item.id}`}
                         scrollEnabled={false}
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>

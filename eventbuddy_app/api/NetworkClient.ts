@@ -47,7 +47,7 @@ class NetworkClient {
         try
         {
             const response = await this.client.get(`/events/${eventID}`);
-            return response.data;
+            return response.data.payload;
         }
         catch (error)
         {
@@ -62,7 +62,7 @@ class NetworkClient {
             const sections: Record<string, EventCardPreview[]> = {};
             
             // Transform each event into the correct format
-            for (const [key, events] of Object.entries(response.data)) {
+            for (const [key, events] of Object.entries(response.data.payload)) {
                 sections[key] = (events as any[]).map(event => ({
                     id: event.id,
                     title: event.title,
@@ -109,17 +109,17 @@ class NetworkClient {
         {
             const response = await this.client.get(`/saved_events/${user_id}`);
             let result : EventCardPreview[] = []
-            for(let i = 0; i < response.data.length; i++){
+            for(let i = 0; i < response.data.payload.length; i++){
                 const item : EventCardPreview = {
-                    id: response.data[i].id,
-                    title: response.data[i].title,
-                    imageUrl: response.data[i].imageUrl,
-                    pricingStructure: response.data[i].pricingStructure,
-                    startDate: response.data[i].startDate,
-                    endDate: response.data[i].endDate,
-                    savedAmount: response.data[i].savedAmount,
-                    eventSaved: response.data[i].eventSaved,
-                    matchScore: response.data[i].matchScore
+                    id: response.data.payload[i].id,
+                    title: response.data.payload[i].title,
+                    imageUrl: response.data.payload[i].imageUrl,
+                    pricingStructure: response.data.payload[i].pricingStructure,
+                    startDate: response.data.payload[i].startDate,
+                    endDate: response.data.payload[i].endDate,
+                    savedAmount: response.data.payload[i].savedAmount,
+                    eventSaved: response.data.payload[i].eventSaved,
+                    matchScore: response.data.payload[i].matchScore
                 };
                 result.push(item);
             }
@@ -167,7 +167,7 @@ class NetworkClient {
                 receivedFriendRequests: [],
                 friendships: []
             });
-            return response.data;
+            return response.data.payload;
         } catch (error) {
             console.error('Error during registration:', error);
             return null;
@@ -177,11 +177,11 @@ class NetworkClient {
     async login(username: string, password: string): Promise<{ user_id: number, token: string } | null> {
         try {
             const response = await this.client.post(`/users/login?username=${username}&password=${password}`);
-            if (response.data.access_token) {
-                console.log("Received token:", response.data.access_token);
-                this.setToken(response.data.access_token);
+            if (response.data.payload.access_token) {
+                console.log("Received token:", response.data.payload.access_token);
+                this.setToken(response.data.payload.access_token);
                 console.log("Token set in NetworkClient");
-                return { user_id: response.data.user_id, token: response.data.access_token };
+                return { user_id: response.data.payload.user_id, token: response.data.payload.access_token };
             }
             return null;
         } catch (error) {
@@ -216,8 +216,8 @@ class NetworkClient {
     {
         try {
             const response = await this.client.post('/search', { text });
-            console.log(response.data);
-            return response.data;
+            console.log(response.data.payload);
+            return response.data.payload;
         } catch (error) {
             console.error('Error during search:', error);
             return [];
@@ -227,7 +227,7 @@ class NetworkClient {
     async refreshToken(): Promise<string | null> {
         try {
             const response = await this.client.post('/refresh-token');
-            const newToken = response.data.access_token;
+            const newToken = response.data.payload.access_token;
             this.setToken(newToken);
             return newToken;
         } catch (error) {
@@ -256,10 +256,11 @@ class NetworkClient {
         }
     }
 
-    async getFriendRequests(userId: number): Promise<any[] | string> {
+    async getFriendRequests(userId: number): Promise<[]> {
         try {
             const response = await this.client.get(`/users/received_friend_requests?user_id=${userId}`);
-            return response.data;
+            console.log(response.data.payload);
+            return response.data.payload;
         } catch (error) {
             console.error('Error getting friend requests:', error);
             return [];
@@ -269,7 +270,7 @@ class NetworkClient {
     async getUserFriends(userId: number): Promise<any[] | string> {
         try {
             const response = await this.client.get(`/users/friends?user_id=${userId}`);
-            return response.data;
+            return response.data.payload;
         } catch (error) {
             console.error('Error getting user friends:', error);
             return [];
@@ -279,7 +280,7 @@ class NetworkClient {
     async removeFriend(userId: number, friendId: number): Promise<string> {
         try {
             const response = await this.client.delete(`/users/friends/delete?user_id=${userId}&friend_id=${friendId}`);
-            return response.data;
+            return response.data.payload;
         } catch (error) {
             console.error('Error removing friend:', error);
             return 'An error occurred while removing the friend.';
@@ -290,7 +291,7 @@ class NetworkClient {
         console.log(createEventParams);
         try {
             const response = await this.client.post('/events', createEventParams);
-            console.log('Event added successfully:', response.data);
+            console.log('Event added successfully:', response.data.payload);
         } catch (error) {
             console.error('Error while adding event:', error);
             throw error;
@@ -300,8 +301,8 @@ class NetworkClient {
     async getUserTickets(userId: number): Promise<Ticket[]> {
         try {
             const response = await this.client.get(`/tickets/${userId}`);
-            console.log(response.data);
-            return response.data;
+            console.log(response.data.payload);
+            return response.data.payload;
         } catch (error) {
             console.error('Error fetching user tickets:', error);
             return [];
@@ -313,7 +314,7 @@ class NetworkClient {
             userId: userId,
             eventId: eventId
         });
-        return response.data;
+        return response.data.payload;
     }
 
     async verifyTicket(qrCode: string): Promise<any> {
@@ -330,7 +331,7 @@ class NetworkClient {
     async getUser(userId: number): Promise<any> {
         try {
             const response = await this.client.get(`/users?user_id=${userId}`);
-            return response.data;
+            return response.data.payload;
         } catch (error) {
             console.error('Error getting user:', error);
             throw error;
@@ -340,7 +341,7 @@ class NetworkClient {
     async changePassword(userId: number, currentPassword: string, newPassword: string): Promise<string> {
         try {
             const response = await this.client.put('/users/change_password', { user_id: userId, current_password: currentPassword, new_password: newPassword });
-            return response.data;
+            return response.data.payload;
         } catch (error) {
             console.error('Error changing password:', error);
             throw error;
@@ -350,7 +351,7 @@ class NetworkClient {
     async deleteUser(userId: number, password: string): Promise<string> {
         try {
             const response = await this.client.delete(`/users/delete?user_id=${userId}&password=${password}`);
-            return response.data;
+            return response.data.payload;
         } catch (error) {
             console.error('Error deleting user:', error);
             throw error;

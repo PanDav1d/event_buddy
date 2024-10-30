@@ -22,9 +22,7 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
                 (fr.FromUserId == toUserId && fr.ToUserId == fromUserId));
 
         if (existingRequest != null)
-        {
-            return Results.BadRequest("A pending or accepted friend request already exists between these users.");
-        }
+            return Results.BadRequest(new { info = "A pending or accepted friend request already exists between these users.", payload = String.Empty });
 
         var request = new FriendRequest
         {
@@ -33,7 +31,7 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
         };
         _context.FriendRequest.Add(request);
         await _context.SaveChangesAsync();
-        return Results.Ok();
+        return Results.Ok(new { info = "Friend request sent", payload = String.Empty });
     }
 
     [HttpPost("friend_requests/respond")]
@@ -57,10 +55,10 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
         }
         else
         {
-            return Results.BadRequest("Invalid status or user is not authorized to respond to this request.");
+            return Results.BadRequest(new { info = "Invalid status or user is not authorized to respond to this request.", payload = String.Empty });
         }
         await _context.SaveChangesAsync();
-        return Results.Ok();
+        return Results.Ok(new { info = "Successfully responded", payload = String.Empty });
     }
 
     [HttpGet("friend_requests")]
@@ -68,8 +66,8 @@ public class FriendRequestsController(EventbuddyDbContext context) : ControllerB
     {
         var requests = await _context.FriendRequest.ToListAsync();
         if (requests.Count == 0)
-            return Results.Ok("No friend requests found");
-        return Results.Ok(requests);
+            return Results.Ok(new { info = "No friend requests found", payload = requests });
+        return Results.Ok(new { info = "Friend requests found", payload = requests });
     }
 
 }

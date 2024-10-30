@@ -38,7 +38,9 @@ public class TicketsController(EventbuddyDbContext context) : ControllerBase
                 }
             })
             .ToListAsync();
-        return Results.Ok(tickets);
+        if (tickets.Count == 0)
+            return Results.Ok(new { info = "User has no Tickets", payload = new List<dynamic>() });
+        return Results.Ok(new { info = "Tickets for user found", payload = tickets });
     }
 
     [HttpPost("tickets/purchase")]
@@ -46,17 +48,17 @@ public class TicketsController(EventbuddyDbContext context) : ControllerBase
     {
         var prevTicket = await _context.Ticket.Where(t => t.OwnerId == request.UserId && t.EventId == request.EventId).FirstOrDefaultAsync();
         if (prevTicket != null)
-            return Results.BadRequest("Ticket already bought");
+            return Results.BadRequest(new { info = "Ticket already bought", payload = String.Empty });
 
         var user = await _context.User.FindAsync(request.UserId);
         if (user == null)
-            return Results.NotFound("User not found");
+            return Results.NotFound(new { info = "User not found", payload = String.Empty });
 
         var @event = await _context.Event.FindAsync(request.EventId);
         if (@event == null)
-            return Results.NotFound("Event not found");
+            return Results.NotFound(new { info = "Event not found", payload = String.Empty });
         if (@event.SoldTickets >= @event.MaxTickets && @event.MaxTickets != null)
-            return Results.BadRequest("Event sold out");
+            return Results.BadRequest(new { info = "Event sold out", payload = String.Empty });
 
         var ticket = new Ticket
         {
@@ -68,7 +70,7 @@ public class TicketsController(EventbuddyDbContext context) : ControllerBase
         _context.Ticket.Add(ticket);
         @event.SoldTickets += 1;
         await _context.SaveChangesAsync();
-        return Results.Ok(ticket);
+        return Results.Ok(new { info = "Ticket purchased", payload = ticket });
     }
 
     [HttpPost("tickets/verify")]
@@ -77,18 +79,18 @@ public class TicketsController(EventbuddyDbContext context) : ControllerBase
         var ticket = await _context.Ticket.FirstOrDefaultAsync(t => t.QRCode == request.QRCode);
 
         if (ticket == null)
-            return Results.NotFound("Ticket not found");
+            return Results.NotFound(new { info = "Ticket not found", payload = String.Empty });
 
         if (!ticket.IsValid)
-            return Results.BadRequest("Ticket is no longer valid");
+            return Results.BadRequest(new { info = "Ticket is no longer valid", payload = String.Empty });
 
         if (ticket.UsedAt.HasValue)
-            return Results.BadRequest("Ticket has already been used");
+            return Results.BadRequest(new { info = "Ticket has already been used", payload = String.Empty });
 
         ticket.UsedAt = DateTime.Now;
         ticket.IsValid = false;
         await _context.SaveChangesAsync();
 
-        return Results.Ok("Ticket has been activated");
+        return Results.Ok(new { info = "Ticket has been activated", payload = String.Empty });
     }
 }
