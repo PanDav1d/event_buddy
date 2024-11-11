@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("eventbuddy-api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5efa1ee9accb37e9abbbfd29feee6e350c686746")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+326561fbc51de3cac25e59debdee388c0e73f23e")]
 [assembly: System.Reflection.AssemblyProductAttribute("eventbuddy-api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("eventbuddy-api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
