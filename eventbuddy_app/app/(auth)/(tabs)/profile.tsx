@@ -5,7 +5,7 @@ import { View, StyleSheet, useColorScheme, Modal, TextInput, TouchableOpacity, S
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
-import NetworkClient from '@/api/NetworkClient';
+import NetworkClient from '@/services/NetworkClient';
 import { useSession } from '@/components/ctx';
 import { useRouter } from 'expo-router';
 import MapView, { Circle, Marker } from 'react-native-maps';
@@ -18,8 +18,7 @@ import Slider from '@react-native-community/slider';
 
 const { width, height } = Dimensions.get('window');
 
-export default function ProfileScreen()
-{
+export default function ProfileScreen() {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const router = useRouter();
@@ -78,27 +77,22 @@ export default function ProfileScreen()
         require('@/assets/images/buddy/buddy_fine.svg')
     ];
 
-    const openModal = (title: string, content: React.ReactNode) =>
-    {
+    const openModal = (title: string, content: React.ReactNode) => {
         setModalContent({ title, content });
         setModalVisible(true);
     };
 
-    const closeModal = () =>
-    {
+    const closeModal = () => {
         setModalVisible(false);
     };
 
-    useEffect(() =>
-    {
-        const interval = setInterval(() =>
-        {
+    useEffect(() => {
+        const interval = setInterval(() => {
             Animated.timing(fadeAnim, {
                 toValue: 0,
                 duration: 500,
                 useNativeDriver: true,
-            }).start(() =>
-            {
+            }).start(() => {
                 setCurrentImageIndex((prevIndex) => (prevIndex + 1) % profileImages.length);
                 Animated.timing(fadeAnim, {
                     toValue: 1,
@@ -187,20 +181,16 @@ export default function ProfileScreen()
         }
     ];
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         fetchSavedEvents();
     }, []);
 
-    const fetchSavedEvents = async () =>
-    {
-        try
-        {
+    const fetchSavedEvents = async () => {
+        try {
             const userId = 1; // Replace with actual user ID
             const fetchedEvents = await NetworkClient.getSavedEvents(userId);
             setSavedCards(fetchedEvents);
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Error fetching saved events:', error);
         }
     };
@@ -435,8 +425,7 @@ const styles = StyleSheet.create({
     }
 });
 
-const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
-{
+const EventCreationForm = ({ closeModal }: { closeModal: () => void }) => {
     const [eventData, setEventData] = useState<CreateEventParams>({
         id: 0,
         title: '',
@@ -470,8 +459,7 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
     const mapRef = useRef<MapView>(null);
 
 
-    const moveToCurrentLocation = async () =>
-    {
+    const moveToCurrentLocation = async () => {
         let currentLocation = await Location.getCurrentPositionAsync({});
         mapRef.current?.animateToRegion({
             latitude: currentLocation.coords.latitude,
@@ -485,13 +473,10 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
         });
     };
 
-    const searchLocation = async () =>
-    {
-        try
-        {
+    const searchLocation = async () => {
+        try {
             const results = await Location.geocodeAsync(searchQuery);
-            if (results.length > 0)
-            {
+            if (results.length > 0) {
                 const { latitude, longitude } = results[0];
                 mapRef.current?.animateToRegion({
                     latitude,
@@ -501,19 +486,15 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
                 });
                 setLocation({ latitude, longitude });
             }
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Error searching location:', error);
         }
     };
 
-    useEffect(() =>
-    {
-        (async () =>
-        {
+    useEffect(() => {
+        (async () => {
             let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted')
-            {
+            if (status !== 'granted') {
                 console.error('Permission to access location was denied');
                 return;
             }
@@ -526,14 +507,11 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
         })();
     }, []);
 
-    const handleStartDateChange = (event: any, selectedDate?: Date) =>
-    {
-        if (selectedDate)
-        {
+    const handleStartDateChange = (event: any, selectedDate?: Date) => {
+        if (selectedDate) {
             const newStartDate = selectedDate.toISOString();
             // If end date is before new start date, set end date to start date + 1 hour
-            if (new Date(eventData.endDate) <= selectedDate)
-            {
+            if (new Date(eventData.endDate) <= selectedDate) {
                 const newEndDate = new Date(selectedDate);
                 newEndDate.setHours(newEndDate.getHours() + 1);
                 setEventData({
@@ -541,26 +519,21 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
                     startDate: newStartDate,
                     endDate: newEndDate.toISOString()
                 });
-            } else
-            {
+            } else {
                 setEventData({ ...eventData, startDate: newStartDate });
             }
         }
     };
 
-    const handleEndDateChange = (event: any, selectedDate?: Date) =>
-    {
-        if (selectedDate)
-        {
-            if (selectedDate > new Date(eventData.startDate))
-            {
+    const handleEndDateChange = (event: any, selectedDate?: Date) => {
+        if (selectedDate) {
+            if (selectedDate > new Date(eventData.startDate)) {
                 setEventData({ ...eventData, endDate: selectedDate.toISOString() });
             }
         }
     };
 
-    const handleMapPress = (e: any) =>
-    {
+    const handleMapPress = (e: any) => {
         setLocation({
             ...location,
             latitude: e.nativeEvent.coordinate.latitude,
@@ -568,18 +541,15 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
         });
     };
 
-    const handleSubmit = async () =>
-    {
-        try
-        {
+    const handleSubmit = async () => {
+        try {
             const newEvent = {
                 ...eventData,
                 organizerId: session?.userID!
             };
             await NetworkClient.addEvent(newEvent);
             closeModal();
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Error creating event:', error);
         }
     };
@@ -692,10 +662,8 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
                         placeholder="Add music style"
                         value={newMusicStyle}
                         onChangeText={setNewMusicStyle}
-                        onSubmitEditing={() =>
-                        {
-                            if (newMusicStyle.trim())
-                            {
+                        onSubmitEditing={() => {
+                            if (newMusicStyle.trim()) {
                                 setEventData({
                                     ...eventData,
                                     musicStyles: [...eventData.musicStyles, newMusicStyle.trim()]
@@ -710,8 +678,7 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) =>
                         <View key={index} style={[styles.tag, { backgroundColor: colors.primary }]}>
                             <ThemedText style={styles.tagText}>{style}</ThemedText>
                             <TouchableOpacity
-                                onPress={() =>
-                                {
+                                onPress={() => {
                                     setEventData({
                                         ...eventData,
                                         musicStyles: eventData.musicStyles.filter((_, i) => i !== index)
@@ -777,8 +744,7 @@ const SettingsContent = () => <ThemedText>Einstellungen-Inhalt hier</ThemedText>
 const HelpSupportContent = () => <ThemedText>Hilfe & Support-Inhalt hier</ThemedText>;
 const PrivacyContent = () => <ThemedText>Datenschutz-Inhalt hier</ThemedText>;
 const AboutUsContent = () => <ThemedText>Über uns-Inhalt hier</ThemedText>;
-const PreferencesContent = ({ closeModal }: { closeModal: () => void }) =>
-{
+const PreferencesContent = ({ closeModal }: { closeModal: () => void }) => {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const { session } = useSession();
@@ -796,13 +762,10 @@ const PreferencesContent = ({ closeModal }: { closeModal: () => void }) =>
     });
     const mapRef = useRef<MapView>(null);
 
-    useEffect(() =>
-    {
-        (async () =>
-        {
+    useEffect(() => {
+        (async () => {
             const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status === 'granted')
-            {
+            if (status === 'granted') {
                 const currentLocation = await Location.getCurrentPositionAsync({});
                 setLocation({
                     latitude: currentLocation.coords.latitude,
@@ -812,16 +775,13 @@ const PreferencesContent = ({ closeModal }: { closeModal: () => void }) =>
         })();
     }, []);
 
-    const handleMapPress = (e: any) =>
-    {
+    const handleMapPress = (e: any) => {
         setLocation(e.nativeEvent.coordinate);
     };
 
-    const moveToCurrentLocation = async () =>
-    {
+    const moveToCurrentLocation = async () => {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted')
-        {
+        if (status === 'granted') {
             const currentLocation = await Location.getCurrentPositionAsync({});
             const newLocation = {
                 latitude: currentLocation.coords.latitude,
@@ -836,10 +796,8 @@ const PreferencesContent = ({ closeModal }: { closeModal: () => void }) =>
         }
     };
 
-    useEffect(() =>
-    {
-        if (mapRef.current)
-        {
+    useEffect(() => {
+        if (mapRef.current) {
             mapRef.current.fitToElements({
                 animated: true,
                 edgePadding: { top: 50, right: 50, bottom: 50, left: 50 }
@@ -951,10 +909,8 @@ const PreferencesContent = ({ closeModal }: { closeModal: () => void }) =>
             <ThemedText style={styles.sliderValue}>{preferences.preferredCrowdedness * 100 + " %"}</ThemedText>
 
             <SubmitButton
-                onPress={() =>
-                {
-                    if (session?.userID !== undefined)
-                    {
+                onPress={() => {
+                    if (session?.userID !== undefined) {
                         NetworkClient.updateUserPreferences(session.userID, {
                             latitude: location.latitude,
                             longitude: location.longitude,
@@ -969,30 +925,24 @@ const PreferencesContent = ({ closeModal }: { closeModal: () => void }) =>
         </ScrollView>
     );
 };
-const ScanTicketsContent = () =>
-{
+const ScanTicketsContent = () => {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [scanned, setScanned] = useState(false);
 
-    useEffect(() =>
-    {
-        const getCameraPermissions = async () =>
-        {
+    useEffect(() => {
+        const getCameraPermissions = async () => {
             const { status } = await Camera.requestCameraPermissionsAsync();
             setHasPermission(status === 'granted');
         };
         getCameraPermissions();
     }, []);
 
-    const handleBarCodeScanned = async ({ data }: { data: string }) =>
-    {
+    const handleBarCodeScanned = async ({ data }: { data: string }) => {
         setScanned(true);
-        try
-        {
+        try {
             const response = await NetworkClient.verifyTicket(data);
 
-            if (response.status == 200)
-            {
+            if (response.status == 200) {
                 Toast.show({
                     type: 'success',
                     text1: 'Erfolgreich',
@@ -1002,8 +952,7 @@ const ScanTicketsContent = () =>
                     visibilityTime: 2000
                 });
             }
-        } catch (error)
-        {
+        } catch (error) {
             Toast.show({
                 type: 'error',
                 text1: 'Fehler',
@@ -1016,12 +965,10 @@ const ScanTicketsContent = () =>
         setTimeout(() => setScanned(false), 2000);
     };
 
-    if (hasPermission === null)
-    {
+    if (hasPermission === null) {
         return <ThemedText>Requesting camera permission...</ThemedText>;
     }
-    if (hasPermission === false)
-    {
+    if (hasPermission === false) {
         return <ThemedText>No access to camera</ThemedText>;
     }
 

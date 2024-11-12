@@ -7,26 +7,22 @@ import { ThemedText } from '@/components/ThemedText';
 import { FlatList } from 'react-native-gesture-handler';
 import { EventItem, EventItemType } from './EventItem';
 import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator';
-import NetworkClient from '@/api/NetworkClient';
+import NetworkClient from '@/services/NetworkClient';
 import { useSession } from '@/components/ctx';
 
-interface EventCarouselProps
-{
+interface EventCarouselProps {
     title?: string;
     data: EventCardPreview[];
     eventCardType?: EventItemType;
 }
 
-export function EventCarousel({ title, data, eventCardType }: EventCarouselProps)
-{
+export function EventCarousel({ title, data, eventCardType }: EventCarouselProps) {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const { session } = useSession();
 
-    const toggleSaveEvent = async (eventId: number) =>
-    {
-        if (session?.userID)
-        {
+    const toggleSaveEvent = async (eventId: number) => {
+        if (session?.userID) {
             const response = await NetworkClient.saveEvent(session.userID, eventId);
             console.log(response);
             const updatedData = data.map(event =>

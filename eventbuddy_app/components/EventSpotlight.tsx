@@ -7,26 +7,23 @@ import { ThemedText } from '@/components/ThemedText';
 import { FlatList } from 'react-native-gesture-handler';
 import { EventItem } from './EventItem';
 import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator';
-import NetworkClient from '@/api/NetworkClient';
+import NetworkClient from '@/services/NetworkClient';
 import { useSession } from '@/components/ctx';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 
-interface EventSpotlightProps
-{
+interface EventSpotlightProps {
     title?: string;
     data: EventCardPreview;
 }
 
-export function EventSpotlight({ title, data }: EventSpotlightProps)
-{
+export function EventSpotlight({ title, data }: EventSpotlightProps) {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const { session } = useSession();
     const fadeAnim = new Animated.Value(0);
 
-    React.useEffect(() =>
-    {
+    React.useEffect(() => {
         Animated.sequence([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -36,14 +33,11 @@ export function EventSpotlight({ title, data }: EventSpotlightProps)
         ]).start();
     }, []);
 
-    const saveEvent = async (eventId: number) =>
-    {
-        try
-        {
+    const saveEvent = async (eventId: number) => {
+        try {
             await NetworkClient.saveEvent(session!.userID, eventId);
             // Add success feedback animation here
-        } catch (error)
-        {
+        } catch (error) {
             // Add error handling
         }
     };

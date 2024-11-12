@@ -13,16 +13,14 @@ import { ProfileButton } from "@/components/ProfileButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DateQuickTab } from "@/constants/DateQuickTabs";
 import { useRouter } from "expo-router";
-import NetworkClient from "@/api/NetworkClient";
+import NetworkClient from "@/services/NetworkClient";
 
 
-interface SearchBarProps
-{
+interface SearchBarProps {
     onSearchChange: (params: SearchParams) => void;
 }
 
-export function SearchBar({ onSearchChange }: SearchBarProps)
-{
+export function SearchBar({ onSearchChange }: SearchBarProps) {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
 
@@ -47,15 +45,12 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [resultItems, setResultItems] = useState<{ id: string, title: string }[]>([]);
 
-    const handleTextSearch = async (text: string) =>
-    {
+    const handleTextSearch = async (text: string) => {
         setSearchText(text);
 
-        if (text.length > 0)
-        {
+        if (text.length > 0) {
             setShowSearchResults(true);
-        } else
-        {
+        } else {
             setShowSearchResults(false);
             return;
         }
@@ -63,13 +58,10 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
 
     const mapRef = useRef<MapView>(null);
 
-    useEffect(() =>
-    {
-        (async () =>
-        {
+    useEffect(() => {
+        (async () => {
             let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted')
-            {
+            if (status !== 'granted') {
                 console.log('Permission to access location was denied');
                 return;
             }
@@ -84,17 +76,14 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
         })();
     }, []);
 
-    useEffect(() =>
-    {
-        if (modalVisible)
-        {
+    useEffect(() => {
+        if (modalVisible) {
             Animated.timing(slideAnimation, {
                 toValue: 1,
                 duration: 300,
                 useNativeDriver: true,
             }).start();
-        } else
-        {
+        } else {
             Animated.timing(slideAnimation, {
                 toValue: 0,
                 duration: 300,
@@ -103,29 +92,24 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
         }
     }, [modalVisible]);
 
-    const handleSearch = () =>
-    {
+    const handleSearch = () => {
         onSearchChange(searchParams);
         setModalVisible(false);
     }
 
-    const handleParamChange = (key: string, value: any, updateMap?: boolean) =>
-    {
+    const handleParamChange = (key: string, value: any, updateMap?: boolean) => {
         setSearchParams(prevParams => ({
             ...prevParams,
             [key]: value
         }));
 
-        if (key === 'radius' && updateMap)
-        {
+        if (key === 'radius' && updateMap) {
             updateMapRegion(value);
         }
     }
 
-    const updateMapRegion = (radius: number) =>
-    {
-        if (mapRef.current)
-        {
+    const updateMapRegion = (radius: number) => {
+        if (mapRef.current) {
             const latitude = searchParams.latitude;
             const longitude = searchParams.longitude;
             const latDelta = radius * 2 / 111.32;
@@ -139,10 +123,8 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
         }
     }
 
-    const toggleTag = (tag: string) =>
-    {
-        setSearchParams(prevParams =>
-        {
+    const toggleTag = (tag: string) => {
+        setSearchParams(prevParams => {
             const newTags = prevParams.tags.includes(tag)
                 ? prevParams.tags.filter(t => t !== tag)
                 : [...prevParams.tags, tag];
@@ -150,8 +132,7 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
         });
     }
 
-    const renderTags = () =>
-    {
+    const renderTags = () => {
         const selectedTags = searchParams.tags;
         const unselectedTags = allTags.filter(tag => !selectedTags.includes(tag));
         const tagsToShow = showAllTags ? [...selectedTags, ...unselectedTags] : [...selectedTags, ...unselectedTags.slice(0, Math.max(0, 5 - selectedTags.length))];
@@ -191,8 +172,7 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
         );
     }
 
-    const handleMapRegionChange = (region: { latitude: any; longitude: any; }) =>
-    {
+    const handleMapRegionChange = (region: { latitude: any; longitude: any; }) => {
         setSearchParams(prevParams => ({
             ...prevParams,
             latitude: region.latitude,
@@ -200,14 +180,12 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
         }));
     }
 
-    const handleDateFilterChange = (filter: DateQuickTab) =>
-    {
+    const handleDateFilterChange = (filter: DateQuickTab) => {
         const now = new Date();
         let start = new Date(now);
         let end = new Date(now);
 
-        switch (filter)
-        {
+        switch (filter) {
             case DateQuickTab.today:
                 start.setHours(0, 0, 0, 0);
                 end.setHours(23, 59, 59, 999);
@@ -292,8 +270,7 @@ export function SearchBar({ onSearchChange }: SearchBarProps)
                                 <View style={[styles.searchContainer]}>
                                     <ScrollView style={styles.resultsContainer}>
                                         {resultItems.map((item) => (
-                                            <TouchableOpacity key={item.id} style={styles.resultItem} onPress={() =>
-                                            {
+                                            <TouchableOpacity key={item.id} style={styles.resultItem} onPress={() => {
                                                 setModalVisible(false);
                                                 setSearchText('');
                                                 setShowSearchResults(false);

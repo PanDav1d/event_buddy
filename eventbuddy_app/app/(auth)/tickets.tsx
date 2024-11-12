@@ -3,7 +3,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { View, StyleSheet, useColorScheme, SafeAreaView, Dimensions, RefreshControl, Modal, Platform } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
-import NetworkClient from '@/api/NetworkClient';
+import NetworkClient from '@/services/NetworkClient';
 import { useSession } from '@/components/ctx';
 import QRCode from 'react-native-qrcode-svg';
 import { Ticket } from '@/constants/Types';
@@ -16,8 +16,7 @@ import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator'
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function TicketsScreen()
-{
+export default function TicketsScreen() {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const { session } = useSession();
@@ -26,67 +25,55 @@ export default function TicketsScreen()
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         fetchTickets();
     }, []);
 
-    const fetchTickets = async () =>
-    {
-        try
-        {
-            if (session?.userID)
-            {
+    const fetchTickets = async () => {
+        try {
+            if (session?.userID) {
                 const userId = session.userID;
                 const fetchedTickets = await NetworkClient.getUserTickets(userId);
                 setTickets(fetchedTickets as Ticket[]);
             }
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Error fetching tickets:', error);
         }
     };
 
-    const onRefresh = React.useCallback(() =>
-    {
+    const onRefresh = React.useCallback(() => {
         setRefreshing(true);
         fetchTickets().then(() => setRefreshing(false));
     }, []);
 
-    const openQRModal = (ticket: Ticket) =>
-    {
+    const openQRModal = (ticket: Ticket) => {
         setSelectedTicket(ticket);
         setModalVisible(true);
     };
 
-    const closeModal = () =>
-    {
+    const closeModal = () => {
         setModalVisible(false);
     };
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayTickets = tickets.filter(ticket =>
-    {
+    const todayTickets = tickets.filter(ticket => {
         const eventDate = new Date(ticket.event!.startDate);
         return eventDate.toDateString() === today.toDateString();
     });
 
-    const futureTickets = tickets.filter(ticket =>
-    {
+    const futureTickets = tickets.filter(ticket => {
         const eventDate = new Date(ticket.event!.startDate);
         return eventDate > today && eventDate.toDateString() !== today.toDateString();
     }).sort((a, b) => new Date(a.event!.startDate).getTime() - new Date(b.event!.startDate).getTime());
 
-    const pastTickets = tickets.filter(ticket =>
-    {
+    const pastTickets = tickets.filter(ticket => {
         const eventDate = new Date(ticket.event!.startDate);
         return eventDate < today;
     });
 
-    const renderTicketSection = (sectionTickets: Ticket[], index: number) =>
-    {
+    const renderTicketSection = (sectionTickets: Ticket[], index: number) => {
         return sectionTickets.map((ticket, idx) => (
             <Animated.View
                 key={ticket.id}

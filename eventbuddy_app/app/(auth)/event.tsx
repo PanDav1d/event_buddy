@@ -2,7 +2,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { Image, View, StyleSheet, useColorScheme, ScrollView, TouchableOpacity, SafeAreaView, Modal } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import NetworkClient from '@/api/NetworkClient';
+import NetworkClient from '@/services/NetworkClient';
 import { useState, useEffect } from 'react';
 import { Event, EventCardPreview } from '@/constants/Types';
 import { useSession } from '@/components/ctx';
@@ -15,8 +15,7 @@ import { EventCarousel } from '@/components/EventCarousel';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 
-export default function EventScreen()
-{
+export default function EventScreen() {
     const { eventID } = useLocalSearchParams();
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
@@ -40,27 +39,22 @@ export default function EventScreen()
         longitudeDelta: 0.02
     };
 
-    const isSoldOut = () =>
-    {
+    const isSoldOut = () => {
         return event?.maxTickets && event?.soldTickets && event?.maxTickets <= event?.soldTickets;
     };
 
 
 
-    useEffect(() =>
-    {
-        const fetchEvent = async () =>
-        {
+    useEffect(() => {
+        const fetchEvent = async () => {
             setIsLoading(true);
             const event = await NetworkClient.getEvent(Number(eventID));
             console.log(event);
-            if (event != null)
-            {
+            if (event != null) {
                 setEvent(event.events);
                 setSimiliarEvents(event.similarEvents);
                 setOrganizerEvents(event.organizerEvents);
-            } else
-            {
+            } else {
                 router.back();
             }
             setIsLoading(false);
@@ -68,29 +62,22 @@ export default function EventScreen()
         fetchEvent();
     }, [eventID]);
 
-    const purchaseTicket = async () =>
-    {
-        try
-        {
-            if (!session?.userID || !eventID)
-            {
+    const purchaseTicket = async () => {
+        try {
+            if (!session?.userID || !eventID) {
                 return;
             }
             const response = await NetworkClient.purchaseTicket(Number(session.userID), Number(eventID));
-            if (response)
-            {
+            if (response) {
                 router.push('/tickets');
             }
-        } catch (error)
-        {
+        } catch (error) {
             console.log('Purchase failed:', error);
         }
     }
 
-    const renderModalContent = () =>
-    {
-        switch (currentStep)
-        {
+    const renderModalContent = () => {
+        switch (currentStep) {
             case 1:
                 return (
                     <View style={styles.modalStepContainer}>
@@ -251,8 +238,7 @@ export default function EventScreen()
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-                                onPress={() =>
-                                {
+                                onPress={() => {
                                     purchaseTicket();
                                     setModalVisible(false);
                                     setCurrentStep(1);
@@ -412,8 +398,7 @@ export default function EventScreen()
                 animationType="slide"
                 presentationStyle="pageSheet"
                 visible={modalVisible}
-                onRequestClose={() =>
-                {
+                onRequestClose={() => {
                     setModalVisible(false);
                     setCurrentStep(1);
                 }
@@ -422,8 +407,7 @@ export default function EventScreen()
                 <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
                     <View style={styles.modalHeader}>
                         <TouchableOpacity
-                            onPress={() =>
-                            {
+                            onPress={() => {
                                 setModalVisible(false);
                                 setCurrentStep(1);
                             }}

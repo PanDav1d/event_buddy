@@ -4,13 +4,12 @@ import { View, ScrollView, TextInput, StyleSheet, FlatList, TouchableOpacity, us
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
-import NetworkClient from '@/api/NetworkClient';
+import NetworkClient from '@/services/NetworkClient';
 import { useSession } from '@/components/ctx';
 import { EventItem, EventItemType } from '@/components/EventItem';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
-export default function ExploreScreen()
-{
+export default function ExploreScreen() {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
 
@@ -20,58 +19,44 @@ export default function ExploreScreen()
     const [searchResults, setSearchResults] = useState<{ users: { user: { id: number, username: string, buddyname: string }, hasReceivedRequest: boolean, hasSentRequest: boolean, isFriend: boolean }[], events: any[] } | null>(null);
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
 
-    useEffect(() =>
-    {
-        if (searchText)
-        {
-            if (typingTimeout)
-            {
+    useEffect(() => {
+        if (searchText) {
+            if (typingTimeout) {
                 clearTimeout(typingTimeout);
             }
-            const newTimeout = setTimeout(() =>
-            {
+            const newTimeout = setTimeout(() => {
                 performSearch();
             }, 1500);
             setTypingTimeout(newTimeout);
         }
     }, [searchText]);
 
-    const performSearch = async () =>
-    {
-        if (session?.userID)
-        {
-            try
-            {
+    const performSearch = async () => {
+        if (session?.userID) {
+            try {
                 const results = await NetworkClient.search(session.userID, searchText);
-                if (results && results.users && results.events)
-                {
+                if (results && results.users && results.events) {
                     setSearchResults(results as { users: { user: { id: number, username: string, buddyname: string }, hasReceivedRequest: boolean, hasSentRequest: boolean, isFriend: boolean }[], events: any[] });
-                } else
-                {
+                } else {
                     console.error('Invalid search results format:', results);
                     setSearchResults(null);
                 }
-            } catch (error)
-            {
+            } catch (error) {
                 console.error('Error performing search:', error);
                 setSearchResults(null);
             }
         }
     };
 
-    const handleSearchSubmit = () =>
-    {
-        if (typingTimeout)
-        {
+    const handleSearchSubmit = () => {
+        if (typingTimeout) {
             clearTimeout(typingTimeout);
         }
         performSearch();
     };
 
-    const renderSearchResult = ({ item, index }: { item: any, index: number }) =>
-    {
-        if (item.user)
-        {
+    const renderSearchResult = ({ item, index }: { item: any, index: number }) => {
+        if (item.user) {
             return (
                 <Animated.View
                     entering={FadeInUp.delay(index * 100)}
@@ -96,8 +81,7 @@ export default function ExploreScreen()
                     </View>
                 </Animated.View>
             );
-        } else
-        {
+        } else {
             return (
                 <Animated.View
                     entering={FadeInUp.delay(index * 100)}
@@ -112,29 +96,22 @@ export default function ExploreScreen()
         }
     };
 
-    const handleFriendAction = async (userId: number, isFriend: boolean | undefined, hasSentRequest: boolean | undefined) =>
-    {
-        try
-        {
-            if (session?.userID)
-            {
-                if (isFriend)
-                {
+    const handleFriendAction = async (userId: number, isFriend: boolean | undefined, hasSentRequest: boolean | undefined) => {
+        try {
+            if (session?.userID) {
+                if (isFriend) {
                     await NetworkClient.removeFriend(session.userID, userId);
-                } else if (!hasSentRequest)
-                {
+                } else if (!hasSentRequest) {
                     await NetworkClient.sendFriendRequest(session.userID, userId);
                 }
                 performSearch();
             }
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Error performing friend action:', error);
         }
     };
 
-    const clearSearch = () =>
-    {
+    const clearSearch = () => {
         setSearchText('');
         setSearchResults(null);
     };

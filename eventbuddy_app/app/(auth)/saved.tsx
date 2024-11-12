@@ -4,7 +4,7 @@ import { Event, EventCardPreview } from '@/constants/Types';
 import { View, StyleSheet, useColorScheme, SafeAreaView, Dimensions, RefreshControl, Platform } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
-import NetworkClient from '@/api/NetworkClient';
+import NetworkClient from '@/services/NetworkClient';
 import { useSession } from '@/components/ctx';
 import { EventItem, EventItemType } from '@/components/EventItem';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,46 +13,37 @@ import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator'
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function SavedScreen()
-{
+export default function SavedScreen() {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const { signOut, session } = useSession();
     const [savedCards, setSavedCards] = useState<EventCardPreview[]>([]);
     const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         fetchSavedEvents();
     }, []);
 
-    const fetchSavedEvents = async () =>
-    {
-        try
-        {
-            if (session?.userID)
-            {
+    const fetchSavedEvents = async () => {
+        try {
+            if (session?.userID) {
                 const userId = session.userID;
                 const fetchedEvents = await NetworkClient.getSavedEvents(userId);
                 setSavedCards(fetchedEvents);
             }
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Error fetching saved events:', error);
         }
     };
 
-    const toggleSaveEvent = async (eventId: number) =>
-    {
-        if (session?.userID)
-        {
+    const toggleSaveEvent = async (eventId: number) => {
+        if (session?.userID) {
             await NetworkClient.saveEvent(session.userID, eventId);
             fetchSavedEvents();
         }
     };
 
-    const onRefresh = React.useCallback(() =>
-    {
+    const onRefresh = React.useCallback(() => {
         setRefreshing(true);
         fetchSavedEvents().then(() => setRefreshing(false));
     }, []);
@@ -60,26 +51,22 @@ export default function SavedScreen()
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayEvents = savedCards.filter(event =>
-    {
+    const todayEvents = savedCards.filter(event => {
         const eventDate = new Date(event.startDate);
         return eventDate.toDateString() === today.toDateString();
     });
 
-    const futureEvents = savedCards.filter(event =>
-    {
+    const futureEvents = savedCards.filter(event => {
         const eventDate = new Date(event.startDate);
         return eventDate > today && eventDate.toDateString() !== today.toDateString();
     }).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
-    const pastEvents = savedCards.filter(event =>
-    {
+    const pastEvents = savedCards.filter(event => {
         const eventDate = new Date(event.startDate);
         return eventDate < today;
     }).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
-    const renderEventSection = (sectionEvents: EventCardPreview[], index: number) =>
-    {
+    const renderEventSection = (sectionEvents: EventCardPreview[], index: number) => {
         return sectionEvents.map((event, idx) => (
             <Animated.View
                 key={event.id}

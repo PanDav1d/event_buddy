@@ -1,4 +1,4 @@
-import { Enviroment } from '@/constants/Enviroment';
+import { Enviroment } from '@/enviroments/enviroment.prod';
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';

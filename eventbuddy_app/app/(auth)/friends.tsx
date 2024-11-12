@@ -3,7 +3,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { View, StyleSheet, useColorScheme, SafeAreaView, FlatList, RefreshControl, TouchableOpacity, Dimensions, Alert, Platform } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
-import NetworkClient from '@/api/NetworkClient';
+import NetworkClient from '@/services/NetworkClient';
 import { useSession } from '@/components/ctx';
 import { Ionicons } from '@expo/vector-icons';
 import { FriendRequestStatus } from '@/constants/FriendRequestRespondEnum';
@@ -11,8 +11,7 @@ import { TitleSeperator } from '@/components/TitleSeperator';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
-export default function FriendsScreen()
-{
+export default function FriendsScreen() {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const { session } = useSession();
@@ -20,49 +19,39 @@ export default function FriendsScreen()
     const [friendRequests, setFriendRequests] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         fetchFriends();
         fetchRequests();
     }, []);
 
-    const fetchFriends = async () =>
-    {
-        try
-        {
-            if (session?.userID)
-            {
+    const fetchFriends = async () => {
+        try {
+            if (session?.userID) {
                 const userId = session.userID;
                 const fetchedFriends = await NetworkClient.getUserFriends(userId);
                 setFriends(fetchedFriends as never[]);
             }
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Error fetching friends:', error);
         }
     };
 
-    const fetchRequests = async () =>
-    {
-        try
-        {
+    const fetchRequests = async () => {
+        try {
             if (session?.userID)
                 setFriendRequests(await NetworkClient.getFriendRequests(session.userID) ?? []);
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Error fetching friend requests:', error);
             setFriendRequests([]);
         }
     };
 
-    const onRefresh = React.useCallback(() =>
-    {
+    const onRefresh = React.useCallback(() => {
         setRefreshing(true);
         Promise.all([fetchFriends(), fetchRequests()]).then(() => setRefreshing(false));
     }, []);
 
-    const handleUnfollow = async (friendId: number) =>
-    {
+    const handleUnfollow = async (friendId: number) => {
         Alert.alert(
             "Entfolgen",
             "Bist du sicher, dass du diesen Freund entfernen möchtest?",
@@ -74,17 +63,13 @@ export default function FriendsScreen()
                 {
                     text: "Entfernen",
                     style: "destructive",
-                    onPress: async () =>
-                    {
-                        try
-                        {
-                            if (session?.userID)
-                            {
+                    onPress: async () => {
+                        try {
+                            if (session?.userID) {
                                 setFriends(friends.filter((friend: any) => friend.id !== friendId));
                                 await NetworkClient.removeFriend(session.userID, friendId);
                             }
-                        } catch (error)
-                        {
+                        } catch (error) {
                             console.error('Error unfollowing friend:', error);
                             fetchFriends();
                         }
@@ -94,21 +79,16 @@ export default function FriendsScreen()
         );
     };
 
-    const handleRespondToRequest = async (requestId: number, status: FriendRequestStatus) =>
-    {
-        try
-        {
-            if (session?.userID)
-            {
+    const handleRespondToRequest = async (requestId: number, status: FriendRequestStatus) => {
+        try {
+            if (session?.userID) {
                 setFriendRequests(friendRequests.filter((request: any) => request.id !== requestId));
                 const success = await NetworkClient.respondFriendRequest(session.userID, requestId, status);
-                if (success && status === FriendRequestStatus.accepted)
-                {
+                if (success && status === FriendRequestStatus.accepted) {
                     fetchFriends();
                 }
             }
-        } catch (error)
-        {
+        } catch (error) {
             console.error('Error responding to friend request:', error);
             fetchRequests();
         }
@@ -136,8 +116,7 @@ export default function FriendsScreen()
         </Animated.View>
     );
 
-    const renderRequestItem = ({ item, index }: { item: { id: number; fromUsername: string; buddyname: string; profileImage: string; status: string }, index: number }) => 
-    {
+    const renderRequestItem = ({ item, index }: { item: { id: number; fromUsername: string; buddyname: string; profileImage: string; status: string }, index: number }) => {
         return (
             <Animated.View entering={FadeInUp.delay(index * 100)} exiting={FadeOutDown}>
                 <View style={[styles.listItem, { backgroundColor: colors.backgroundAlt }]}>
