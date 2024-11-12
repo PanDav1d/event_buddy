@@ -32,6 +32,7 @@ public class TicketsController(EventbuddyDbContext context) : ControllerBase
                 {
                     Id = t.Event!.Id,
                     Title = t.Event.Title,
+                    ImageUrl = t.Event.ImageUrl,
                     Description = t.Event.Description,
                     StartDate = t.Event.StartDate,
                     EndDate = t.Event.EndDate

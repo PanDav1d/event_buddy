@@ -78,6 +78,7 @@ export interface SearchParams {
 export interface Ticket {
   id: number;
   eventId: number;
+  imageUrl: string;
   event?: EventCardPreview;
   createdAt: string;
   qrCode: string;
