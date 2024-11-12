@@ -16,6 +16,7 @@ public class Event
     public DateTime EndDate { get; set; }
     public int SoldTickets { get; set; } = 0;
     public int? MaxTickets { get; set; }
+    public string? TicketUrl { get; set; }
 
     // Event characteristics
     public float EventSize { get; set; }
