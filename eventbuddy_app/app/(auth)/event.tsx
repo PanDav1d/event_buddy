@@ -29,7 +29,6 @@ export default function EventScreen() {
     const [currentStep, setCurrentStep] = useState(1);
     const [ticketQuantity, setTicketQuantity] = useState(1);
     const [selectedTier, setSelectedTier] = useState<number | null>(null);
-    const eventUrl = 'https://www.example.com';
 
     const defaultCoords = {
         latitude: 48.137154,  // Example: Vienna coordinates
@@ -39,11 +38,12 @@ export default function EventScreen() {
     };
 
     const isSoldOut = () => {
-        return event?.maxTickets && event?.soldTickets && event?.maxTickets <= event?.soldTickets;
+        return event?.ticketUrl != null || event?.ticketUrl != "";
+        //return event?.maxTickets && event?.soldTickets && event?.maxTickets <= event?.soldTickets;
     };
 
     const openBrowser = async () => {
-        const url = eventUrl; // Replace with your desired URL
+        const url = event?.ticketUrl!; // Replace with your desired URL
         await WebBrowser.openBrowserAsync(url);
     };
 
@@ -219,10 +219,7 @@ export default function EventScreen() {
                 animationType="slide"
                 presentationStyle="pageSheet"
                 visible={modalVisible}
-                onRequestClose={() => {
-                    setModalVisible(false);
-                }
-                }
+                onRequestClose={() => setModalVisible(false)}
             >
                 <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
                     <View style={styles.modalHeader}>
@@ -242,7 +239,7 @@ export default function EventScreen() {
                         </TouchableOpacity>
                     </View>
                     <View style={styles.modalContent}>
-                        <WebView source={{ uri: eventUrl }} style={styles.webview} />
+                        <WebView source={{ uri: event?.ticketUrl! }} style={styles.webview} />
                     </View>
                 </SafeAreaView>
             </Modal >
@@ -414,10 +411,6 @@ const styles = StyleSheet.create({
         color: '#007AFF',
         fontWeight: '500',
     },
-    stepIndicator: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
     modalContent: {
         flex: 1,
     },
@@ -431,215 +424,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 14,
         lineHeight: 22,
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 24,
-    },
-    modalButton: {
-        padding: 16,
-        borderRadius: 12,
-        width: '48%',
-        alignItems: 'center',
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        elevation: 3,
-    },
-    backButton: {
-        backgroundColor: '#666',
-    },
-    modalButtonText: {
-        color: 'white',
-        fontWeight: '600',
-        fontSize: 16,
-        letterSpacing: 0.5,
-    },
-    paymentInfo: {
-        backgroundColor: 'rgba(245, 245, 245, 0.5)',
-        padding: 20,
-        borderRadius: 16,
-        marginVertical: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(200, 200, 200, 0.3)',
-    },
-    summaryContainer: {
-        backgroundColor: 'rgba(245, 245, 245, 0.5)',
-        padding: 20,
-        borderRadius: 16,
-        marginVertical: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(200, 200, 200, 0.3)',
-    },
-    dateContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(245, 245, 245, 0.5)',
-        padding: 16,
-        borderRadius: 12,
-        marginVertical: 12,
-    },
-    modalStepContainer: {
-        flex: 1,
-    },
-    stepProgress: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 8,
-        marginBottom: 32,
-    },
-    stepDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#E0E0E0',
-    },
-    stepDotActive: {
-        backgroundColor: '#007AFF',
-    },
-    modalHero: {
-        marginBottom: 32,
-    },
-    modalSubtitle: {
-        fontSize: 16,
-        opacity: 0.6,
-    },
-    ticketCard: {
-        backgroundColor: 'rgba(245, 245, 245, 0.5)',
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 24,
-        borderWidth: 1,
-        borderColor: 'rgba(200, 200, 200, 0.3)',
-    },
-    ticketHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    ticketTitle: {
-        fontSize: 20,
-        fontWeight: '600',
-    },
-    ticketPrice: {
-        fontSize: 24,
-        fontWeight: '700',
-    },
-    ticketDetails: {
-        gap: 12,
-    },
-    detailRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    detailLabel: {
-        opacity: 0.6,
-    },
-    detailValue: {
-        fontWeight: '500',
-    },
-    primaryButton: {
-        backgroundColor: '#007AFF',
-        borderRadius: 14,
-        padding: 16,
-        alignItems: 'center',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
-    },
-    primaryButtonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    secondaryButton: {
-        backgroundColor: 'rgba(120, 120, 128, 0.2)',
-        borderRadius: 14,
-        padding: 16,
-        alignItems: 'center',
-    },
-    secondaryButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    buttonGroup: {
-        flexDirection: 'row',
-        gap: 12,
-        marginTop: 'auto',
-    },
-    paymentMethodsContainer: {
-        gap: 12,
-        marginBottom: 24,
-    },
-    paymentMethod: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderRadius: 14,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(200, 200, 200, 0.3)',
-    },
-    paymentMethodContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    paymentMethodIcon: {
-        width: 32,
-        height: 32,
-        backgroundColor: '#007AFF',
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    paymentMethodText: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    paymentMethodCheck: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        borderWidth: 2,
-        borderColor: '#007AFF',
-    },
-    summaryCard: {
-        backgroundColor: 'rgba(245, 245, 245, 0.1)',
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 24,
-        borderWidth: 1,
-        borderColor: 'rgba(200, 200, 200, 0.3)',
-    },
-    summarySection: {
-        gap: 8,
-        marginVertical: 12,
-    },
-    summaryLabel: {
-        fontSize: 14,
-        opacity: 0.6,
-    },
-    summaryValue: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    summaryTotal: {
-        fontSize: 24,
-        fontWeight: '700',
-    },
-    summaryDivider: {
-        height: 1,
-        backgroundColor: 'rgba(200, 200, 200, 0.3)',
-        marginVertical: 12,
     },
     gradient: {
         position: 'absolute',
@@ -678,38 +462,8 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         borderRadius: 8,
     },
-    quantitySelector: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 16,
-        paddingTop: 16,
-        marginBottom: 40,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(200, 200, 200, 0.3)',
-    },
-    quantityControls: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-    },
-    quantityButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    quantityText: {
-        fontSize: 18,
-        fontWeight: '600',
-    },
     pricingTier: {
-        borderRadius: 16,
         padding: 20,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(200, 200, 200, 0.3)',
     },
     pricingHeader: {
         flexDirection: 'row',
@@ -747,12 +501,5 @@ const styles = StyleSheet.create({
     ticketTierPrice: {
         fontSize: 20,
         fontWeight: '700',
-    },
-    selectedCheck: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
 });
