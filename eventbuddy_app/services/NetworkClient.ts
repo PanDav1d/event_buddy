@@ -2,11 +2,10 @@ import axios, { AxiosInstance } from 'axios';
 import { CreateEventParams, Event, EventCardPreview, SearchParams, Ticket } from '@/constants/Types';
 import { FriendRequestStatus } from '@/constants/FriendRequestRespondEnum';
 import { router } from 'expo-router';
+import { Enviroment } from '@/enviroments/enviroment.prod';
 
-const PROD_URL = 'https://eventbuddy.bsite.net/api/v1';
-const DEV_URL = 'http://localhost:5196/api/v1';
 
-const BASE_URL = PROD_URL;
+const BASE_URL = Enviroment.BASE_URL;
 
 class NetworkClient {
   private client: AxiosInstance;
@@ -26,6 +25,9 @@ class NetworkClient {
         if (axios.isAxiosError(error) && error.response?.status === 401) {
           this.clearToken();
           router.replace("/sign-in");
+        } else if (axios.isAxiosError(error && error.response?.status.toString().startsWith('5'))) {
+          console.log("Server error");
+          router.replace("/sign-in");
         }
         return Promise.reject(error);
       }
@@ -34,6 +36,7 @@ class NetworkClient {
 
   setToken(token: string) {
     this.token = token;
+    console.log(token);
     this.client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
@@ -42,9 +45,9 @@ class NetworkClient {
     delete this.client.defaults.headers.common['Authorization'];
   }
 
-  async getEvent(eventID: number): Promise<{ events: Event, similarEvents: EventCardPreview[], organizerEvents: EventCardPreview[] } | null> {
+  async getEvent(eventID: number, userID: number): Promise<{ event: Event, similarEvents: EventCardPreview[], organizerEvents: EventCardPreview[] } | null> {
     try {
-      const response = await this.client.get(`/events/${eventID}`);
+      const response = await this.client.get(`/events/${userID}/${eventID}`);
       return response.data.payload;
     }
     catch (error) {

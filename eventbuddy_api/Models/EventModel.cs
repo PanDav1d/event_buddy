@@ -12,6 +12,7 @@ public class Event
     public float? Latitude { get; set; }
     public float? Longitude { get; set; }
     public int OrganizerId { get; set; }
+    public string? OrganizerName { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public int SoldTickets { get; set; } = 0;

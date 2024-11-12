@@ -1,5 +1,5 @@
 import { ThemedText } from '@/components/ThemedText';
-import { Image, View, StyleSheet, useColorScheme, ScrollView, TouchableOpacity, SafeAreaView, Modal, Text } from 'react-native';
+import { Image, View, StyleSheet, useColorScheme, ScrollView, TouchableOpacity, SafeAreaView, Modal, Platform, Linking } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import NetworkClient from '@/services/NetworkClient';
@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ActivityIndicatorFullscreenComponent } from '@/components/ActivityIndicatorFullscreenComponent/ActivityIndicatorFullscreenComponent';
 import { WebView } from "react-native-webview";
 import * as WebBrowser from "expo-web-browser";
+import { MapViewSkeleton } from '@/components/skeletons/MapViewSkeleton/MapViewSkeleton';
 
 export default function EventScreen() {
     const { eventID } = useLocalSearchParams();
@@ -26,34 +27,36 @@ export default function EventScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [organizerEvents, setOrganizerEvents] = useState<EventCardPreview[]>();
     const [modalVisible, setModalVisible] = useState(false);
-    const [currentStep, setCurrentStep] = useState(1);
-    const [ticketQuantity, setTicketQuantity] = useState(1);
-    const [selectedTier, setSelectedTier] = useState<number | null>(null);
-
-    const defaultCoords = {
-        latitude: 48.137154,  // Example: Vienna coordinates
-        longitude: 16.363449,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02
-    };
 
     const isSoldOut = () => {
-        return event?.ticketUrl != null || event?.ticketUrl != "";
-        //return event?.maxTickets && event?.soldTickets && event?.maxTickets <= event?.soldTickets;
+        return event?.maxTickets && event?.soldTickets && event?.maxTickets <= event?.soldTickets;
     };
+    const hasUrl = () => {
+        return event?.ticketUrl != null || event?.ticketUrl != "";
+    }
 
     const openBrowser = async () => {
         const url = event?.ticketUrl!; // Replace with your desired URL
         await WebBrowser.openBrowserAsync(url);
     };
 
+    const openMaps = (eventName: string, lat: number, lng: number) => {
+        const scheme = Platform.select({ ios: 'maps://0,0?q=', android: 'geo:0,0?q=' });
+        const latLng = `${lat},${lng}`;
+        const label = eventName;
+        const url = Platform.select({
+            ios: `${scheme}${label}@${latLng}`,
+            android: `${scheme}${latLng}(${label})`
+        });
+        Linking.openURL(url!);
+    }
+
     useEffect(() => {
         const fetchEvent = async () => {
             setIsLoading(true);
-            const event = await NetworkClient.getEvent(Number(eventID));
-            console.log(event);
+            const event = await NetworkClient.getEvent(Number(eventID), session?.userID!);
             if (event != null) {
-                setEvent(event.events);
+                setEvent(event.event);
                 setSimiliarEvents(event.similarEvents);
                 setOrganizerEvents(event.organizerEvents);
             } else {
@@ -63,20 +66,6 @@ export default function EventScreen() {
         };
         fetchEvent();
     }, [eventID]);
-
-    const purchaseTicket = async () => {
-        try {
-            if (!session?.userID || !eventID) {
-                return;
-            }
-            const response = await NetworkClient.purchaseTicket(Number(session.userID), Number(eventID));
-            if (response) {
-                router.push('/tickets');
-            }
-        } catch (error) {
-            console.log('Purchase failed:', error);
-        }
-    }
 
     if (isLoading) {
         return (
@@ -109,7 +98,11 @@ export default function EventScreen() {
                                     style={styles.iconButton}
                                     onPress={() => {/* Implement save logic */ }}
                                 >
-                                    <Ionicons name="heart-outline" size={24} color="white" />
+                                    {event?.eventSaved! ? (
+                                        <Ionicons name="heart" size={24} color='red' />
+                                    ) : (
+                                        <Ionicons name="heart-outline" size={24} color='white' />
+                                    )}
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.iconButton}
@@ -122,8 +115,7 @@ export default function EventScreen() {
                         <View style={styles.heroContent}>
                             <ThemedText style={styles.title}>{event?.title || 'Event'}</ThemedText>
                             <View style={styles.organizerRow}>
-                                <View style={styles.organizerAvatar} />
-                                <ThemedText style={styles.organizer}>{event?.organizerId || 'Organizer'}</ThemedText>
+                                <ThemedText style={styles.organizer}>von {event?.organizerName || 'Organizer'}</ThemedText>
                             </View>
                         </View>
                     </View>
@@ -169,26 +161,33 @@ export default function EventScreen() {
                         <View style={styles.section}>
                             <ThemedText style={styles.sectionTitle}>Standort</ThemedText>
                             <View style={styles.mapContainer}>
-                                <MapView
-                                    style={styles.map}
-                                    initialRegion={event ? {
-                                        latitude: event.latitude,
-                                        longitude: event.longitude,
-                                        latitudeDelta: 0.02,
-                                        longitudeDelta: 0.02,
-                                    } : defaultCoords}
-                                    scrollEnabled={false}
-                                    zoomEnabled={false}
-                                >
-                                    {event && (
-                                        <Marker
-                                            coordinate={{
-                                                latitude: event.latitude,
-                                                longitude: event.longitude,
-                                            }}
-                                        />
-                                    )}
-                                </MapView>
+                                {event == undefined ? (
+                                    <MapViewSkeleton />
+                                ) : (
+                                    <MapView
+                                        style={styles.map}
+                                        initialRegion={{
+                                            latitude: event.latitude,
+                                            longitude: event.longitude,
+                                            latitudeDelta: 0.02,
+                                            longitudeDelta: 0.02,
+                                        }}
+                                        scrollEnabled={false}
+                                        zoomEnabled={false}
+                                        mapType='mutedStandard'
+                                        cacheEnabled={true}
+                                        onPress={() => openMaps(event.title, event.latitude, event.longitude)}
+                                    >
+                                        {event && (
+                                            <Marker
+                                                coordinate={{
+                                                    latitude: event.latitude,
+                                                    longitude: event.longitude,
+                                                }}
+                                            />
+                                        )}
+                                    </MapView>
+                                )}
                             </View>
                         </View>
                     </View>
@@ -202,14 +201,14 @@ export default function EventScreen() {
                     <TouchableOpacity
                         style={[
                             styles.buyButton,
-                            { backgroundColor: isSoldOut() ? '#ccc' : colors.buttonPrimary },
-                            isSoldOut() && { opacity: 0.5 }
+                            { backgroundColor: hasUrl() ? '#ccc' : colors.buttonPrimary },
+                            hasUrl() && { opacity: 0.5 }
                         ]}
-                        onPress={() => !isSoldOut() && setModalVisible(true)}
-                        disabled={isSoldOut()}
+                        onPress={() => !hasUrl() && setModalVisible(true)}
+                        disabled={hasUrl()}
                     >
                         <ThemedText style={styles.buyButtonText}>
-                            {isSoldOut() ? 'Ausverkauft' : 'Ticket kaufen'}
+                            {hasUrl() ? 'Kein Ticket verfügbar' : 'Ticket kaufen'}
                         </ThemedText>
                     </TouchableOpacity>
 

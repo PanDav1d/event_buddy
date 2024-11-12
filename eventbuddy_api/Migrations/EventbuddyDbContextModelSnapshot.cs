@@ -77,6 +77,9 @@ namespace eventbuddy_api.Migrations
                     b.Property<int>("OrganizerId")
                         .HasColumnType("int");
 
+                    b.Property<string>("OrganizerName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("SoldTickets")
                         .HasColumnType("int");
 

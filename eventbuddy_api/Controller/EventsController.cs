@@ -11,10 +11,16 @@ namespace eventbuddy_api.Controller;
 [Authorize]
 [ApiController]
 [Route("api/v1")]
-public class EventsController(EventbuddyDbContext context, FeedSectionService feedSectionService) : ControllerBase
+public class EventsController : ControllerBase
 {
-    private readonly EventbuddyDbContext _context = context;
-    private readonly FeedSectionService _feedSectionService = feedSectionService;
+    private readonly EventbuddyDbContext _context;
+    private readonly FeedSectionService _feedSectionService;
+
+    public EventsController(EventbuddyDbContext context, FeedSectionService feedSectionService)
+    {
+        _context = context;
+        _feedSectionService = feedSectionService;
+    }
 
     [HttpGet("events")]
     public async Task<IResult> GetEventsFeedForUserID([FromQuery] int user_id)
@@ -28,21 +34,41 @@ public class EventsController(EventbuddyDbContext context, FeedSectionService fe
         return Results.Ok(new { info = "Successfully reached personal Feed", payload = feed });
     }
 
-    [HttpGet("events/{event_id}")]
-    public async Task<IResult> GetEventByID(int event_id)
+    [HttpGet("events/{user_id}/{event_id}")]
+    public async Task<IResult> GetEventByID(int event_id, int user_id)
     {
-        var events = await _context.Event.Include(e => e.PricingStructure).Where(e => e.Id == event_id).FirstOrDefaultAsync();
-        if (events == null)
+        var evt = await _context.Event.Include(e => e.PricingStructure).Where(e => e.Id == event_id).FirstOrDefaultAsync();
+        var user = await _context.User.FindAsync(user_id);
+
+        if (evt == null)
         {
             return Results.NotFound();
         }
+        var @event = new
+        {
+            Id = evt.Id,
+            Title = evt.Title,
+            Description = evt.Description,
+            ImageUrl = evt.ImageUrl,
+            StartDate = evt.StartDate,
+            EndDate = evt.EndDate,
+            SoldTickets = evt.SoldTickets,
+            MaxTickets = evt.MaxTickets,
+            Longitude = evt.Longitude,
+            Latitude = evt.Latitude,
+            OrganizerId = evt.OrganizerId,
+            OrganizerName = user.Username,
+            PricingStructure = evt.PricingStructure,
+            EventSaved = await _context.SavedEvent.AnyAsync(s => s.EventId == evt.Id && s.UserId == user_id),
+            SavedAmount = await _context.SavedEvent.CountAsync(se => se.EventId == evt.Id)
+        };
 
         var similarEvents = await _context.Event.Where(e => e.Id != event_id).Take(10).ToListAsync();
-        var organizerEvents = await _context.Event.Where(e => e.OrganizerId == events.OrganizerId && e.Id != events.Id).ToListAsync();
+        var organizerEvents = await _context.Event.Where(e => e.OrganizerId == evt.OrganizerId && e.Id != evt.Id).ToListAsync();
         return Results.Ok(new
         {
             info = "Found event with that id",
-            payload = new { events, similarEvents, organizerEvents }
+            payload = new { @event, similarEvents, organizerEvents }
         });
     }
 

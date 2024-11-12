@@ -8,6 +8,7 @@ export interface Event {
   latitude: number;
   longitude: number;
   organizerId: number;
+  organizerName: string;
   soldTickets: number;
   maxTickets: number;
   eventSize: number;
