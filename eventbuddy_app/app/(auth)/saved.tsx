@@ -10,6 +10,7 @@ import { EventItem, EventItemType } from '@/components/EventItem';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator';
+import { ActivityIndicatorFullscreenComponent } from '@/components/ActivityIndicatorFullscreenComponent/ActivityIndicatorFullscreenComponent';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -19,17 +20,20 @@ export default function SavedScreen() {
     const { signOut, session } = useSession();
     const [savedCards, setSavedCards] = useState<EventCardPreview[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [isLoading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchSavedEvents();
     }, []);
 
     const fetchSavedEvents = async () => {
+        setLoading(true);
         try {
             if (session?.userID) {
                 const userId = session.userID;
                 const fetchedEvents = await NetworkClient.getSavedEvents(userId);
                 setSavedCards(fetchedEvents);
+                setLoading(false);
             }
         } catch (error) {
             console.error('Error fetching saved events:', error);
@@ -83,6 +87,12 @@ export default function SavedScreen() {
             </Animated.View>
         ));
     };
+
+    if (isLoading) {
+        return (
+            <ActivityIndicatorFullscreenComponent />
+        )
+    }
 
     return (
         <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>

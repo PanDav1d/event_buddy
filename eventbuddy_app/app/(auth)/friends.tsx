@@ -10,6 +10,7 @@ import { FriendRequestStatus } from '@/constants/FriendRequestRespondEnum';
 import { TitleSeperator } from '@/components/TitleSeperator';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
+import { ActivityIndicatorFullscreenComponent } from '@/components/ActivityIndicatorFullscreenComponent/ActivityIndicatorFullscreenComponent';
 
 export default function FriendsScreen() {
     const colorScheme = useColorScheme();
@@ -18,10 +19,13 @@ export default function FriendsScreen() {
     const [friends, setFriends] = useState([]);
     const [friendRequests, setFriendRequests] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [isLoading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchFriends();
-        fetchRequests();
+        setLoading(true);
+        fetchFriends().then(() =>
+            fetchRequests().then(() =>
+                setLoading(false)));
     }, []);
 
     const fetchFriends = async () => {
@@ -144,6 +148,11 @@ export default function FriendsScreen() {
                 </View>
             </Animated.View>
         );
+    }
+    if (isLoading) {
+        return (
+            <ActivityIndicatorFullscreenComponent />
+        )
     }
 
     return (

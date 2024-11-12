@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { TitleSeperator, TitleSeperatorType } from '@/components/TitleSeperator';
+import { ActivityIndicatorFullscreenComponent } from '@/components/ActivityIndicatorFullscreenComponent/ActivityIndicatorFullscreenComponent';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -22,6 +23,7 @@ export default function TicketsScreen() {
     const { session } = useSession();
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [isLoading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
@@ -30,11 +32,13 @@ export default function TicketsScreen() {
     }, []);
 
     const fetchTickets = async () => {
+        setLoading(true);
         try {
             if (session?.userID) {
                 const userId = session.userID;
                 const fetchedTickets = await NetworkClient.getUserTickets(userId);
                 setTickets(fetchedTickets as Ticket[]);
+                setLoading(false);
             }
         } catch (error) {
             console.error('Error fetching tickets:', error);
@@ -91,6 +95,12 @@ export default function TicketsScreen() {
             </Animated.View>
         ));
     };
+
+    if (isLoading) {
+        return (
+            <ActivityIndicatorFullscreenComponent />
+        )
+    }
 
     return (
         <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
