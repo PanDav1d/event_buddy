@@ -50,6 +50,7 @@ public class EventsController : ControllerBase
             Title = evt.Title,
             Description = evt.Description,
             ImageUrl = evt.ImageUrl,
+            TicketUrl = evt.TicketUrl,
             StartDate = evt.StartDate,
             EndDate = evt.EndDate,
             SoldTickets = evt.SoldTickets,

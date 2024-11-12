@@ -431,6 +431,7 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) => {
         title: '',
         description: '',
         imageUrl: '',
+        ticketUrl: '',
         latitude: 37.78825,
         longitude: -122.4324,
         organizerId: 0,
@@ -579,6 +580,14 @@ const EventCreationForm = ({ closeModal }: { closeModal: () => void }) => {
                     placeholder="Bild URL"
                     value={eventData.imageUrl}
                     onChangeText={(text) => setEventData({ ...eventData, imageUrl: text })}
+                />
+
+                <ThemedText>Ticket URL:</ThemedText>
+                <TextInput
+                    style={[styles.input, { color: 'white' }]}
+                    placeholder="Ticket URL"
+                    value={eventData.ticketUrl}
+                    onChangeText={(text) => setEventData({ ...eventData, ticketUrl: text })}
                 />
 
                 <ThemedText>Maximum Tickets:</ThemedText>

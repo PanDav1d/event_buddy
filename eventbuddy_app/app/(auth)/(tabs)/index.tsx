@@ -37,17 +37,18 @@ export default function IndexScreen() {
     const fetchData = useCallback(async () => {
         const feedData = await NetworkClient.getFeed(session.userID);
         setSections(feedData);
-        setIsLoading(false);
     }, [session.userID]);
 
     useEffect(() => {
+        setIsLoading(true);
         fetchData();
+        setIsLoading(false);
     }, [fetchData]);
 
-    const onRefresh = useCallback(() => {
+    const onRefresh = async () => {
         setRefreshing(true);
-        fetchData().then(() => setRefreshing(false));
-    }, [fetchData]);
+        await fetchData().then(() => setRefreshing(false));
+    };
 
     const renderSkeletonLoading = () => (
         <View style={styles.skeletonContainer}>

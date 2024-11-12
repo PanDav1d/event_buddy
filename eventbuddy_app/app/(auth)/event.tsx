@@ -14,6 +14,7 @@ import { ActivityIndicatorFullscreenComponent } from '@/components/ActivityIndic
 import { WebView } from "react-native-webview";
 import * as WebBrowser from "expo-web-browser";
 import { MapViewSkeleton } from '@/components/skeletons/MapViewSkeleton/MapViewSkeleton';
+import { toggleSaveEvent } from '@/features/ToggleSaveFunction/ToggleSave';
 
 export default function EventScreen() {
     const { eventID } = useLocalSearchParams();
@@ -27,12 +28,13 @@ export default function EventScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [organizerEvents, setOrganizerEvents] = useState<EventCardPreview[]>();
     const [modalVisible, setModalVisible] = useState(false);
+    const [isSaved, setIsSaved] = useState(event?.eventSaved);
 
     const isSoldOut = () => {
         return event?.maxTickets && event?.soldTickets && event?.maxTickets <= event?.soldTickets;
     };
     const hasUrl = () => {
-        return event?.ticketUrl != null || event?.ticketUrl != "";
+        return event?.ticketUrl == null && event?.ticketUrl == "";
     }
 
     const openBrowser = async () => {
@@ -59,6 +61,7 @@ export default function EventScreen() {
                 setEvent(event.event);
                 setSimiliarEvents(event.similarEvents);
                 setOrganizerEvents(event.organizerEvents);
+                setIsSaved(event.event.eventSaved);
             } else {
                 router.back();
             }
@@ -96,9 +99,12 @@ export default function EventScreen() {
                             <View style={styles.rightButtons}>
                                 <TouchableOpacity
                                     style={styles.iconButton}
-                                    onPress={() => {/* Implement save logic */ }}
+                                    onPress={() => {
+                                        toggleSaveEvent(event?.id, session?.userID);
+                                        setIsSaved(!isSaved);
+                                    }}
                                 >
-                                    {event?.eventSaved! ? (
+                                    {isSaved ? (
                                         <Ionicons name="heart" size={24} color='red' />
                                     ) : (
                                         <Ionicons name="heart-outline" size={24} color='white' />

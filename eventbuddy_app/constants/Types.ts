@@ -56,6 +56,7 @@ export interface CreateEventParams {
   endDate: string;
   soldTickets: number;
   maxTickets: number;
+  ticketUrl: string;
   eventSize: number;
   interactivity: number;
   noisiness: number;
