@@ -1,5 +1,5 @@
 import { ThemedText } from '@/components/ThemedText';
-import { Image, View, StyleSheet, useColorScheme, ScrollView, TouchableOpacity, SafeAreaView, Modal } from 'react-native';
+import { Image, View, StyleSheet, useColorScheme, ScrollView, TouchableOpacity, SafeAreaView, Modal, Text } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import NetworkClient from '@/services/NetworkClient';
@@ -9,11 +9,10 @@ import { useSession } from '@/components/ctx';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import MapView, { Marker } from 'react-native-maps';
-import { EventItem } from '@/components/EventItem';
-import { TitleSeperator } from '@/components/TitleSeperator';
-import { EventCarousel } from '@/components/EventCarousel';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
+import { ActivityIndicatorFullscreenComponent } from '@/components/ActivityIndicatorFullscreenComponent/ActivityIndicatorFullscreenComponent';
+import { WebView } from "react-native-webview";
+import * as WebBrowser from "expo-web-browser";
 
 export default function EventScreen() {
     const { eventID } = useLocalSearchParams();
@@ -30,7 +29,7 @@ export default function EventScreen() {
     const [currentStep, setCurrentStep] = useState(1);
     const [ticketQuantity, setTicketQuantity] = useState(1);
     const [selectedTier, setSelectedTier] = useState<number | null>(null);
-
+    const eventUrl = 'https://www.example.com';
 
     const defaultCoords = {
         latitude: 48.137154,  // Example: Vienna coordinates
@@ -43,7 +42,10 @@ export default function EventScreen() {
         return event?.maxTickets && event?.soldTickets && event?.maxTickets <= event?.soldTickets;
     };
 
-
+    const openBrowser = async () => {
+        const url = eventUrl; // Replace with your desired URL
+        await WebBrowser.openBrowserAsync(url);
+    };
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -76,181 +78,11 @@ export default function EventScreen() {
         }
     }
 
-    const renderModalContent = () => {
-        switch (currentStep) {
-            case 1:
-                return (
-                    <View style={styles.modalStepContainer}>
-                        <View style={styles.modalHeader}>
-                            <View style={styles.stepProgress}>
-                                {[1, 2, 3].map((step) => (
-                                    <View key={step} style={[
-                                        styles.stepDot,
-                                        currentStep >= step && styles.stepDotActive && { backgroundColor: colors.primary }
-                                    ]} />
-                                ))}
-                            </View>
-                        </View>
-
-                        <View style={styles.modalHero}>
-                            <ThemedText style={styles.modalTitle}>Ticket wählen</ThemedText>
-                            <ThemedText style={styles.modalSubtitle}>Wähle deine Ticket-Kategorie</ThemedText>
-                        </View>
-
-                        <View style={styles.ticketTierContainer}>
-                            {event?.pricingStructure?.map((tier) => (
-                                <TouchableOpacity
-                                    key={tier.id}
-                                    style={[
-                                        { borderColor: colors.textPrimary },
-                                        styles.ticketTierCard,
-                                        selectedTier === tier.id && {
-                                            borderColor: colors.primary,
-                                        }
-                                    ]}
-                                    onPress={() => setSelectedTier(tier.id)}
-                                >
-                                    <View style={styles.ticketTierContent}>
-                                        <ThemedText style={styles.ticketTierTitle}>{tier.title}</ThemedText>
-                                        <ThemedText style={styles.ticketTierPrice}>€{tier.price}</ThemedText>
-                                    </View>
-                                    {selectedTier === tier.id && (
-                                        <View style={[styles.selectedCheck, { backgroundColor: colors.primary }]}>
-                                            <Ionicons name="checkmark" size={20} color="white" />
-                                        </View>
-                                    )}
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        <TouchableOpacity
-                            style={[
-                                styles.primaryButton,
-                                { backgroundColor: selectedTier ? colors.primary : '#ccc' }
-                            ]}
-                            onPress={() => selectedTier && setCurrentStep(2)}
-                            disabled={!selectedTier}
-                        >
-                            <ThemedText style={styles.primaryButtonText}>Weiter zur Bezahlung</ThemedText>
-                        </TouchableOpacity>
-                    </View>
-                );
-            case 2:
-                return (
-                    <View style={styles.modalStepContainer}>
-                        <View style={styles.modalHeader}>
-                            <View style={styles.stepProgress}>
-                                {[1, 2, 3].map((step) => (
-                                    <View key={step} style={[
-                                        styles.stepDot,
-                                        currentStep >= step && styles.stepDotActive && { backgroundColor: colors.primary }
-                                    ]} />
-                                ))}
-                            </View>
-                        </View>
-
-                        <View style={styles.modalHero}>
-                            <ThemedText style={styles.modalTitle}>Zahlungsmittel</ThemedText>
-                            <ThemedText style={styles.modalSubtitle}>Wähle deine Zahlungsmethode</ThemedText>
-                        </View>
-
-                        <View style={styles.paymentMethodsContainer}>
-                            <TouchableOpacity style={styles.paymentMethod}>
-                                <View style={styles.paymentMethodContent}>
-                                    <View style={styles.paymentMethodIcon}>
-                                        <Ionicons name='card-outline' size={26} color={'white'} />
-                                    </View>
-                                    <ThemedText style={styles.paymentMethodText}>Karte</ThemedText>
-                                </View>
-                                <View style={styles.paymentMethodCheck} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.paymentMethodsContainer}>
-                            <TouchableOpacity style={styles.paymentMethod}>
-                                <View style={styles.paymentMethodContent}>
-                                    <View style={styles.paymentMethodIcon}>
-                                        <Ionicons name='logo-paypal' size={26} color={'white'} />
-                                    </View>
-                                    <ThemedText style={styles.paymentMethodText}>PayPal</ThemedText>
-                                </View>
-                                <View style={styles.paymentMethodCheck} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.buttonGroup}>
-                            <TouchableOpacity
-                                style={styles.secondaryButton}
-                                onPress={() => setCurrentStep(1)}
-                            >
-                                <ThemedText style={styles.secondaryButtonText}>Zurück</ThemedText>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-                                onPress={() => setCurrentStep(3)}
-                            >
-                                <ThemedText style={styles.primaryButtonText}>Fortfahren</ThemedText>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                );
-            case 3:
-                return (
-                    <View style={styles.modalStepContainer}>
-                        <View style={styles.modalHeader}>
-                            <View style={styles.stepProgress}>
-                                {[1, 2, 3].map((step) => (
-                                    <View key={step} style={[
-                                        styles.stepDot,
-                                        currentStep >= step && styles.stepDotActive && { backgroundColor: colors.primary }
-                                    ]} />
-                                ))}
-                            </View>
-                        </View>
-
-                        <View style={styles.modalHero}>
-                            <ThemedText style={styles.modalTitle}>Bestätigung</ThemedText>
-                            <ThemedText style={styles.modalSubtitle}>Überprüfe deinen Kauf</ThemedText>
-                        </View>
-
-                        <View style={styles.summaryCard}>
-                            <View style={styles.summarySection}>
-                                <ThemedText style={styles.summaryLabel}>Event</ThemedText>
-                                <ThemedText style={styles.summaryValue}>{event?.title}</ThemedText>
-                            </View>
-                            <View style={styles.summarySection}>
-                                <ThemedText style={styles.summaryLabel}>Datum</ThemedText>
-                                <ThemedText style={styles.summaryValue}>{new Date(event?.startDate!).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}</ThemedText>
-                            </View>
-                            <View style={styles.summaryDivider} />
-                            <View style={styles.summarySection}>
-                                <ThemedText style={styles.summaryLabel}>Brutto</ThemedText>
-                                <ThemedText style={styles.summaryTotal}>€{event?.price || 0}</ThemedText>
-                            </View>
-                        </View>
-
-                        <View style={styles.buttonGroup}>
-                            <TouchableOpacity
-                                style={styles.secondaryButton}
-                                onPress={() => setCurrentStep(2)}
-                            >
-                                <ThemedText style={styles.secondaryButtonText}>Zurück</ThemedText>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-                                onPress={() => {
-                                    purchaseTicket();
-                                    setModalVisible(false);
-                                    setCurrentStep(1);
-                                }}
-                            >
-                                <ThemedText style={styles.primaryButtonText}>Kauf abschliessen</ThemedText>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                );
-        }
-    };
+    if (isLoading) {
+        return (
+            <ActivityIndicatorFullscreenComponent />
+        )
+    }
     return (
         <GestureHandlerRootView>
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -360,17 +192,6 @@ export default function EventScreen() {
                             </View>
                         </View>
                     </View>
-
-                    <View style={styles.section}>
-                        <TitleSeperator title='Ähnliche Events' />
-                        <EventCarousel data={similarEvents} />
-                    </View>
-
-                    <View style={styles.section}>
-                        <TitleSeperator title={"Mehr von " + event?.organizerId} />
-                        <EventCarousel data={organizerEvents} />
-                    </View>
-
                 </ScrollView>
 
                 <View style={styles.bottomSheet}>
@@ -400,7 +221,6 @@ export default function EventScreen() {
                 visible={modalVisible}
                 onRequestClose={() => {
                     setModalVisible(false);
-                    setCurrentStep(1);
                 }
                 }
             >
@@ -409,15 +229,20 @@ export default function EventScreen() {
                         <TouchableOpacity
                             onPress={() => {
                                 setModalVisible(false);
-                                setCurrentStep(1);
                             }}
                         >
-                            <ThemedText style={styles.closeButton}>Abbrechen</ThemedText>
+                            <ThemedText style={styles.closeButton}>Fertig</ThemedText>
                         </TouchableOpacity>
-                        <ThemedText style={styles.stepIndicator}>Schritt {currentStep} von 3</ThemedText>
+                        <TouchableOpacity onPress={() => {
+                            openBrowser();
+                        }}>
+                            <ThemedText style={styles.actionButton}>
+                                <Ionicons name="arrow-redo-outline" size={24} color="white" />
+                            </ThemedText>
+                        </TouchableOpacity>
                     </View>
                     <View style={styles.modalContent}>
-                        {renderModalContent()}
+                        <WebView source={{ uri: eventUrl }} style={styles.webview} />
                     </View>
                 </SafeAreaView>
             </Modal >
@@ -427,6 +252,10 @@ export default function EventScreen() {
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
+    },
+    webview: {
+        backgroundColor: 'black',
         flex: 1,
     },
     heroSection: {
@@ -580,13 +409,17 @@ const styles = StyleSheet.create({
         color: '#007AFF',
         fontWeight: '500',
     },
+    actionButton: {
+        fontSize: 16,
+        color: '#007AFF',
+        fontWeight: '500',
+    },
     stepIndicator: {
         fontSize: 16,
         fontWeight: '500',
     },
     modalContent: {
         flex: 1,
-        padding: 24,
     },
     modalTitle: {
         paddingTop: 20,
@@ -922,5 +755,4 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-
 });
