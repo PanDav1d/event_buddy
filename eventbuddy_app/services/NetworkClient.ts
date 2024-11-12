@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import { CreateEventParams, Event, EventCardPreview, SearchParams, Ticket } from '@/constants/Types';
 import { FriendRequestStatus } from '@/constants/FriendRequestRespondEnum';
 import { router } from 'expo-router';
-import { Enviroment } from '@/enviroments/enviroment.prod';
+import { Enviroment } from '@/enviroments/enviroment';
 
 
 const BASE_URL = Enviroment.BASE_URL;
