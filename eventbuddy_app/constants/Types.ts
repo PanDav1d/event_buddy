@@ -21,6 +21,7 @@ export interface Event {
   eventSaved: boolean;
   savedAmount: number;
   matchScore: number;
+  ticketUrl: string;
   pricingStructure: PricingTier[];
 }
 
@@ -73,11 +74,10 @@ export interface SearchParams {
 }
 
 
-export interface Ticket
-{
-    id: number;
-    eventId: number;
-    event?: EventCardPreview;
-    createdAt: string;
-    qrCode: string;
+export interface Ticket {
+  id: number;
+  eventId: number;
+  event?: EventCardPreview;
+  createdAt: string;
+  qrCode: string;
 }
